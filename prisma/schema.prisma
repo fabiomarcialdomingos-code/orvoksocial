@@ -7,4 +7,452 @@ datasource db {
   provider = "postgresql"
 }
 
-// Fase 0: deliberately no product models. Fase 1 defines the approved schema.
+// Fase 1 parcial: somente estrutura; sem catálogo real, Score, consenso ou RadarScore.
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum QuestionDomain {
+  WORLD
+  RADAR
+}
+
+enum ConsentPurpose {
+  SELF_ANSWER
+  BE_PREDICTED
+}
+
+enum ConsentNoticeStatus {
+  DRAFT
+  APPROVED
+}
+
+enum DataRequestType {
+  ACCESS
+  EXPORT
+  ERASURE
+}
+
+enum DataRequestStatus {
+  RECEIVED
+  PROCESSING
+  READY
+  REVIEW_REQUIRED
+  CLOSED
+}
+
+enum NotificationState {
+  UNREAD
+  READ
+  DISMISSED
+}
+
+enum ApiIdempotencyState {
+  PENDING
+  COMPLETED
+}
+
+enum VisibilityScope {
+  PRIVATE
+  SHARED
+  PUBLIC
+}
+
+enum EvidenceDomain {
+  WORLD
+  RADAR
+}
+
+enum EvidenceState {
+  INITIAL
+  EVALUATION
+  SUFFICIENT
+}
+
+model User {
+  id                        String                      @id @default(uuid()) @db.Uuid
+  status                    UserStatus                  @default(ACTIVE)
+  role                      UserRole                    @default(USER)
+  createdAt                 DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime                    @updatedAt @db.Timestamptz(6)
+  consentGrants             ConsentGrant[]              @relation("ConsentSubject")
+  consentRevocations        ConsentRevocation[]         @relation("RevocationSubject")
+  answers                   AnswerVersion[]             @relation("AnswerOwner")
+  worldPredictions          PredictionSnapshot[]        @relation("WorldPredictor")
+  socialPredictionsMade     SocialPredictionSnapshot[]  @relation("SocialPredictor")
+  socialPredictionsReceived SocialPredictionSnapshot[]  @relation("SocialTarget")
+  auditActions              AuditLog[]                  @relation("AuditActor")
+  radarInvitationsSent      RadarInvitation[]           @relation("RadarInviter")
+  radarInvitationsReceived  RadarInvitation[]           @relation("RadarInvitee")
+  authIdentity              AuthIdentity?
+  authSessions              AuthSession[]
+  authTokens                AuthToken[]
+  approvedConsentNotices    ConsentNotice[]             @relation("NoticeApprover")
+  noticePresentations       ConsentNoticePresentation[] @relation("NoticePresentedTo")
+  dataRequests              DataRequest[]               @relation("DataRequestSubject")
+  notifications             Notification[]              @relation("NotificationRecipient")
+  idempotencyRecords        ApiIdempotency[]            @relation("IdempotencyActor")
+}
+
+model ConsentNotice {
+  id            String                      @id @default(uuid()) @db.Uuid
+  purpose       ConsentPurpose
+  version       String                      @db.VarChar(80)
+  content       String
+  contentHash   String                      @db.VarChar(64)
+  status        ConsentNoticeStatus         @default(DRAFT)
+  approvedAt    DateTime?                   @db.Timestamptz(6)
+  approvedById  String?                     @db.Uuid
+  createdAt     DateTime                    @default(now()) @db.Timestamptz(6)
+  approvedBy    User?                       @relation("NoticeApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  presentations ConsentNoticePresentation[]
+
+  @@unique([purpose, version])
+}
+
+model ConsentNoticePresentation {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @db.Uuid
+  noticeId    String         @db.Uuid
+  sessionId   String         @db.Uuid
+  presentedAt DateTime       @default(now()) @db.Timestamptz(6)
+  user        User           @relation("NoticePresentedTo", fields: [userId], references: [id], onDelete: Restrict)
+  notice      ConsentNotice  @relation(fields: [noticeId], references: [id], onDelete: Restrict)
+  session     AuthSession    @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  grants      ConsentGrant[]
+
+  @@unique([id, userId])
+  @@index([userId, presentedAt])
+}
+
+model DataRequest {
+  id          String            @id @default(uuid()) @db.Uuid
+  subjectId   String            @db.Uuid
+  type        DataRequestType
+  status      DataRequestStatus @default(RECEIVED)
+  requestedAt DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(6)
+  subject     User              @relation("DataRequestSubject", fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@index([subjectId, requestedAt])
+}
+
+model Notification {
+  id            String            @id @default(uuid()) @db.Uuid
+  recipientId   String            @db.Uuid
+  eventType     String            @db.VarChar(80)
+  sourceId      String            @db.Uuid
+  sourceVersion Int
+  state         NotificationState @default(UNREAD)
+  createdAt     DateTime          @default(now()) @db.Timestamptz(6)
+  readAt        DateTime?         @db.Timestamptz(6)
+  dismissedAt   DateTime?         @db.Timestamptz(6)
+  recipient     User              @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Restrict)
+
+  @@unique([recipientId, eventType, sourceId, sourceVersion])
+  @@index([recipientId, createdAt])
+}
+
+model ApiIdempotency {
+  id             String              @id @default(uuid()) @db.Uuid
+  actorId        String              @db.Uuid
+  route          String              @db.VarChar(160)
+  key            String              @db.VarChar(128)
+  requestHash    String              @db.VarChar(64)
+  state          ApiIdempotencyState @default(PENDING)
+  responseStatus Int?
+  responseBody   Json?
+  createdAt      DateTime            @default(now()) @db.Timestamptz(6)
+  actor          User                @relation("IdempotencyActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@unique([actorId, route, key])
+}
+
+model AuthIdentity {
+  userId            String    @id @db.Uuid
+  email             String    @unique @db.VarChar(320)
+  passwordHash      String    @db.VarChar(255)
+  verifiedAt        DateTime? @db.Timestamptz(6)
+  passwordChangedAt DateTime  @default(now()) @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @db.Timestamptz(6)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+model AuthSession {
+  id                  String                      @id @default(uuid()) @db.Uuid
+  userId              String                      @db.Uuid
+  tokenHash           String                      @unique @db.VarChar(64)
+  familyId            String                      @db.Uuid
+  createdAt           DateTime                    @default(now()) @db.Timestamptz(6)
+  expiresAt           DateTime                    @db.Timestamptz(6)
+  revokedAt           DateTime?                   @db.Timestamptz(6)
+  replacedById        String?                     @unique @db.Uuid
+  user                User                        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  noticePresentations ConsentNoticePresentation[]
+
+  @@index([userId, expiresAt])
+  @@index([familyId])
+}
+
+enum AuthTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+model AuthToken {
+  id         String           @id @default(uuid()) @db.Uuid
+  userId     String           @db.Uuid
+  purpose    AuthTokenPurpose
+  tokenHash  String           @unique @db.VarChar(64)
+  createdAt  DateTime         @default(now()) @db.Timestamptz(6)
+  expiresAt  DateTime         @db.Timestamptz(6)
+  consumedAt DateTime?        @db.Timestamptz(6)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, purpose, expiresAt])
+}
+
+model AuthRateLimit {
+  keyHash  String   @id @db.VarChar(64)
+  attempts Int
+  resetsAt DateTime @db.Timestamptz(6)
+}
+
+model AuthMailOutbox {
+  id               String           @id @default(uuid()) @db.Uuid
+  userId           String           @db.Uuid
+  purpose          AuthTokenPurpose
+  encryptedPayload String
+  createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+  deliveredAt      DateTime?        @db.Timestamptz(6)
+  failedAt         DateTime?        @db.Timestamptz(6)
+  attempts         Int              @default(0)
+  nextAttemptAt    DateTime         @default(now()) @db.Timestamptz(6)
+}
+
+model Question {
+  id        String            @id @default(uuid()) @db.Uuid
+  stableKey String            @unique @db.VarChar(120)
+  domain    QuestionDomain
+  createdAt DateTime          @default(now()) @db.Timestamptz(6)
+  versions  QuestionVersion[]
+}
+
+model QuestionVersion {
+  id                String                     @id @default(uuid()) @db.Uuid
+  questionId        String                     @db.Uuid
+  version           Int
+  text              String
+  familyKey         String                     @db.VarChar(120)
+  contentHash       String                     @db.VarChar(64)
+  createdAt         DateTime                   @default(now()) @db.Timestamptz(6)
+  question          Question                   @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  options           AnswerOption[]
+  answers           AnswerVersion[]
+  events            PredictionEvent[]
+  worldPredictions  PredictionSnapshot[]
+  socialPredictions SocialPredictionSnapshot[]
+
+  @@unique([questionId, version])
+  @@index([familyKey])
+}
+
+model AnswerOption {
+  id                String               @id @default(uuid()) @db.Uuid
+  questionVersionId String               @db.Uuid
+  code              String               @db.VarChar(40)
+  label             String
+  position          Int
+  createdAt         DateTime             @default(now()) @db.Timestamptz(6)
+  questionVersion   QuestionVersion      @relation(fields: [questionVersionId], references: [id], onDelete: Restrict)
+  answers           AnswerVersion[]
+  worldPredictions  PredictionSnapshot[]
+
+  @@unique([questionVersionId, code])
+  @@unique([questionVersionId, position])
+  @@unique([id, questionVersionId])
+}
+
+model ConsentGrant {
+  id                     String                     @id @default(uuid()) @db.Uuid
+  subjectId              String                     @db.Uuid
+  purpose                ConsentPurpose
+  scope                  VisibilityScope
+  noticeVersion          String                     @db.VarChar(80)
+  noticeHash             String                     @db.VarChar(64)
+  consentVersion         Int                        @default(1)
+  invitationAcceptanceId String?                    @db.Uuid
+  noticePresentationId   String?                    @unique @db.Uuid
+  grantedAt              DateTime                   @db.Timestamptz(6)
+  createdAt              DateTime                   @default(now()) @db.Timestamptz(6)
+  subject                User                       @relation("ConsentSubject", fields: [subjectId], references: [id], onDelete: Restrict)
+  revocation             ConsentRevocation?
+  answers                AnswerVersion[]            @relation("AnswerConsent")
+  socialPredictions      SocialPredictionSnapshot[] @relation("SocialConsent")
+  invitationAcceptance   RadarInvitationAcceptance? @relation(fields: [invitationAcceptanceId, subjectId], references: [id, targetId], onDelete: Restrict)
+  noticePresentation     ConsentNoticePresentation? @relation(fields: [noticePresentationId, subjectId], references: [id, userId], onDelete: Restrict)
+
+  @@unique([id, subjectId])
+  @@unique([id, subjectId, consentVersion])
+  @@unique([subjectId, purpose, consentVersion])
+  @@index([subjectId, purpose, grantedAt])
+}
+
+model RadarInvitation {
+  id          String                     @id @default(uuid()) @db.Uuid
+  predictorId String                     @db.Uuid
+  targetId    String                     @db.Uuid
+  invitedAt   DateTime                   @db.Timestamptz(6)
+  createdAt   DateTime                   @default(now()) @db.Timestamptz(6)
+  predictor   User                       @relation("RadarInviter", fields: [predictorId], references: [id], onDelete: Restrict)
+  target      User                       @relation("RadarInvitee", fields: [targetId], references: [id], onDelete: Restrict)
+  acceptance  RadarInvitationAcceptance?
+
+  @@unique([id, targetId])
+}
+
+model RadarInvitationAcceptance {
+  id           String          @id @default(uuid()) @db.Uuid
+  invitationId String          @unique @db.Uuid
+  targetId     String          @db.Uuid
+  acceptedAt   DateTime        @db.Timestamptz(6)
+  createdAt    DateTime        @default(now()) @db.Timestamptz(6)
+  invitation   RadarInvitation @relation(fields: [invitationId, targetId], references: [id, targetId], onDelete: Restrict)
+  grants       ConsentGrant[]
+
+  @@unique([id, targetId])
+  @@unique([invitationId, targetId])
+}
+
+model ConsentRevocation {
+  id        String       @id @default(uuid()) @db.Uuid
+  grantId   String       @unique @db.Uuid
+  subjectId String       @db.Uuid
+  revokedAt DateTime     @db.Timestamptz(6)
+  createdAt DateTime     @default(now()) @db.Timestamptz(6)
+  grant     ConsentGrant @relation(fields: [grantId, subjectId], references: [id, subjectId], onDelete: Restrict)
+  subject   User         @relation("RevocationSubject", fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@unique([grantId, subjectId])
+  @@index([subjectId, revokedAt])
+}
+
+model AnswerVersion {
+  id                       String                     @id @default(uuid()) @db.Uuid
+  subjectId                String                     @db.Uuid
+  questionVersionId        String                     @db.Uuid
+  optionId                 String                     @db.Uuid
+  consentGrantId           String                     @db.Uuid
+  version                  Int
+  supersedesId             String?                    @unique @db.Uuid
+  answeredAt               DateTime                   @db.Timestamptz(6)
+  snapshotHash             String                     @db.VarChar(64)
+  createdAt                DateTime                   @default(now()) @db.Timestamptz(6)
+  subject                  User                       @relation("AnswerOwner", fields: [subjectId], references: [id], onDelete: Restrict)
+  questionVersion          QuestionVersion            @relation(fields: [questionVersionId], references: [id], onDelete: Restrict)
+  option                   AnswerOption               @relation(fields: [optionId, questionVersionId], references: [id, questionVersionId], onDelete: Restrict)
+  consentGrant             ConsentGrant               @relation("AnswerConsent", fields: [consentGrantId, subjectId], references: [id, subjectId], onDelete: Restrict)
+  supersedes               AnswerVersion?             @relation("AnswerSupersession", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy             AnswerVersion?             @relation("AnswerSupersession")
+  targetPredictions        SocialPredictionSnapshot[] @relation("TargetAnswer")
+  predictorSelfPredictions SocialPredictionSnapshot[] @relation("PredictorSelfAnswer")
+
+  @@unique([subjectId, questionVersionId, version])
+  @@unique([id, subjectId, questionVersionId])
+  @@index([subjectId, answeredAt])
+}
+
+model PredictionEvent {
+  id                String               @id @default(uuid()) @db.Uuid
+  questionVersionId String               @db.Uuid
+  resolutionSource  String
+  resolutionRule    String
+  opensAt           DateTime             @db.Timestamptz(6)
+  closesAt          DateTime             @db.Timestamptz(6)
+  createdAt         DateTime             @default(now()) @db.Timestamptz(6)
+  questionVersion   QuestionVersion      @relation(fields: [questionVersionId], references: [id], onDelete: Restrict)
+  predictions       PredictionSnapshot[]
+
+  @@unique([id, questionVersionId])
+}
+
+model PredictionSnapshot {
+  id                String              @id @default(uuid()) @db.Uuid
+  eventId           String              @db.Uuid
+  predictorId       String              @db.Uuid
+  questionVersionId String              @db.Uuid
+  optionId          String              @db.Uuid
+  probabilityVector Json
+  supersedesId      String?             @unique @db.Uuid
+  predictedAt       DateTime            @db.Timestamptz(6)
+  snapshotHash      String              @db.VarChar(64)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+  event             PredictionEvent     @relation(fields: [eventId, questionVersionId], references: [id, questionVersionId], onDelete: Restrict)
+  predictor         User                @relation("WorldPredictor", fields: [predictorId], references: [id], onDelete: Restrict)
+  questionVersion   QuestionVersion     @relation(fields: [questionVersionId], references: [id], onDelete: Restrict)
+  option            AnswerOption        @relation(fields: [optionId, questionVersionId], references: [id, questionVersionId], onDelete: Restrict)
+  supersedes        PredictionSnapshot? @relation("WorldSupersession", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy      PredictionSnapshot? @relation("WorldSupersession")
+
+  @@index([eventId, predictorId, predictedAt])
+}
+
+model SocialPredictionSnapshot {
+  id                   String                    @id @default(uuid()) @db.Uuid
+  predictorId          String                    @db.Uuid
+  targetId             String                    @db.Uuid
+  questionVersionId    String                    @db.Uuid
+  answerVersionId      String                    @db.Uuid
+  selfAnswerVersionId  String                    @db.Uuid
+  targetConsentGrantId String                    @db.Uuid
+  targetConsentVersion Int
+  probabilityVector    Json
+  supersedesId         String?                   @unique @db.Uuid
+  predictedAt          DateTime                  @db.Timestamptz(6)
+  snapshotHash         String                    @db.VarChar(64)
+  createdAt            DateTime                  @default(now()) @db.Timestamptz(6)
+  predictor            User                      @relation("SocialPredictor", fields: [predictorId], references: [id], onDelete: Restrict)
+  target               User                      @relation("SocialTarget", fields: [targetId], references: [id], onDelete: Restrict)
+  questionVersion      QuestionVersion           @relation(fields: [questionVersionId], references: [id], onDelete: Restrict)
+  answerVersion        AnswerVersion             @relation("TargetAnswer", fields: [answerVersionId, targetId, questionVersionId], references: [id, subjectId, questionVersionId], onDelete: Restrict)
+  selfAnswerVersion    AnswerVersion             @relation("PredictorSelfAnswer", fields: [selfAnswerVersionId, predictorId, questionVersionId], references: [id, subjectId, questionVersionId], onDelete: Restrict)
+  targetConsentGrant   ConsentGrant              @relation("SocialConsent", fields: [targetConsentGrantId, targetId, targetConsentVersion], references: [id, subjectId, consentVersion], onDelete: Restrict)
+  supersedes           SocialPredictionSnapshot? @relation("SocialSupersession", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy         SocialPredictionSnapshot? @relation("SocialSupersession")
+
+  @@index([predictorId, targetId, predictedAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorId     String?  @db.Uuid
+  action      String   @db.VarChar(120)
+  objectType  String   @db.VarChar(120)
+  objectId    String   @db.Uuid
+  contextHash String?  @db.VarChar(64)
+  occurredAt  DateTime @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  actor       User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([objectType, objectId, occurredAt])
+}
+
+model EvidenceAssessment {
+  id            String         @id @default(uuid()) @db.Uuid
+  domain        EvidenceDomain
+  subjectId     String         @db.Uuid
+  evidenceState EvidenceState
+  methodVersion String         @db.VarChar(80)
+  assessedAt    DateTime       @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+
+  @@index([domain, subjectId, assessedAt])
+}

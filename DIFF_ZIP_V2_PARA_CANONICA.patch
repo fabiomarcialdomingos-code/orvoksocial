@@ -1,0 +1,154 @@
+--- OBSOLETO_ZIP/12_ORVOK_Fechamento_Lacunas_Reconciliado_V2.md
++++ CANONICO/ORVOK_FECHAMENTO_LACUNAS_MATEMATICA_LGPD_CONTRATOS_V2_CANONICA.md
+@@ -1,129 +1,44 @@
+-# ORVOK Fechamento das Lacunas Reconciliado V2
++# ORVOK — fechamento de lacunas V2 canônica
+ 
+-## 1. Status e autoridade
++**Ratificação:** decisão formal do responsável do produto, 22/09/2026. **Autoridade:** adendo compatível com 00/03/M55 REV01, limitado às cláusulas abaixo. Este arquivo substitui, para interpretação futura, a V2 externa de SHA-256 `524e21a71e7f6bbb2f6639a003f96a3e64f503ff2793975dcb32d4b0bd2f84fc` e o adendo V2 contido no ZIP de SHA-256 `cdcac3e59c0a2c1042de1a5202d36a925aabe05565048d9eae4603b3aff5ff2d`. Ambos são **obsoletos, não oficiais e não utilizáveis para implementação**. Os binários permanecem íntegros como histórico. Nenhum DOCX REV01 é alterado.
+ 
+-Este documento é um adendo técnico ao pacote ORVOK REV01. Não substitui o Documento 00, M52, M53, M54 ou M55. Em caso de conflito, prevalece a hierarquia do Documento 00 e, dentro do motor matemático, o Motor Matemático V1 e o M55 REV01.
++## 1. Precedência e escopo
+ 
+-O produto está funcionalmente congelado. Este adendo fecha os contratos de implementação identificados no Gate 0 sem alterar decisões já fechadas.
++Documento 00 define precedência; 01 produto; 02 visual; 03 fórmulas e parâmetros congelados; M52–M55 fundamentação, governança e fechamento; 08–11 persistência e execução. A presente ratificação resolve as divergências dos adendos, sem promover parâmetros candidatos. A Fase 1 está autorizada **somente para preparação de modelo estrutural e contratos de dados**. Scoring, consenso, RadarScore, ranking, estimador de γ, shrinkage e telas de produto não estão autorizados.
+ 
+-## 2. Regra de evidência
++## 2. Estados de evidência oficiais
+ 
+-Estados oficiais: `INITIAL`, `EVALUATION`, `SUFFICIENT`.
++Os únicos estados são `INITIAL`, `EVALUATION`, `SUFFICIENT`. `INSUFFICIENT_EVIDENCE` pode ser motivo operacional de ausência de Score, não quarto estado.
+ 
+-### Score Preditivo do mundo
++| Domínio | INITIAL | EVALUATION | SUFFICIENT |
++| --- | --- | --- | --- |
++| Radar Humano | `0 ≤ n_eff < 44` | `n_eff ≥ 44` sem todos os critérios de maturidade | `n_eff ≥ 90`, `R_A ≥ 10`, `R_B ≥ 10`, IC95% de `γ_ij` exclui zero |
++| Score mundo | `n_eff = 0` | `1 ≤ n_eff ≤ 96` | `n_eff ≥ 97` |
+ 
+-- `n_eff < 44`: `INITIAL`;
+-- `44 ≤ n_eff < 97`: `EVALUATION`;
+-- `n_eff ≥ 97`: `SUFFICIENT`, sempre com margem de incerteza e N visível.
++O **44** é piso metodológico DA, não maturidade pública; **90** é o limiar relacional público. O Score do mundo pode ser exibido desde a primeira previsão resolvida **elegível**, acompanhado de estado, N e margem. M53 §53.5 continua regendo eventos sem quórum: Q<5 não produz consenso oficial, Gain ou Score público; tais eventos preservam histórico e dados de estilo autorizados. Para eventos elegíveis, aplicar leave-one-out e backfill de semeadura conforme M53. A apresentação pública não revela fórmulas internas.
+ 
+-Evento sem quórum não gera Score público, ganho positivo ou negativo, nem ranking. Pode alimentar apenas histórico e DNA comportamental, com evidência insuficiente.
++## 3. Modelo relacional
+ 
+-### Radar Humano
+-
+-- `n_eff < 44`: não publicar RadarScore; estado `INITIAL`;
+-- `44 ≤ n_eff < 90`: DA preliminar, estado `EVALUATION`;
+-- `n_eff ≥ 90`, `R_A ≥ 10`, `R_B ≥ 10` e IC95% de γ excluindo zero: `SUFFICIENT` e RadarScore oficial.
+-
+-O limiar 90 é o limiar de maturidade relacional. O valor 44 é apenas piso metodológico operacional e não autoriza RadarScore maduro.
+-
+-## 3. Modelo relacional de γ
+-
+-O modelo de efeitos cruzados deve separar os componentes:
++Usar exclusivamente a notação do Motor Matemático V1:
+ 
+ ```text
+ z_ij = μ + α_i + β_j + γ_ij + ε_ij
+ ```
+ 
+-- `μ`: média global;
+-- `α_i`: efeito geral do previsor i;
+-- `β_j`: efeito geral do alvo j;
+-- `γ_ij`: efeito específico da relação i→j;
+-- `ε_ij`: erro residual.
++`μ` é média global, `α_i` é efeito geral do previsor, `β_j` é efeito geral do alvo, **`γ_ij` é exclusivamente o efeito específico da relação previsor–alvo**, e `ε_ij` é erro residual. O estimador deve ser cruzado e aplicar shrinkage com dados esparsos (03 §10; M52 §52.13). Esta equação não define sozinha verossimilhança, variâncias ou IC. Essas escolhas matemáticas dependem de especificação versionada, simulação e aprovação antes de qualquer implementação de γ.
+ 
+-`γ_ij` é o único componente interpretado como efeito específico da relação. A estimativa deve usar shrinkage e intervalo de confiança. A implementação deve preservar a notação do Motor Matemático V1 e não renomear `γ_ij` para outro parâmetro.
++## 4. Tempo, dependência e `n_eff`
+ 
+-## 4. Peso temporal e dependência
++O peso temporal operacional é `w_i=exp(−λΔt_i)`, `λ=ln(2)/180 dias`, com `Δt_i` em dias e versão congelada (03 §3). Agrupamentos de dependência devem impedir que observações correlacionadas sejam contadas como independentes (03 §4; M52 §52.17; M53 §53.9). A unidade de cálculo de `n_eff=(Σw)²/Σw²` deve ser definida pelo contrato estatístico versionado para clusters independentes. A proposta anterior `W_c=mean(w_i)` **não está ratificada**. Nenhum peso de cluster candidato pode ser implementado como regra oficial nesta autorização estrutural.
+ 
+-Para cada observação:
++## 5. Estrutura de dados permitida nesta etapa
+ 
+-```text
+-λ = ln(2) / 180
+-w_i = exp(−λ Δt_i)
+-n_eff = (Σw_i)² / Σw_i²
+-```
++Preparar perguntas e opções versionadas, consentimentos distintos para responder e ser previsto, revogações auditáveis, respostas próprias e versões imutáveis de gabarito, previsões com snapshots imutáveis, trilhas de auditoria e enum dos três estados. Resultados e métricas futuras deverão referenciar versões e dados brutos sem sobrescrevê-los. O gabarito válido deve preceder a previsão social, que registra referência à versão vigente no momento; resultado posterior fica separado (01 §3; M52 §52.18; 08 §2). Este adendo **não** publica as 12 perguntas Radar: catálogo real ausente, somente catálogo vazio ou fixtures marcadas como teste.
+ 
+-Itens/eventos da mesma família ou dependência não são observações independentes. O cluster deve ser identificado antes da agregação. A implementação deve:
++## 6. Privacidade e LGPD
+ 
+-1. aplicar o peso temporal à observação;
+-2. agrupar por cluster/família;
+-3. impedir que a contagem bruta de itens correlacionados aumente artificialmente o n efetivo;
+-4. calcular a agregação conforme o contrato específico do Motor Matemático V1;
+-5. registrar a versão de λ, da regra de cluster e do algoritmo.
++Consentimento para responder não equivale a consentimento para ser previsto. Convite→aceite→consentimento explícito do alvo→gabarito→previsão→resolução→avaliação. Revogação impede novas previsões e remove exposição pública/compartilhada futura do RadarScore agregado, preservando os direitos de dados conforme M52 §52.21/M55 §55.8.5. A política de prazos do fechamento V1 e das V2 obsoletas é **política técnica provisória**, não obrigação legal universal nem retenção aprovada. Finalidade, base, prazo, eliminação, backups e exceções exigem revisão jurídica antes de operação comercial. Não criar inferências clínicas ou diagnósticas.
+ 
+-Não utilizar a regra simplificada `peso = 1/tamanho_do_cluster` como substituição do algoritmo do Motor V1. Ela não é autoridade REV01.
++## 7. Limites e testes de aceite
+ 
+-## 5. Shrinkage
+-
+-O shrinkage de `γ_ij` é obrigatório para amostras esparsas. A forma operacional é:
+-
+-```text
+-γ̂_shrunk = λ_ij γ̂_observado + (1 − λ_ij) γ̂_global
+-```
+-
+-O fator `λ_ij` deve ser produzido pelo estimador hierárquico implementado e versionado. Não se fixa um valor arbitrário de shrinkage no código. O sistema deve guardar estimativa, variância, intervalo, n efetivo e versão do estimador.
+-
+-## 6. Baseline Radar
+-
+-`BASELINE_RADAR_V1` terá 1.500 respostas válidas, coletadas antes da utilização oficial dos itens, com consentimento, controle de duplicidade, validação de qualidade e exclusão do próprio alvo avaliado. A coleta operacional deve buscar aproximadamente 1.800 respostas brutas para obter 1.500 válidas.
+-
+-A baseline será congelada, versionada e identificada por hash. Nova baseline cria nova versão e não reprocessa avaliações históricas sem decisão formal de migração.
+-
+-## 7. Snapshots e correções
+-
+-Previsões, respostas, consenso e resultados devem ser snapshots imutáveis. Correções criam novo registro vinculado ao anterior por `supersedes_id`; nenhum registro histórico é sobrescrito.
+-
+-## 8. Consentimento e visibilidade Shared
+-
+-O alvo deve aceitar o convite antes de a previsão social ser avaliada. `Shared` significa visibilidade restrita aos participantes diretamente envolvidos. Métricas agregadas para terceiros exigem pelo menos cinco pares válidos. Revogação remove a exposição futura e o RadarScore agregado público, conforme M52/M55, preservando somente o mínimo necessário para auditoria e obrigações legais.
+-
+-## 9. Retenção e exclusão LGPD
+-
+-Os prazos abaixo são política técnica inicial e exigem revisão jurídica antes da operação comercial:
+-
+-| Entidade | Retenção operacional |
+-|---|---|
+-| Conta ativa | enquanto ativa |
+-| Convite não aceito | 90 dias |
+-| Mensagens | 24 meses após última atividade |
+-| Logs de segurança | 5 anos |
+-| Auditoria administrativa | 5 anos |
+-| Backups | ciclo máximo de 90 dias |
+-| Métricas anonimizadas | permanentes se não reidentificáveis |
+-
+-Exclusão elimina identificadores diretos, remove conteúdo exposto e anonimiza derivados quando possível. O sistema deve suportar acesso, correção, portabilidade, revogação e eliminação.
+-
+-## 10. APIs, notificações e moderação
+-
+-APIs públicas usam `/api/v1`, schemas versionados, autorização, idempotência nas gravações, erros padronizados, auditoria e testes de contrato. Cálculos críticos ficam no backend.
+-
+-Notificações V1: convite, aceite, previsão recebida, reciprocidade, avaliação, fechamento, resultado, comentário/reação e ação administrativa.
+-
+-Moderação mínima: denúncia, revisão, manutenção, ocultação, remoção, suspensão temporária e exclusão, sempre com operador, motivo, timestamp e duração quando aplicável.
+-
+-## 11. Critérios de aceite
+-
+-O adendo será considerado implementado quando:
+-
+-1. os estados e limiares REV01 estiverem no modelo de dados;
+-2. γ, shrinkage, IC e n_eff tiverem testes numéricos;
+-3. pesos temporais e dependências forem auditáveis;
+-4. snapshots forem imutáveis;
+-5. baseline possuir versão, hash e procedimento de congelamento;
+-6. consentimento e revogação tiverem testes de autorização;
+-7. APIs tiverem contratos versionados;
+-8. notificações e moderação tiverem estados testados;
+-9. nenhuma métrica pública for exibida sem estado, N e margem.
+-
+-## 12. Itens recalibráveis
+-
+-Podem ser recalibrados somente em nova revisão formal: variâncias do estimador, parâmetros empíricos do shrinkage, baseline, parâmetros de cluster, limiares estatísticos após piloto e prazos de retenção após revisão jurídica. Nenhuma recalibração altera snapshots ou resultados históricos sem migração versionada e auditada.
++O schema estrutural pode conter identificadores, versões, estados e referências, mas nenhum valor derivado de Score, consenso, RadarScore, γ, shrinkage ou ranking. Testes devem verificar integridade de FK, opções por versão, ausência de update em snapshots, separação dos dois consentimentos, revogação registrada, gabarito ligado temporalmente, enum fechado e replay dos dados brutos. Não converter propostas anteriores de cinco pares, `/api/v1`, notificações, moderação, retenção ou peso intercluster em regras definitivas por constarem de adendos históricos. Mudança futura exige revisão formal, migration versionada e preservação de histórico.

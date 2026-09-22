@@ -1,0 +1,73 @@
+# ORVOK — fechamento de lacunas matemáticas, LGPD e contratos V2
+
+**Revisão:** V2 proposta para validação formal, 22/09/2026. **Estado:** reconciliação documental; Fase 1 bloqueada. Esta revisão corrige a V1 homônima, que permanece preservada como histórico. A presença deste arquivo no pacote não aprova parâmetros candidatos nem autoriza implementação de contratos pendentes.
+
+## 1. Autoridade e alcance
+
+Aplicar a hierarquia em `ORVOK_HIERARQUIA_DOCUMENTAL_REV02.md`. O Documento 00 e o Operational Freeze do Documento 03 continuam vigentes. Esta V2 só propõe as alterações expressas abaixo; onde houver lacuna, vale o bloqueio da parte afetada. M52–M55, Definição Oficial e Modelo de Dados conservam as regras não contrariadas por decisão formal. Os 43 grupos R01–R43 do Gate 0 não são renumerados; A01–A11 são registros de reconciliação em `MATRIZ_ADENDO_A01_A11_V2.md`.
+
+## 2. Evento sem quórum — A01
+
+Um evento resolvido sem quórum válido `Q=5` não produz Score público, Gain, perda, ranking ou reputação competitiva. Previsões preservam o histórico e podem alimentar métricas de estilo autorizadas, sem competição. `INSUFFICIENT_EVIDENCE` é **código de motivo operacional** do evento/resultado, nunca quarto valor do enum de estado de evidência `INITIAL | EVALUATION | SUFFICIENT`. “Score desde a primeira previsão resolvida” em M55 se aplica à primeira resolução elegível a Score. A interpretação desta frase exige ratificação explícita na validação V2; até lá, a implementação afetada permanece bloqueada. Snapshot, quórum e versão de algoritmo precisam de teste reproduzível.
+
+## 3. Gabarito versionado — A02
+
+Uma resposta oficial é imutável e versionada, com no mínimo `answer_id`, `target_id`, `question_id`, `answer_option`, `instrument_version`, `answered_at`, `consent_version` e `supersedes_answer_id`. Antes de uma previsão do Radar, existe resposta e consentimento válidos. O snapshot imutável da previsão guarda o **identificador da versão de resposta válida naquele instante**; resultado e resolução posteriores ficam em registro separado e referenciam o snapshot. Uma correção cria outra resposta, sem reescrever o snapshot ou recalcular silenciosamente a avaliação passada. Reprocessamento explícito preserva versão e resultado originais. Falta definir o contrato de correção entre abertura e fechamento de uma rodada, inclusive disputas e revogação.
+
+## 4. Efeito relacional e suficiência — A03
+
+No espaço Fisher-z, a nomenclatura proposta, sem reutilizar símbolos para efeitos diferentes, é:
+
+```text
+z_ij = μ + a_i + b_j + r_ij + e_ij
+```
+
+`μ` é intercepto global; `a_i` é efeito do previsor `i`; `b_j` é efeito do alvo `j`; **`r_ij` é exclusivamente o efeito específico da relação previsor–alvo**; `e_ij` é erro residual. O símbolo `γ_ij` empregado no pacote REV01 para a métrica relacional deve ser ligado apenas ao efeito `r_ij` por transformação, estimador e versão documentados. Não designa `b_j`. Esta equação é uma decomposição de modelo, não um estimador executável. Contração, variâncias, prior, identificabilidade, tratamento de esparsidade, transformação para exibição e IC95% ainda dependem de contrato numérico e validação. `λ` fica reservado ao decaimento temporal; qualquer coeficiente de contração terá outro símbolo.
+
+**Estados de evidência do Radar, objeto desta emenda proposta:**
+
+- `n_eff < 30`: `INITIAL`;
+- `30 ≤ n_eff < 90`: `EVALUATION`;
+- `n_eff ≥ 90`: `SUFFICIENT` **somente** com suporte relacional `R_A ≥ 10` e `R_B ≥ 10` e IC95% adequado para `γ_ij`, conforme 03 §5/M55 §55.2. Sem qualquer condição, permanece `EVALUATION`.
+
+O piso metodológico **44** do Documento 03 continua necessário para exibir DA preliminar: entre 30 e 43 o estado pode ser `EVALUATION`, mas a DA preliminar não é publicada. A mudança de 10 para 30 é restrita à fronteira do **estado** e só terá força normativa após validação desta V2. O limiar 90 não foi reduzido. Métrica pública, quando autorizada, exige volume e incerteza; estilo não gera ranking competitivo.
+
+## 5. Dependência, tempo e tamanho efetivo — A04
+
+Um **cluster disjunto de dependência** é a unidade independente para agregação e `n_eff`; eventos da mesma família, fonte ou dependência conhecida não contam como unidades adicionais. Para cada evento `i` do cluster `c`, no instante de referência e com idade `Δt_i ≥ 0`:
+
+```text
+t_i = exp(−λ_v Δt_i)
+u_i = t_i / Σ_{k∈c} t_k
+G_c = Σ_{i∈c} u_i G_i
+```
+
+O peso temporal é normalizado **dentro** de cada cluster. `λ_v` tem unidade inversa à de `Δt`, versão explícita e data de vigência; o half-life operacional de 180 dias do Documento 03 só se traduz em `λ_v = ln(2)/180 dias` quando as unidades e a versão forem declaradas. Para a agregação entre clusters, uma regra candidata que preserva a unidade independente é `W_c = (Σ_{i∈c} t_i)/|c|`, `G = (Σ_c W_c G_c)/(Σ_c W_c)` e `n_eff = (Σ_c W_c)²/Σ_c W_c²`. Essa escolha de `W_c` **não está congelada**; requer aprovação e casos numéricos. Com dois clusters de tamanhos 2 e 1, todos no mesmo tempo, ela produz `W=(1,1)` e `n_eff=2`, não 2,67. Clusters sobrepostos, atribuição, correlações entre clusters, efeitos de recência e zeros exigem especificação e teste antes de uso em Score. Não aplicar a antiga fórmula de Kish sobre pesos de eventos como se fossem independentes.
+
+## 6. Baseline e instrumento — A05–A06
+
+Permanecem `N_calib=1.500`, exclusão do alvo e congelamento/versionamento antes do uso oficial do item. `BASELINE_RADAR_V1` é identificação proposta. Estratos demográficos, controle de duplicidade, hash, consentimento e a meta aproximada de 1.800 respostas brutas são **plano candidato de coleta**, não amostra já obtida nem fórmula definitiva; exigem finalidade/base de tratamento, desenho amostral e piloto. A estimativa de ±2,53 p.p. supõe amostragem aleatória simples e não é garantia para amostra estratificada ou enviesada.
+
+As 12 perguntas iniciais e metadados de `RADAR_BASE_V1` são exigidos pela Definição Oficial; este documento **não fornece** seus textos, alternativas ou política de expansão até 44/90 unidades. Não incluir inferências clínicas/diagnósticas. Não implementar pontuação de item ausente.
+
+## 7. Política técnica provisória de dados pessoais — A07
+
+Os prazos da V1 — convite não aceito 90 dias, mensagens 24 meses, logs e auditoria 5 anos, backups até 90 dias, conta ativa enquanto ativa — são **proposta técnica provisória**, sem validação jurídica ou início automático de contagem. Não há afirmação de que a LGPD imponha esses prazos uniformes. Antes de operação comercial, revisão jurídica deve aprovar finalidade e base de tratamento por categoria, termo inicial e final, exceções, direitos de terceiros, backups, anonimização verificável, trilha de solicitação e supressão/recomputação de derivados. Sem essa revisão, a tabela da V1 não é política operacional aprovada.
+
+Direitos de acesso, correção, exportação, revogação e eliminação permanecem exigências; o modo de cumprir cada um em snapshots imutáveis e auditoria ainda requer contrato. O Radar exige consentimento do alvo e finalidade antes da avaliação, e revogação bloqueia exposição futura. Dados anonimizados só podem ser assim chamados após avaliação de risco de reidentificação. Nenhum resultado pode ser apresentado como diagnóstico.
+
+## 8. Visibilidade, API, notificações e moderação — A08–A11
+
+`Shared` é proposto para previsor e alvo diretamente envolvidos. A sugestão de **cinco pares válidos** para agregado é piso candidato de privacidade, não prova de maturidade estatística, nem substitui `n_eff`, R_A/R_B ou IC95%. Matriz de autorização, efeitos da revogação e supressão ainda faltam.
+
+`/api/v1` é convenção candidata. Cada endpoint exigirá schemas versionados, autenticação, autorização por objeto, erros, paginação quando cabível, idempotência apropriada a gravações, auditoria e testes de contrato. Payloads e códigos ainda não foram definidos; nenhum contrato de score fica autorizado por esta seção.
+
+Os nove gatilhos de notificação e os estados `UNREAD | READ | DISMISSED` da V1 são candidatos. Canais, preferências, privacidade após revogação e deduplicação precisam de matriz de casos. O fluxo de moderação `DENUNCIADO → EM_REVISÃO → MANTIDO | OCULTO | REMOVIDO | SUSPENSO` também é candidato; roles, transições, recurso afetado, apelação, prazo e reversão precisam de contrato. A trilha de auditoria é obrigatória.
+
+## 9. Aceite documental e bloqueios
+
+Esta V2 estará validada apenas quando o responsável do produto aprovar explicitamente a matriz A01–A11 e a hierarquia REV02, incluindo a interpretação de M55, a alteração do limite INITIAL/EVALUATION e a regra candidata entre clusters. Validação documental não equivale a aceite de implementação. Para a Fase 1, permanecem bloqueantes os contratos de privacidade/dados aplicáveis, inclusive tratamento de gabarito e consentimento; fases matemáticas, Radar, API, notificações e moderação mantêm seus bloqueios específicos. Nenhum parâmetro candidato vira definitivo por constar desta V2. Alterações futuras exigem versão de instrumento/algoritmo, reprodução histórica e preservação dos registros originais.
+
+## 10. Referências
+
+Pacote ORVOK REV01 (00–11), V1 deste fechamento, `MATRIZ_ADENDO_A01_A11_V2.md` e `ORVOK_HIERARQUIA_DOCUMENTAL_REV02.md`. Referência jurídica para revisão: [Lei nº 13.709/2018, texto compilado](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm), [FAQ da ANPD](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes) e [estudo técnico da ANPD sobre anonimização](https://www.gov.br/anpd/pt-br/centrais-de-conteudo/documentos-tecnicos-orientativos/estudo_tecnico_sobre_anonimizacao_de_dados_na_lgpd_uma_visao_de_processo_baseado_em_risco_e_tecnicas_computacionais.pdf/@@display-file/file). A interpretação jurídica efetiva depende de profissional habilitado e do caso concreto.
