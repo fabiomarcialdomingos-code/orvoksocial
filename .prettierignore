@@ -1,0 +1,9 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+generated
+next-env.d.ts
+pnpm-lock.yaml
+ORVOK_DIAGNOSTICO_PRE_IMPLEMENTACAO_V1.md
