@@ -25,11 +25,11 @@ Limite técnico inicial `API-RATE-01`: 20 convites e 60 outras mutações por at
 | POST `/me/export-requests` | `{}` | 202 `{requestId,state:RECEIVED}` | solicita revisão/manual de exportação quando stream excede limite; não promete pacote automático |
 | POST `/me/erasure-requests` | `{}` | 202 `{requestId,state:RECEIVED}` | pedido próprio; não apaga ou anonimiza automaticamente |
 | GET `/me/data-requests` | `cursor?` | `{items:[{id,type,status,requestedAt}],nextCursor}` | pedidos próprios |
-| GET `/notifications` | `cursor?` | `{items:[{id,eventType,state,createdAt}],nextCursor}` | inbox próprio; nenhuma regra de gatilho não ratificada é gerada |
+| GET `/notifications` | `cursor?` | `{items:[{id,eventType,state,createdAt}],nextCursor}` | inbox próprio; eventos operacionais de convite, aceite e revogação TEST_ONLY conforme contrato Radar complementar |
 | GET `/admin/audit` | `cursor?` | `{items:[{id,actorId,action,objectType,objectId,occurredAt}],nextCursor}` | ADMIN; somente metadados, sem payload privado |
 
 `ApiIdempotency` armazena hash da requisição e resposta curta sem gabarito ou token. Repetir chave/corpo concluído devolve a mesma resposta; mudar corpo ou encontrar `PENDING` retorna 409. `PENDING` não é reexecutado automaticamente depois de falha: exige reconciliação auditada do evento original. Não há prazo de retenção inventado.
 
-A exportação é técnica e limitada ao titular autenticado. O fluxo de exclusão só registra uma solicitação; qualquer decisão de eliminação, retenção ou anonimização depende de revisão jurídica da política provisória. Notificações permanecem infraestrutura de inbox sem gatilhos de produto ratificados. Acesso por papel é sempre rechecado no backend; nenhuma rota publica dados sociais ou perguntas reais.
+A exportação é técnica e limitada ao titular autenticado. O fluxo de exclusão só registra uma solicitação; qualquer decisão de eliminação, retenção ou anonimização depende de revisão jurídica da política provisória. Eventos operacionais de convite, aceite e revogação são emitidos no bloco Radar TEST_ONLY; gatilhos de produto adicionais continuam sem ratificação. Veja [`CONTRATOS_RADAR_SOCIAL_TEST_ONLY_V1.md`](CONTRATOS_RADAR_SOCIAL_TEST_ONLY_V1.md) para catálogo, painéis, oportunidades e transições de inbox. Acesso por papel é sempre rechecado no backend; nenhuma rota publica dados sociais ou perguntas reais.
 
 Se o stream for interrompido por 100 MiB, 120 s, cancelamento ou falha de banco, o corpo não é um pacote íntegro. O cliente deve descartar a resposta e usar `/me/export-requests`; esse pedido fica para processamento/revisão manual, sem prazo inventado e sem promessa de entrega automática. A exportação grande integral ainda é risco operacional aberto.

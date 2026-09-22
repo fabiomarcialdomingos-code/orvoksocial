@@ -24,8 +24,12 @@ export function SiteHeader() {
               <Link href="/#comunidade">Comunidade</Link>
               <Link href="/#sobre">Sobre</Link>
               <Link href="/convites">Convites</Link>
+              <Link href="/radar">Radar</Link>
+              <Link href="/entrar">Entrar</Link>
+              <Link href="/cadastro">Criar conta</Link>
             </nav>
           </details>
+          <Link href="/radar" className="text-link">Radar</Link>
           <Link href="/entrar" className="text-link">
             Entrar
           </Link>

@@ -19,6 +19,7 @@ type Invitation = {
   invitedAt: string;
   acceptedAt: string | null;
   acceptanceId: string | null;
+  expiresAt?: string | null;
 };
 type Consent = {
   id: string;
@@ -29,6 +30,22 @@ type Consent = {
   grantedAt: string;
   revokedAt: string | null;
 };
+
+async function fetchAll<T>(path: string, signal: AbortSignal): Promise<T[]> {
+  const items: T[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < 100; page++) {
+    const response = await fetch(`${path}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, {
+      credentials: "same-origin", signal, cache: "no-store",
+    });
+    if (!response.ok) throw new Error("LIST_UNAVAILABLE");
+    const data = (await response.json()) as { items: T[]; nextCursor?: string | null };
+    items.push(...data.items);
+    if (!data.nextCursor) return items;
+    cursor = data.nextCursor;
+  }
+  throw new Error("LIST_TOO_LARGE");
+}
 
 async function post(path: string, body: object) {
   return fetch(path, {
@@ -45,9 +62,11 @@ async function post(path: string, body: object) {
 export function RadarFlow({
   mode,
   initialAcceptanceId = "",
+  initialInvitationId = "",
 }: {
   mode: Mode;
   initialAcceptanceId?: string;
+  initialInvitationId?: string;
 }) {
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -60,24 +79,37 @@ export function RadarFlow({
   const [acceptanceId, setAcceptanceId] = useState<string | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [consents, setConsents] = useState<Consent[]>([]);
+  const [listError, setListError] = useState(false);
+  const [actorId, setActorId] = useState("");
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (mode !== "accept") return;
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [mode]);
+  useEffect(() => {
+    if (mode !== "accept") return;
+    const controller = new AbortController();
+    fetch("/api/v1/users/me", { credentials: "same-origin", signal: controller.signal })
+      .then(async (response) => response.ok ? (response.json() as Promise<{ user: { id: string } | null }>) : null)
+      .then((data) => { if (!controller.signal.aborted) setActorId(data?.user?.id ?? ""); })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [mode]);
   useEffect(() => {
     const controller = new AbortController();
     const path =
       mode === "consent"
         ? "/api/v1/radar/consents"
         : "/api/v1/radar/invitations";
-    fetch(path, { credentials: "same-origin", signal: controller.signal })
-      .then(async (response) =>
-        response.ok
-          ? (response.json() as Promise<{ items: Invitation[] | Consent[] }>)
-          : null,
-      )
-      .then((data) => {
-        if (!data) return;
-        if (mode === "consent") setConsents(data.items as Consent[]);
-        else setInvitations(data.items as Invitation[]);
-      })
-      .catch(() => {});
+    if (mode === "consent")
+      fetchAll<Consent>(path, controller.signal)
+        .then((items) => { if (!controller.signal.aborted) setConsents(items); })
+        .catch(() => { if (!controller.signal.aborted) setListError(true); });
+    else
+      fetchAll<Invitation>(path, controller.signal)
+        .then((items) => { if (!controller.signal.aborted) setInvitations(items); })
+        .catch(() => { if (!controller.signal.aborted) setListError(true); });
     return () => controller.abort();
   }, [mode]);
   useEffect(() => {
@@ -246,6 +278,7 @@ export function RadarFlow({
         <li>Respostas próprias</li>
         <li>Previsão</li>
       </ol>
+      {listError && <p className="form-message" data-kind="error" role="alert">Não foi possível carregar a lista de convites ou consentimentos. Atualize a página antes de decidir.</p>}
       {mode === "consent" && (
         <>
           {noticeUnavailable && (
@@ -274,12 +307,12 @@ export function RadarFlow({
           )}
         </>
       )}
-      {mode === "accept" && invitations.some((item) => !item.acceptedAt) && (
+      {mode === "accept" && invitations.some((item) => item.targetId === actorId && !item.acceptedAt && (!item.expiresAt || new Date(item.expiresAt).getTime() > now)) && (
         <section>
           <h3>Convites disponíveis</h3>
           <ul>
             {invitations
-              .filter((item) => !item.acceptedAt)
+              .filter((item) => item.targetId === actorId && !item.acceptedAt && (!item.expiresAt || new Date(item.expiresAt).getTime() > now))
               .map((item) => (
                 <li key={item.id}>
                   <button
@@ -300,12 +333,12 @@ export function RadarFlow({
           </ul>
         </section>
       )}
-      {mode === "accept" && invitations.some((item) => item.acceptanceId) && (
+      {mode === "accept" && invitations.some((item) => item.targetId === actorId && item.acceptanceId) && (
         <section>
           <h3>Convites aceitos</h3>
           <ul>
             {invitations
-              .filter((item) => item.acceptanceId)
+              .filter((item) => item.targetId === actorId && item.acceptanceId)
               .map((item) => (
                 <li key={item.id}>
                   <Link
@@ -319,11 +352,11 @@ export function RadarFlow({
           </ul>
         </section>
       )}
-      {mode === "consent" && consents.length > 0 && (
+      {mode === "consent" && consents.some((item) => item.purpose === "BE_PREDICTED") && (
         <section>
           <h3>Consentimentos registrados</h3>
           <ul>
-            {consents.map((item) => (
+            {consents.filter((item) => item.purpose === "BE_PREDICTED").map((item) => (
               <li key={item.id}>
                 Versão {item.consentVersion} ·{" "}
                 {item.revokedAt ? "Revogado" : "Ativo"}
@@ -368,6 +401,7 @@ export function RadarFlow({
               id="invitation-id"
               name="invitationId"
               type="text"
+              defaultValue={initialInvitationId}
               required
               autoComplete="off"
             />

@@ -39,6 +39,7 @@ describe.skipIf(!url)("contratos operacionais /api/v1", () => {
   afterAll(async () => {
     await pool.query(`DELETE FROM "AuditLog" WHERE "actorId"=ANY($1::uuid[])`, [[owner, stranger]]);
     await pool.query(`DELETE FROM "DataRequest" WHERE "subjectId"=ANY($1::uuid[])`, [[owner, stranger]]);
+    await pool.query(`DELETE FROM "Notification" WHERE "recipientId"=ANY($1::uuid[])`, [[owner, stranger]]);
     await pool.query(`DELETE FROM "ApiIdempotency" WHERE "actorId"=ANY($1::uuid[])`, [[owner, stranger]]);
     await pool.query(`DELETE FROM "AuthRateLimit" WHERE "keyHash"=$1`, [createHash("sha256").update(`${OPERATIONAL_RATE_LIMIT_VERSION}:${owner}:/fixture/rate`).digest("hex")]);
     await pool.query(`DELETE FROM "AuthSession" WHERE id=$1`, [sessionId]);
@@ -127,6 +128,31 @@ describe.skipIf(!url)("contratos operacionais /api/v1", () => {
     const inbox = await GET(request("notifications", "GET"), context("notifications"));
     expect(inbox.status).toBe(200);
     expect((await inbox.json()).items).toEqual([]);
+  });
+
+  it("transiciona inbox do titular, audita e normaliza timestamp forjado no banco", async () => {
+    const first = randomUUID();
+    const second = randomUUID();
+    await pool.query(`INSERT INTO "Notification" (id,"recipientId","eventType","sourceId","sourceVersion")
+      VALUES ($1,$3,'RADAR_INVITATION_RECEIVED',$4,1),($2,$3,'RADAR_INVITATION_ACCEPTED',$5,1)`,
+      [first, second, owner, randomUUID(), randomUUID()]);
+    const read = await POST(request(`notifications/${first}/read`, "POST"), context(`notifications/${first}/read`));
+    expect(read.status).toBe(201);
+    expect((await read.json()).state).toBe("READ");
+    const dismiss = await POST(request(`notifications/${first}/dismiss`, "POST"), context(`notifications/${first}/dismiss`));
+    expect(dismiss.status).toBe(201);
+    expect((await dismiss.json()).state).toBe("DISMISSED");
+    const invalid = await POST(request(`notifications/${first}/read`, "POST"), context(`notifications/${first}/read`));
+    expect(invalid.status).toBe(409);
+    const scoped = operationalPool(tokenHash(token));
+    const forged = await scoped.query<{ readAt: Date }>(
+      `UPDATE "Notification" SET state='READ',"readAt"='2099-01-01'::timestamptz
+       WHERE id=$1 RETURNING "readAt"`, [second]);
+    expect(forged.rows[0]!.readAt.getUTCFullYear()).toBeLessThan(2099);
+    const audit = await pool.query(`SELECT action FROM "AuditLog" WHERE "objectType"='Notification' AND "objectId"=$1`, [first]);
+    expect(audit.rows.map((row) => row.action)).toEqual(expect.arrayContaining([
+      "RADAR_NOTIFICATION_READ", "RADAR_NOTIFICATION_DISMISSED",
+    ]));
   });
 
   it("limita mutações por ator e rota com parâmetro operacional configurável", async () => {

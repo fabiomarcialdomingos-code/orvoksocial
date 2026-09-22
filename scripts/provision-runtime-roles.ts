@@ -41,7 +41,7 @@ try {
   if (!identity.rows[0]?.superuser && !identity.rows[0]?.createRole)
     throw new Error("DBA_CREATEROLE_REQUIRED");
   const expectedFunctions = await owner.query<{ count: number }>(
-    `SELECT COUNT(*)::integer AS count FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN
+    `SELECT COUNT(DISTINCT proname)::integer AS count FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN
       ('orvok_radar_invite','orvok_radar_accept','orvok_radar_present_notice','orvok_radar_grant',
        'orvok_radar_revoke','orvok_radar_grant_self','orvok_radar_revoke_self',
        'orvok_radar_answer','orvok_radar_predict','orvok_radar_audit_blocked')`,
@@ -67,6 +67,7 @@ try {
       "ConsentPurpose","ConsentNoticeStatus","DataRequestType","DataRequestStatus",
       "NotificationState","ApiIdempotencyState","VisibilityScope","EvidenceDomain",
       "EvidenceState","QuestionDomain" TO orvok_auth_runtime,orvok_app_runtime`);
+    await owner.query(`GRANT USAGE ON TYPE "RadarCatalogStatus" TO orvok_auth_runtime,orvok_app_runtime`);
 
     await owner.query(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM orvok_auth_runtime,orvok_app_runtime`);
     await owner.query(`GRANT SELECT ON "User" TO orvok_auth_runtime`);
@@ -77,13 +78,15 @@ try {
       "SocialPredictionSnapshot","ConsentNotice","ConsentNoticePresentation","DataRequest",
       "Notification","ApiIdempotency","AuditLog" TO orvok_app_runtime`);
     await owner.query(`GRANT SELECT ("userId",email,"verifiedAt") ON "AuthIdentity" TO orvok_app_runtime`);
-    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "DataRequest","Notification","ApiIdempotency" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "DataRequest","ApiIdempotency" TO orvok_app_runtime`);
+    await owner.query(`GRANT UPDATE (state,"readAt","dismissedAt") ON "Notification" TO orvok_app_runtime`);
     // Operational request/export audit is append-only. Radar audit rows are
     // emitted by the privileged functions; no Radar table DML is granted.
     await owner.query(`GRANT INSERT ON "AuditLog" TO orvok_app_runtime`);
     await owner.query(`REVOKE ALL ON FUNCTION
       orvok_radar_invite(text,uuid),orvok_radar_accept(text,uuid),
       orvok_radar_present_notice(text,"ConsentPurpose"),
+      orvok_radar_present_notice(text,"ConsentPurpose",uuid),
       orvok_radar_grant(text,uuid,uuid,"VisibilityScope",text,text),
       orvok_radar_revoke(text,uuid),orvok_radar_grant_self(text,uuid,text,text),
       orvok_radar_revoke_self(text,uuid),orvok_radar_answer(text,uuid,uuid,uuid,uuid),
@@ -92,6 +95,7 @@ try {
     await owner.query(`GRANT EXECUTE ON FUNCTION
       orvok_radar_invite(text,uuid),orvok_radar_accept(text,uuid),
       orvok_radar_present_notice(text,"ConsentPurpose"),
+      orvok_radar_present_notice(text,"ConsentPurpose",uuid),
       orvok_radar_grant(text,uuid,uuid,"VisibilityScope",text,text),
       orvok_radar_revoke(text,uuid),orvok_radar_grant_self(text,uuid,text,text),
       orvok_radar_revoke_self(text,uuid),orvok_radar_answer(text,uuid,uuid,uuid,uuid),
@@ -102,11 +106,19 @@ try {
       orvok_read_snapshot(uuid),orvok_export_restricted_predictions(uuid),
       orvok_export_received_predictions(uuid),orvok_bind_read_actor(text),
       orvok_app_rate_attempt(text) FROM PUBLIC,orvok_auth_runtime,orvok_app_runtime`);
+    await owner.query(`REVOKE ALL ON FUNCTION
+      orvok_radar_present_notice_core(text,"ConsentPurpose"),
+      orvok_radar_answer_core(text,uuid,uuid,uuid,uuid),
+      orvok_radar_predict_core(text,uuid,uuid,uuid,uuid,jsonb,uuid)
+      FROM PUBLIC,orvok_auth_runtime,orvok_app_runtime`);
     await owner.query(`GRANT EXECUTE ON FUNCTION
       orvok_read_actor(),orvok_read_role(),orvok_snapshot_visible(uuid),
       orvok_read_snapshot(uuid),orvok_export_restricted_predictions(uuid),
       orvok_export_received_predictions(uuid),orvok_bind_read_actor(text),
-      orvok_app_rate_attempt(text) TO orvok_app_runtime`);
+      orvok_app_rate_attempt(text),orvok_catalog_version_enabled(uuid),
+      orvok_catalog_test_configured(),orvok_catalog_test_material_present(),
+      orvok_radar_opportunities(text),orvok_radar_mutual_connections(text)
+      TO orvok_app_runtime`);
     await owner.query(`REVOKE ALL ON FUNCTION orvok_radar_actor(text) FROM orvok_app_runtime,orvok_auth_runtime,PUBLIC`);
     await owner.query("COMMIT");
   } catch (error) {

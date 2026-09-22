@@ -1,5 +1,21 @@
 # Operação local e testes controlados — fundação V1
 
+## Radar V1 com fixtures de teste
+
+Depois das migrações e do provisionamento dos papéis, habilite fixtures somente no banco local `orvok_dev` ou em banco isolado terminado em `_test`, com `APP_ENV=development` ou `test`:
+
+```powershell
+$env:ORVOK_ALLOW_TEST_SEED='1'
+corepack pnpm db:seed
+corepack pnpm exec tsx scripts/import-radar-catalog.ts fixtures/radar-catalog-test-only.json
+Remove-Item Env:ORVOK_ALLOW_TEST_SEED
+corepack pnpm dev
+```
+
+O seed cria apenas avisos fictícios marcados `TEST_ONLY` e um registro administrativo técnico sem identidade de login. O catálogo contém dois itens fictícios, não as 12 perguntas oficiais. O importador recusa alteração da mesma versão e jamais publica `APPROVED`; a publicação oficial exige manifesto e decisão de produto separados. Nenhum texto de aviso ou pergunta de teste deve ser apresentado a pessoas reais. Se `APP_ENV` for inválido ou um ambiente hospedado detectar material `TEST_ONLY`, o Radar fica indisponível; revogação e direitos do titular devem permanecer disponíveis para resposta a incidentes.
+
+Confira o [gate de homologação](RADAR_V1_GATES_DE_HOMOLOGACAO.md) e a [observabilidade](RADAR_V1_OBSERVABILIDADE.md). `corepack pnpm radar:metrics 24` imprime agregados administrativos sem dados de resposta. A semântica oficial de matches, o prazo padrão de convite, a resolução/avaliação e a revisão jurídica ainda não foram ratificados para operação real.
+
 Esta é uma fundação para contas de teste, sem autorização para operação comercial ou Radar real. O catálogo oficial de perguntas e o aviso de consentimento aprovado não existem neste repositório; a API recusa concessões sem aviso publicado. Não semear conteúdo fictício em ambientes com pessoas reais.
 
 ## Separação de credenciais

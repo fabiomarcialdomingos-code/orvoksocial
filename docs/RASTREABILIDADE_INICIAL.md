@@ -1,5 +1,20 @@
 # Rastreabilidade inicial — Fase 0
 
+## Refinamento RHV1 — Radar Humano Social V1 (escopo de teste)
+
+Os itens RHV1 refinam os grupos R01–R43 e não mudam a contagem de 43 grupos. A matriz registra a autorização do bloco Radar V1, sem transformar regras candidatas em decisões oficiais. A evidência de conclusão será registrada no relatório final do bloco.
+
+| ID | Grupos R | Origem | Contrato e entrega | Teste de aceite | Estado |
+| --- | --- | --- | --- | --- | --- |
+| RHV1-01 | R02/R04/R05/R40 | Produto 01 §3; M52; V2 canônica §5; autorização atual | catálogo Radar versionado, importação controlada e fixtures `TEST_ONLY`; publicação oficial bloqueada | recusar pergunta não ratificada em ambiente real; integridade de versão/opções; manifesto incompleto ou alterado | Implementado para teste; 12 perguntas oficiais pendentes |
+| RHV1-02 | R28/R30/R31 | Produto 01 §3; M55 §55.8.5; V2 canônica §§5–6 | convite→aceite→aviso→grant→gabarito→previsão, com snapshot imutável e versão do consentimento | casos positivos, recusas temporais, revogação, concorrência e bypass de SQL | Verificado localmente; avaliação pós-resolução pendente |
+| RHV1-03 | R28/R29/R32 | M52 §52.18; V2 canônica §§5–6; autorização atual | projeções de previsões feitas/sobre o titular e reciprocidade estrutural, sem métricas | leitura cruzada proibida; revogação oculta exposição futura; gabarito não vaza | Verificado localmente; semântica final de match pendente |
+| RHV1-04 | R42 | Produto 01 §§5–6; decisão D13 candidata; autorização atual | inbox Radar com eventos operacionais mínimos, referências e deduplicação | destinatário exclusivo; retry, revogação e ausência de conteúdo sensível | Verificado localmente; canais/gatilhos finais pendentes |
+| RHV1-05 | R29/R30/R43 | política LGPD técnica provisória; autorização atual | exportação própria, solicitação de exclusão, auditoria e backup/restauração | autorização e limites da exportação, trilha e restauração | Fluxo técnico existente; revisão jurídica pendente |
+| RHV1-06 | R01/R41/R43 | sistema visual REV02; autorização atual | telas Radar para teste, estados de UI, responsividade e acessibilidade | E2E, teclado, foco, larguras móveis e desktop | Verificado localmente em 22 E2E; auditoria assistiva humana pendente |
+
+**Conflito de ordem temporal:** o pedido atual menciona avaliação quando o alvo responder, enquanto V2 canônica §§5–6 exige gabarito válido antes da previsão e resultado/avaliação depois. Nenhum contrato autoriza previsão sem gabarito ou reavaliação retroativa por resposta posterior. Esta parte da experiência permanece bloqueada até decisão formal compatível; os demais fluxos seguem a ordem canônica.
+
 ## Refinamento FOP — fundação operacional autorizada em 22/09/2026
 
 Estes IDs refinam os 43 grupos R01–R43; não criam 11 requisitos de produto adicionais. Estado “implementado” aqui se refere apenas à infraestrutura e aos contratos para testes controlados. Critérios de abertura ao público permanecem separados.

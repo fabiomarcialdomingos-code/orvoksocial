@@ -12,7 +12,7 @@ if (!ownerUrl || !appUrl || !authUrl) throw new Error("RUNTIME_DATABASE_URLS_REQ
 const owner = new Client({ connectionString: ownerUrl });
 const app = new Client({ connectionString: appUrl });
 const auth = new Client({ connectionString: authUrl });
-const ids = { predictor: randomUUID(), target: randomUUID(), session: randomUUID(), targetSession: randomUUID(), invitation: "", extraInvitation: "", acceptance: "" };
+const ids = { predictor: randomUUID(), target: randomUUID(), extraTarget: randomUUID(), session: randomUUID(), targetSession: randomUUID(), invitation: "", extraInvitation: "", acceptance: "" };
 const hash = randomBytes(32).toString("hex");
 const targetHash = randomBytes(32).toString("hex");
 
@@ -27,8 +27,8 @@ async function rejectsWith(client: Client, sql: string, params: unknown[], code:
 
 await Promise.all([owner.connect(), app.connect(), auth.connect()]);
 try {
-  await owner.query(`INSERT INTO "User" (id,"updatedAt") VALUES ($1,clock_timestamp()),($2,clock_timestamp())`,
-    [ids.predictor, ids.target]);
+  await owner.query(`INSERT INTO "User" (id,"updatedAt") VALUES ($1,clock_timestamp()),($2,clock_timestamp()),($3,clock_timestamp())`,
+    [ids.predictor, ids.target, ids.extraTarget]);
   await owner.query(`INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt")
     VALUES ($1,$3,'fixture-only',clock_timestamp()),($2,$4,'fixture-only',clock_timestamp())`,
     [ids.predictor, ids.target, `${ids.predictor}@orvok.test`, `${ids.target}@orvok.test`]);
@@ -72,7 +72,7 @@ try {
   await rejectsWith(app, `SELECT orvok_radar_invite($1,$2)`, ["0".repeat(64), ids.target], "28000");
   await app.query("BEGIN");
   ids.extraInvitation = (await app.query<{ id: string }>(`SELECT orvok_radar_invite($1,$2) AS id`,
-    [hash, ids.target])).rows[0]!.id;
+    [hash, ids.extraTarget])).rows[0]!.id;
   await owner.query(`SET statement_timeout TO '200ms'`);
   try {
     await rejectsWith(owner, `UPDATE "AuthSession" SET "revokedAt"=clock_timestamp() WHERE id=$1`,
@@ -85,6 +85,7 @@ try {
   await rejectsWith(app, `SELECT orvok_radar_invite($1,$2)`, [hash, ids.target], "28000");
   console.log("runtime boundary: passed (DML denied, roles separated, valid/revoked session, session lock race, search_path)");
 } finally {
+  await owner.query(`DELETE FROM "Notification" WHERE "recipientId" IN ($1,$2,$3)`, [ids.predictor, ids.target, ids.extraTarget]);
   if (ids.invitation) {
     if (ids.extraInvitation) {
       await owner.query(`DELETE FROM "AuditLog" WHERE "objectId"=$1`, [ids.extraInvitation]);
@@ -97,6 +98,6 @@ try {
   }
   await owner.query(`DELETE FROM "AuthSession" WHERE id IN ($1,$2)`, [ids.session, ids.targetSession]);
   await owner.query(`DELETE FROM "AuthIdentity" WHERE "userId" IN ($1,$2)`, [ids.predictor, ids.target]);
-  await owner.query(`DELETE FROM "User" WHERE id IN ($1,$2)`, [ids.predictor, ids.target]);
+  await owner.query(`DELETE FROM "User" WHERE id IN ($1,$2,$3)`, [ids.predictor, ids.target, ids.extraTarget]);
   await Promise.all([owner.end(), app.end(), auth.end()]);
 }

@@ -1,5 +1,7 @@
 # ORVOK Social — fundação técnica
 
+**Radar Humano Social V1 em testes controlados:** o fluxo técnico inclui catálogo versionado, fixtures `TEST_ONLY`, painéis e jornada social sob consentimento. As 12 perguntas oficiais e o aviso jurídico aprovado continuam ausentes; nenhum dado de pessoas reais deve ser coletado nessa jornada. Consulte [a operação local](docs/OPERACAO_LOCAL_E_TESTE.md), [os contratos Radar](docs/CONTRATOS_RADAR_SOCIAL_TEST_ONLY_V1.md), [os gates de homologação](docs/RADAR_V1_GATES_DE_HOMOLOGACAO.md) e [a rastreabilidade](docs/RASTREABILIDADE_INICIAL.md). Scoring, RadarScore, γ, consenso e ranking permanecem fora do escopo.
+
 Este repositório contém a fundação técnica e operacional para testes controlados: identidade, contratos `/api/v1`, fluxo estrutural Radar, consentimento versionado e interfaces-base. O Radar real continua bloqueado sem aviso oficial aprovado, catálogo oficial de perguntas e revisão jurídica aplicável. As regras oficiais estão na [V2 canônica](ORVOK_FECHAMENTO_LACUNAS_MATEMATICA_LGPD_CONTRATOS_V2_CANONICA.md), na [hierarquia documental](ORVOK_HIERARQUIA_DOCUMENTAL_REV02_CANONICA.md) e no [diagnóstico Gate 0](ORVOK_DIAGNOSTICO_PRE_IMPLEMENTACAO_V1.md). A V2 externa anterior e o ZIP divergente são obsoletos.
 
 ## Versões e pré-requisitos

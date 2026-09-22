@@ -170,6 +170,12 @@ export class RadarConsentService {
         );
         if (!accepted.rowCount)
           throw new RadarInvariantError("ACCEPTANCE_MISSING");
+        const active = await client.query(
+          `SELECT 1 FROM "ConsentGrant" g WHERE g."invitationAcceptanceId"=$1 AND g.purpose='BE_PREDICTED' AND NOT EXISTS (SELECT 1 FROM "ConsentRevocation" r WHERE r."grantId"=g.id) LIMIT 1`,
+          [input.acceptanceId],
+        );
+        if (active.rowCount)
+          throw new RadarInvariantError("CONSENT_ALREADY_ACTIVE");
         const presented = await client.query(
           `SELECT 1 FROM "ConsentNoticePresentation" p JOIN "ConsentNotice" n ON n.id=p."noticeId" WHERE p.id=$1 AND p."userId"=$2 AND p."sessionId"=$3 AND n.purpose='BE_PREDICTED' AND n.version=$4 AND n."contentHash"=$5 AND n.status='APPROVED' AND p."presentedAt"<clock_timestamp()`,
           [input.presentationId, input.targetId, input.sessionId, input.notice.version, input.notice.hash],

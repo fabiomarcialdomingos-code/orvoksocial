@@ -25,6 +25,12 @@ enum QuestionDomain {
   RADAR
 }
 
+enum RadarCatalogStatus {
+  TEST_ONLY
+  CANDIDATE
+  APPROVED
+}
+
 enum ConsentPurpose {
   SELF_ANSWER
   BE_PREDICTED
@@ -109,6 +115,7 @@ model ConsentNotice {
   content       String
   contentHash   String                      @db.VarChar(64)
   status        ConsentNoticeStatus         @default(DRAFT)
+  testOnly      Boolean                     @default(false)
   approvedAt    DateTime?                   @db.Timestamptz(6)
   approvedById  String?                     @db.Uuid
   createdAt     DateTime                    @default(now()) @db.Timestamptz(6)
@@ -123,10 +130,12 @@ model ConsentNoticePresentation {
   userId      String         @db.Uuid
   noticeId    String         @db.Uuid
   sessionId   String         @db.Uuid
+  invitationAcceptanceId String? @db.Uuid
   presentedAt DateTime       @default(now()) @db.Timestamptz(6)
   user        User           @relation("NoticePresentedTo", fields: [userId], references: [id], onDelete: Restrict)
   notice      ConsentNotice  @relation(fields: [noticeId], references: [id], onDelete: Restrict)
   session     AuthSession    @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  invitationAcceptance RadarInvitationAcceptance? @relation(fields: [invitationAcceptanceId, userId], references: [id, targetId], onDelete: Restrict)
   grants      ConsentGrant[]
 
   @@unique([id, userId])
@@ -253,6 +262,9 @@ model QuestionVersion {
   text              String
   familyKey         String                     @db.VarChar(120)
   contentHash       String                     @db.VarChar(64)
+  instrumentVersion String                     @default("TEST_ONLY_LEGACY") @db.VarChar(80)
+  catalogStatus     RadarCatalogStatus         @default(TEST_ONLY)
+  approvedAt        DateTime?                  @db.Timestamptz(6)
   createdAt         DateTime                   @default(now()) @db.Timestamptz(6)
   question          Question                   @relation(fields: [questionId], references: [id], onDelete: Restrict)
   options           AnswerOption[]
@@ -311,12 +323,19 @@ model RadarInvitation {
   predictorId String                     @db.Uuid
   targetId    String                     @db.Uuid
   invitedAt   DateTime                   @db.Timestamptz(6)
+  expiresAt   DateTime?                  @db.Timestamptz(6)
   createdAt   DateTime                   @default(now()) @db.Timestamptz(6)
   predictor   User                       @relation("RadarInviter", fields: [predictorId], references: [id], onDelete: Restrict)
   target      User                       @relation("RadarInvitee", fields: [targetId], references: [id], onDelete: Restrict)
   acceptance  RadarInvitationAcceptance?
 
   @@unique([id, targetId])
+}
+
+model RadarCatalogControl {
+  id            Int      @id
+  allowTestOnly Boolean  @default(false)
+  updatedAt     DateTime @default(now()) @db.Timestamptz(6)
 }
 
 model RadarInvitationAcceptance {
@@ -327,6 +346,7 @@ model RadarInvitationAcceptance {
   createdAt    DateTime        @default(now()) @db.Timestamptz(6)
   invitation   RadarInvitation @relation(fields: [invitationId, targetId], references: [id, targetId], onDelete: Restrict)
   grants       ConsentGrant[]
+  presentations ConsentNoticePresentation[]
 
   @@unique([id, targetId])
   @@unique([invitationId, targetId])

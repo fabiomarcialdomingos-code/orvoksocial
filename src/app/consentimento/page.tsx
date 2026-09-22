@@ -12,7 +12,7 @@ export default async function ConsentPage({
       title="Você controla sua participação."
       description="Leia o aviso vigente antes de decidir. O registro guarda a versão exata apresentada."
     >
-      <RadarFlow mode="consent" initialAcceptanceId={aceite ?? ""} />
+      <RadarFlow key={aceite ?? ""} mode="consent" initialAcceptanceId={aceite ?? ""} />
     </FoundationPage>
   );
 }

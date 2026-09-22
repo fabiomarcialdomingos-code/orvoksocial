@@ -96,25 +96,104 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   const route = `/${path.join("/")}`;
   if (method === "POST") await enforceOperationalRateLimit(pool, route);
 
+  const isRevocation = method === "POST" && path.length === 4 && path[0] === "radar" &&
+    (path[1] === "consents" || path[1] === "self-answer-consents") && path[3] === "revoke";
+  if (!isRevocation && (route.startsWith("/radar/") || route === "/consent-notice")) {
+    if (process.env.APP_ENV !== "development" && process.env.APP_ENV !== "test") {
+      const material = await pool.query<{ present: boolean }>(`SELECT orvok_catalog_test_material_present() AS present`);
+      if (material.rows[0]?.present || process.env.APP_ENV !== "staging" && process.env.APP_ENV !== "production")
+        throw new OperationalApiError(503, "TEST_CATALOG_IN_DEPLOYED_ENVIRONMENT");
+    }
+  }
+
   if (method === "GET" && route === "/consent-notice") {
     await enforceOperationalRateLimit(pool, route);
     const params = new URL(request.url).searchParams;
     const purpose = z.enum(["SELF_ANSWER", "BE_PREDICTED"]).parse(params.get("purpose"));
+    let acceptanceId: string | undefined;
     if (purpose === "BE_PREDICTED") {
-      const acceptanceId = uuid.parse(params.get("acceptanceId"));
+      acceptanceId = uuid.parse(params.get("acceptanceId"));
       const accepted = await pool.query(
         `SELECT 1 FROM "RadarInvitationAcceptance" WHERE id=$1 AND "targetId"=$2 AND "acceptedAt"<clock_timestamp()`,
         [acceptanceId, actorId],
       );
       if (!accepted.rowCount) throw new OperationalApiError(404, "NOT_FOUND");
     }
-    const notice = await rpc.presentNotice(purpose);
+    const notice = await rpc.presentNotice(purpose, acceptanceId);
     return apiJson(notice);
   }
   if (method === "GET" && route === "/users/me") {
     requireAccess(canAccess({ role, actorId, resource: "PROFILE", action: "READ", ownerId: actorId }));
     const result = await pool.query(`SELECT id,status,"createdAt" FROM "User" WHERE id=$1`, [actorId]);
     return apiJson({ user: result.rows[0] ?? null });
+  }
+  if (method === "GET" && route === "/radar/questions") {
+    const cursor = pageCursor(request);
+    const rows = await pool.query<{
+      questionVersionId: string; version: number; text: string; instrumentVersion: string;
+      catalogStatus: string; options: { id: string; label: string; position: number }[];
+    }>(`SELECT qv.id AS "questionVersionId",qv.version,qv.text,qv."instrumentVersion",qv."catalogStatus",
+      COALESCE(jsonb_agg(jsonb_build_object('id',ao.id,'label',ao.label,'position',ao.position)
+        ORDER BY ao.position) FILTER (WHERE ao.id IS NOT NULL),'[]'::jsonb) AS options
+      FROM "QuestionVersion" qv JOIN "Question" q ON q.id=qv."questionId"
+      LEFT JOIN "AnswerOption" ao ON ao."questionVersionId"=qv.id
+      WHERE q.domain='RADAR' AND orvok_catalog_version_enabled(qv.id)
+        AND ($1::uuid IS NULL OR qv.id>$1)
+      GROUP BY qv.id ORDER BY qv.id LIMIT 21`, [cursor]);
+    const items = rows.rows.slice(0, 20);
+    const nextCursor = rows.rows.length > 20 && items[19]
+      ? Buffer.from(items[19].questionVersionId).toString("base64url") : null;
+    return apiJson({ items, nextCursor });
+  }
+  if (method === "GET" && route === "/radar/answers") {
+    const cursor = pageCursor(request);
+    const result = await pool.query<{ id: string; questionVersionId: string; optionId: string; version: number; answeredAt: Date }>(
+      `SELECT av.id,av."questionVersionId",av."optionId",av.version,av."answeredAt"
+        FROM "AnswerVersion" av JOIN "QuestionVersion" qv ON qv.id=av."questionVersionId"
+        JOIN "Question" q ON q.id=qv."questionId"
+        WHERE av."subjectId"=$1 AND q.domain='RADAR' AND ($2::uuid IS NULL OR av.id>$2)
+        ORDER BY av.id LIMIT 21`, [actorId, cursor],
+    );
+    return apiJson(page(result.rows));
+  }
+  if (method === "GET" && route === "/radar/opportunities") {
+    const opaque = new URL(request.url).searchParams.get("cursor");
+    const decoded = opaque ? z.tuple([uuid, uuid, uuid]).parse(
+      JSON.parse(Buffer.from(opaque, "base64url").toString("utf8"))) : null;
+    const result = await pool.query<{ targetId: string; grantId: string; questionVersionId: string; selfAnswerVersionId: string }>(
+      `SELECT * FROM orvok_radar_opportunities($1)
+        WHERE ($2::uuid IS NULL OR ("targetId","grantId","questionVersionId") > ($2,$3,$4))
+        ORDER BY "targetId","grantId","questionVersionId" LIMIT 21`,
+      [sessionHash, decoded?.[0] ?? null, decoded?.[1] ?? null, decoded?.[2] ?? null],
+    );
+    const items = result.rows.slice(0, 20);
+    const last = items.at(-1);
+    const nextCursor = result.rows.length > 20 && last
+      ? Buffer.from(JSON.stringify([last.targetId, last.grantId, last.questionVersionId])).toString("base64url") : null;
+    return apiJson({ items, nextCursor });
+  }
+  if (method === "GET" && route === "/radar/dashboard") {
+    const [made, received, pending, matches] = await Promise.all([
+      pool.query<{ id: string; targetId: string; questionVersionId: string; predictedAt: Date }>(
+        `SELECT id,"targetId","questionVersionId","predictedAt" FROM "SocialPredictionSnapshot"
+          WHERE "predictorId"=$1 ORDER BY "predictedAt" DESC,id DESC LIMIT 21`, [actorId]),
+      pool.query<{ id: string; predictorId: string; questionVersionId: string; predictedAt: Date }>(
+        `SELECT id,"predictorId","questionVersionId","predictedAt" FROM "SocialPredictionSnapshot"
+          WHERE "targetId"=$1 ORDER BY "predictedAt" DESC,id DESC LIMIT 21`, [actorId]),
+      pool.query<{ id: string; predictorId: string; invitedAt: Date; expiresAt: Date | null }>(
+        `SELECT i.id,i."predictorId",i."invitedAt",i."expiresAt" FROM "RadarInvitation" i
+          LEFT JOIN "RadarInvitationAcceptance" a ON a."invitationId"=i.id
+          WHERE i."targetId"=$1 AND a.id IS NULL
+            AND (i."expiresAt" IS NULL OR i."expiresAt">clock_timestamp())
+          ORDER BY i."invitedAt" DESC,i.id DESC LIMIT 21`, [actorId]),
+      pool.query<{ userId: string; mutualAt: Date }>(`SELECT * FROM orvok_radar_mutual_connections($1) LIMIT 21`, [sessionHash]),
+    ]);
+    return apiJson({
+      made: made.rows.slice(0, 20), received: received.rows.slice(0, 20),
+      pendingInvitations: pending.rows.slice(0, 20), matches: matches.rows.slice(0, 20),
+      hasMore: { made: made.rows.length > 20, received: received.rows.length > 20,
+        pendingInvitations: pending.rows.length > 20, matches: matches.rows.length > 20 },
+    });
   }
   if (method === "POST" && route === "/radar/invitations") {
     const body = inviteBody.parse(await readJsonBody(request));
@@ -126,8 +205,8 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   }
   if (method === "GET" && route === "/radar/invitations") {
     const cursor = pageCursor(request);
-    const result = await pool.query<{ id: string; predictorId: string; targetId: string; invitedAt: Date; acceptanceId: string | null; acceptedAt: Date | null }>(
-      `SELECT i.id,i."predictorId",i."targetId",i."invitedAt",a.id AS "acceptanceId",a."acceptedAt" FROM "RadarInvitation" i LEFT JOIN "RadarInvitationAcceptance" a ON a."invitationId"=i.id WHERE (i."predictorId"=$1 OR i."targetId"=$1) AND ($2::uuid IS NULL OR i.id>$2) ORDER BY i.id LIMIT 21`,
+    const result = await pool.query<{ id: string; predictorId: string; targetId: string; invitedAt: Date; expiresAt: Date | null; acceptanceId: string | null; acceptedAt: Date | null }>(
+      `SELECT i.id,i."predictorId",i."targetId",i."invitedAt",i."expiresAt",a.id AS "acceptanceId",a."acceptedAt" FROM "RadarInvitation" i LEFT JOIN "RadarInvitationAcceptance" a ON a."invitationId"=i.id WHERE (i."predictorId"=$1 OR i."targetId"=$1) AND ($2::uuid IS NULL OR i.id>$2) ORDER BY i.id LIMIT 21`,
       [actorId, cursor],
     );
     return apiJson(page(result.rows));
@@ -221,14 +300,14 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   }
   if (method === "GET" && path.length === 3 && path[0] === "radar" && path[1] === "snapshots") {
     const id = uuid.parse(path[2]);
-    const result = await pool.query<{ id: string; predictorId: string; targetId: string; questionVersionId: string; probabilityVector: unknown; predictedAt: Date; targetConsentGrantId: string; targetConsentVersion: number; scope: "PRIVATE" | "SHARED" | "PUBLIC"; active: boolean }>(
+    const result = await pool.query<{ id: string; predictorId: string; targetId: string; questionVersionId: string; probabilityVector: unknown; predictedAt: Date; targetConsentGrantId: string; targetConsentVersion: number; snapshotHash: string; scope: "PRIVATE" | "SHARED" | "PUBLIC"; active: boolean }>(
       `SELECT * FROM orvok_read_snapshot($1)`,
       [id],
     );
     const row = result.rows[0];
     if (!row || !canAccess({ role, actorId, resource: "RADAR_SNAPSHOT", action: "READ", predictorId: row.predictorId, targetId: row.targetId, visibility: row.scope, consentActive: row.active }))
       throw new OperationalApiError(404, "NOT_FOUND");
-    return apiJson({ snapshot: { id: row.id, predictorId: row.predictorId, targetId: row.targetId, questionVersionId: row.questionVersionId, probabilityVector: row.probabilityVector, predictedAt: row.predictedAt, consentVersion: row.targetConsentVersion } });
+    return apiJson({ snapshot: { id: row.id, predictorId: row.predictorId, targetId: row.targetId, questionVersionId: row.questionVersionId, probabilityVector: row.probabilityVector, predictedAt: row.predictedAt, consentVersion: row.targetConsentVersion, snapshotHash: row.snapshotHash } });
   }
   if (method === "GET" && route === "/me/export") {
     requireAccess(canAccess({ role, actorId, resource: "DATA_REQUEST", action: "READ", ownerId: actorId }));
@@ -267,6 +346,29 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
       [actorId, cursor],
     );
     return apiJson(page(result.rows));
+  }
+  if (method === "POST" && path.length === 3 && path[0] === "notifications" &&
+      (path[2] === "read" || path[2] === "dismiss")) {
+    const notificationId = uuid.parse(path[1]);
+    z.strictObject({}).parse(await readJsonBody(request));
+    const nextState = path[2] === "read" ? "READ" : "DISMISSED";
+    const result = await withIdempotency(pool, actorId, route, request.headers.get("Idempotency-Key"), {}, async () => {
+      const current = await pool.query<{ state: string }>(
+        `SELECT state FROM "Notification" WHERE id=$1 AND "recipientId"=$2`, [notificationId, actorId]);
+      if (!current.rows[0]) throw new OperationalApiError(404, "NOT_FOUND");
+      if (current.rows[0].state === "DISMISSED" ||
+          (nextState === "READ" && current.rows[0].state !== "UNREAD"))
+        throw new OperationalApiError(409, "CONFLICT");
+      const updated = await pool.query(
+        nextState === "READ"
+          ? `UPDATE "Notification" SET state='READ',"readAt"=clock_timestamp() WHERE id=$1 AND "recipientId"=$2 AND state='UNREAD' RETURNING id`
+          : `UPDATE "Notification" SET state='DISMISSED',"dismissedAt"=clock_timestamp() WHERE id=$1 AND "recipientId"=$2 AND state IN ('UNREAD','READ') RETURNING id`,
+        [notificationId, actorId],
+      );
+      if (!updated.rowCount) throw new OperationalApiError(409, "CONFLICT");
+      return { status: 201, data: { id: notificationId, state: nextState } };
+    });
+    return apiJson(result.data, result.status);
   }
   if (method === "GET" && route === "/admin/audit") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));

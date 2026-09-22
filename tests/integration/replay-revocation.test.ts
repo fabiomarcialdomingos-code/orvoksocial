@@ -47,10 +47,10 @@ describe.skipIf(!url)("replay após revogação e acesso ao snapshot", () => {
     await pool.query(`INSERT INTO "User" (id,role,"updatedAt") VALUES ($1,'USER',clock_timestamp()),($2,'USER',clock_timestamp()),($3,'ADMIN',clock_timestamp())`, [ids.predictor, ids.target, ids.admin]);
     await pool.query(`INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt") VALUES ($1,$3,'FIXTURE',clock_timestamp()),($2,$4,'FIXTURE',clock_timestamp())`, [ids.predictor, ids.target, `p-${ids.predictor}@example.invalid`, `t-${ids.target}@example.invalid`]);
     await pool.query(`INSERT INTO "AuthSession" (id,"userId","tokenHash","familyId","expiresAt") VALUES ($1,$3,$5,$7,clock_timestamp()+interval '1 hour'),($2,$4,$6,$8,clock_timestamp()+interval '1 hour')`, [ids.predictorSession, ids.targetSession, ids.predictor, ids.target, tokenHash(predictorToken), tokenHash(targetToken), randomUUID(), randomUUID()]);
-    await pool.query(`INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById") VALUES ($1,'BE_PREDICTED',$3,$5,$6,'APPROVED',clock_timestamp(),$7),($2,'SELF_ANSWER',$4,$5,$6,'APPROVED',clock_timestamp(),$7)`, [ids.radarNotice, ids.selfNotice, `FIXTURE-${ids.radarNotice}`, `FIXTURE-${ids.selfNotice}`, content, contentHash, ids.admin]);
+    await pool.query(`INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById","testOnly") VALUES ($1,'BE_PREDICTED',$3,$5,$6,'APPROVED',clock_timestamp(),$7,true),($2,'SELF_ANSWER',$4,$5,$6,'APPROVED',clock_timestamp(),$7,true)`, [ids.radarNotice, ids.selfNotice, `FIXTURE-${ids.radarNotice}`, `FIXTURE-${ids.selfNotice}`, content, contentHash, ids.admin]);
     invitationId = await radar.invite({ predictorId: ids.predictor, targetId: ids.target });
     acceptanceId = await radar.accept({ invitationId, targetId: ids.target });
-    await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","presentedAt") VALUES ($1,$4,$6,$8,clock_timestamp()),($2,$5,$6,$9,clock_timestamp()),($3,$5,$7,$9,clock_timestamp())`, [ids.predictorSelfPresentation, ids.targetSelfPresentation, ids.targetRadarPresentation, ids.predictor, ids.target, ids.selfNotice, ids.radarNotice, ids.predictorSession, ids.targetSession]);
+    await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","invitationAcceptanceId","presentedAt") VALUES ($1,$4,$6,$8,NULL,clock_timestamp()),($2,$5,$6,$9,NULL,clock_timestamp()),($3,$5,$7,$9,$10,clock_timestamp())`, [ids.predictorSelfPresentation, ids.targetSelfPresentation, ids.targetRadarPresentation, ids.predictor, ids.target, ids.selfNotice, ids.radarNotice, ids.predictorSession, ids.targetSession, acceptanceId]);
     await pool.query(`INSERT INTO "ConsentGrant" (id,"subjectId",purpose,scope,"noticeVersion","noticeHash","consentVersion","noticePresentationId","grantedAt") VALUES ($1,$3,'SELF_ANSWER','PRIVATE',$5,$7,1,$8,clock_timestamp()),($2,$4,'SELF_ANSWER','PRIVATE',$6,$7,1,$9,clock_timestamp())`, [ids.predictorSelfGrant, ids.targetSelfGrant, ids.predictor, ids.target, `FIXTURE-${ids.selfNotice}`, `FIXTURE-${ids.selfNotice}`, contentHash, ids.predictorSelfPresentation, ids.targetSelfPresentation]);
     const grant = await radar.grant({ acceptanceId, targetId: ids.target, presentationId: ids.targetRadarPresentation, sessionId: ids.targetSession, notice: { version: `FIXTURE-${ids.radarNotice}`, hash: contentHash }, scope: "SHARED" });
     grantId = grant.id;
@@ -61,6 +61,7 @@ describe.skipIf(!url)("replay após revogação e acesso ao snapshot", () => {
   });
 
   afterAll(async () => {
+    await pool.query(`DELETE FROM "Notification" WHERE "recipientId"=ANY($1::uuid[])`, [[ids.predictor, ids.target]]);
     await pool.query(`DELETE FROM "AuditLog" WHERE "actorId"=ANY($1::uuid[])`, [[ids.predictor, ids.target, ids.admin]]);
     await pool.query(`DELETE FROM "ApiIdempotency" WHERE "actorId"=ANY($1::uuid[])`, [[ids.predictor, ids.target]]);
     if (snapshotId) await pool.query(`DELETE FROM "SocialPredictionSnapshot" WHERE id=$1`, [snapshotId]);

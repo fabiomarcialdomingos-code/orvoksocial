@@ -25,6 +25,7 @@ const targetHash = randomBytes(32).toString("hex");
 const noticeContent = "Aviso de consentimento fixture — somente teste automatizado";
 const noticeHash = createHash("sha256").update(noticeContent).digest("hex");
 const noticeVersion = `TEST-${randomBytes(4).toString("hex")}`;
+type PresentedNotice = { presentation_id: string; notice_version: string; notice_hash: string };
 
 async function expectCode(client: Client, sql: string, args: unknown[], code: string) {
   try {
@@ -46,9 +47,9 @@ try {
     ($1,$2,$3,$4,clock_timestamp()+interval '1 hour'),
     ($5,$6,$7,$8,clock_timestamp()+interval '1 hour')`,
     [id.predictorSession,id.predictor,predictorHash,randomUUID(),id.targetSession,id.target,targetHash,randomUUID()]);
-  await owner.query(`INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById") VALUES
-    ($1,'SELF_ANSWER',$3,$4,$5,'APPROVED',clock_timestamp(),$6),
-    ($2,'BE_PREDICTED',$3,$4,$5,'APPROVED',clock_timestamp(),$6)`,
+  await owner.query(`INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById","testOnly") VALUES
+    ($1,'SELF_ANSWER',$3,$4,$5,'APPROVED',clock_timestamp(),$6,true),
+    ($2,'BE_PREDICTED',$3,$4,$5,'APPROVED',clock_timestamp(),$6,true)`,
     [id.selfNotice,id.radarNotice,noticeVersion,noticeContent,noticeHash,id.admin]);
   await owner.query(`INSERT INTO "Question" (id,"stableKey",domain) VALUES ($1,$2,'RADAR')`, [id.question,`TEST_${id.question}`]);
   await owner.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash") VALUES
@@ -58,23 +59,28 @@ try {
 
   id.invitation = (await app.query<{ value: string }>(`SELECT orvok_radar_invite($1,$2) AS value`, [predictorHash,id.target])).rows[0]!.value;
   id.acceptance = (await app.query<{ value: string }>(`SELECT orvok_radar_accept($1,$2) AS value`, [targetHash,id.invitation])).rows[0]!.value;
-  id.predictorPresentation = (await app.query<{ presentation_id: string }>(
-    `SELECT * FROM orvok_radar_present_notice($1,'SELF_ANSWER'::"ConsentPurpose")`, [predictorHash])).rows[0]!.presentation_id;
-  id.targetPresentation = (await app.query<{ presentation_id: string }>(
-    `SELECT * FROM orvok_radar_present_notice($1,'SELF_ANSWER'::"ConsentPurpose")`, [targetHash])).rows[0]!.presentation_id;
+  const predictorSelfNotice = (await app.query<PresentedNotice>(
+    `SELECT * FROM orvok_radar_present_notice($1,'SELF_ANSWER'::"ConsentPurpose")`, [predictorHash])).rows[0]!;
+  const targetSelfNotice = (await app.query<PresentedNotice>(
+    `SELECT * FROM orvok_radar_present_notice($1,'SELF_ANSWER'::"ConsentPurpose")`, [targetHash])).rows[0]!;
+  id.predictorPresentation = predictorSelfNotice.presentation_id;
+  id.targetPresentation = targetSelfNotice.presentation_id;
   id.predictorSelfGrant = (await app.query<{ grant_id: string }>(
-    `SELECT * FROM orvok_radar_grant_self($1,$2,$3,$4)`, [predictorHash,id.predictorPresentation,noticeVersion,noticeHash])).rows[0]!.grant_id;
+    `SELECT * FROM orvok_radar_grant_self($1,$2,$3,$4)`, [predictorHash,id.predictorPresentation,predictorSelfNotice.notice_version,predictorSelfNotice.notice_hash])).rows[0]!.grant_id;
   id.targetSelfGrant = (await app.query<{ grant_id: string }>(
-    `SELECT * FROM orvok_radar_grant_self($1,$2,$3,$4)`, [targetHash,id.targetPresentation,noticeVersion,noticeHash])).rows[0]!.grant_id;
+    `SELECT * FROM orvok_radar_grant_self($1,$2,$3,$4)`, [targetHash,id.targetPresentation,targetSelfNotice.notice_version,targetSelfNotice.notice_hash])).rows[0]!.grant_id;
   id.predictorAnswer = (await app.query<{ answer_id: string }>(
     `SELECT * FROM orvok_radar_answer($1,$2,$3,$4,NULL)`, [predictorHash,id.version,id.optionA,id.predictorSelfGrant])).rows[0]!.answer_id;
-  id.radarPresentation = (await app.query<{ presentation_id: string }>(
-    `SELECT * FROM orvok_radar_present_notice($1,'BE_PREDICTED'::"ConsentPurpose")`, [targetHash])).rows[0]!.presentation_id;
+  const radarNotice = (await app.query<PresentedNotice>(
+    `SELECT * FROM orvok_radar_present_notice($1,'BE_PREDICTED'::"ConsentPurpose",$2)`, [targetHash,id.acceptance])).rows[0]!;
+  id.radarPresentation = radarNotice.presentation_id;
   await expectCode(app, `SELECT * FROM orvok_radar_grant($1,$2,$3,'PRIVATE'::"VisibilityScope",$4,$5)`,
-    [targetHash,id.acceptance,id.radarPresentation,noticeVersion,"b".repeat(64)], "23514");
+    [targetHash,id.acceptance,id.radarPresentation,radarNotice.notice_version,"b".repeat(64)], "23514");
   id.targetGrant = (await app.query<{ grant_id: string; consent_version: number }>(
     `SELECT * FROM orvok_radar_grant($1,$2,$3,'PRIVATE'::"VisibilityScope",$4,$5)`,
-    [targetHash,id.acceptance,id.radarPresentation,noticeVersion,noticeHash])).rows[0]!.grant_id;
+    [targetHash,id.acceptance,id.radarPresentation,radarNotice.notice_version,radarNotice.notice_hash])).rows[0]!.grant_id;
+  await expectCode(app, `SELECT * FROM orvok_radar_grant($1,$2,$3,'PRIVATE'::"VisibilityScope",$4,$5)`,
+    [targetHash,id.acceptance,id.radarPresentation,radarNotice.notice_version,radarNotice.notice_hash], "23505");
   id.targetAnswer = (await app.query<{ answer_id: string }>(
     `SELECT * FROM orvok_radar_answer($1,$2,$3,$4,NULL)`, [targetHash,id.version,id.optionB,id.targetSelfGrant])).rows[0]!.answer_id;
   const predicted = (await app.query<{ snapshot_id: string; consent_version: number }>(
@@ -86,21 +92,24 @@ try {
     `SELECT "targetConsentVersion","targetConsentGrantId" FROM "SocialPredictionSnapshot" WHERE id=$1`, [id.snapshot]);
   if (stored.rows[0]?.targetConsentVersion !== 1 || stored.rows[0]?.targetConsentGrantId !== id.targetGrant)
     throw new Error("snapshot did not preserve grant version");
+  await expectCode(app, `SELECT * FROM orvok_radar_predict($1,$2,$3,$4,$5,$6::jsonb,NULL)`,
+    [predictorHash,id.target,id.version,id.predictorAnswer,id.targetGrant,"[0.6,0.4]"], "23505");
   id.revocation = (await app.query<{ value: string }>(`SELECT orvok_radar_revoke($1,$2) AS value`,
     [targetHash,id.targetGrant])).rows[0]!.value;
   await expectCode(app, `SELECT * FROM orvok_radar_predict($1,$2,$3,$4,$5,$6::jsonb,NULL)`,
     [predictorHash,id.target,id.version,id.predictorAnswer,id.targetGrant,"[0.6,0.4]"], "23514");
-  id.radarPresentation2 = (await app.query<{ presentation_id: string }>(
-    `SELECT * FROM orvok_radar_present_notice($1,'BE_PREDICTED'::"ConsentPurpose")`, [targetHash])).rows[0]!.presentation_id;
+  const radarNoticeRenewal = (await app.query<PresentedNotice>(
+    `SELECT * FROM orvok_radar_present_notice($1,'BE_PREDICTED'::"ConsentPurpose",$2)`, [targetHash,id.acceptance])).rows[0]!;
+  id.radarPresentation2 = radarNoticeRenewal.presentation_id;
   id.targetGrant2 = (await app.query<{ grant_id: string; consent_version: number }>(
     `SELECT * FROM orvok_radar_grant($1,$2,$3,'PRIVATE'::"VisibilityScope",$4,$5)`,
-    [targetHash,id.acceptance,id.radarPresentation2,noticeVersion,noticeHash])).rows[0]!.grant_id;
+    [targetHash,id.acceptance,id.radarPresentation2,radarNoticeRenewal.notice_version,radarNoticeRenewal.notice_hash])).rows[0]!.grant_id;
   id.targetAnswer2 = (await app.query<{ answer_id: string }>(
     `SELECT * FROM orvok_radar_answer($1,$2,$3,$4,$5)`,
     [targetHash,id.version,id.optionB,id.targetSelfGrant,id.targetAnswer])).rows[0]!.answer_id;
   const [racePrediction,raceRevocation] = await Promise.allSettled([
-    app.query<{ snapshot_id: string }>(`SELECT * FROM orvok_radar_predict($1,$2,$3,$4,$5,$6::jsonb,NULL)`,
-      [predictorHash,id.target,id.version,id.predictorAnswer,id.targetGrant2,"[0.55,0.45]"]),
+    app.query<{ snapshot_id: string }>(`SELECT * FROM orvok_radar_predict($1,$2,$3,$4,$5,$6::jsonb,$7)`,
+      [predictorHash,id.target,id.version,id.predictorAnswer,id.targetGrant2,"[0.55,0.45]",id.snapshot]),
     appSecond.query<{ value: string }>(`SELECT orvok_radar_revoke($1,$2) AS value`, [targetHash,id.targetGrant2]),
   ]);
   if (raceRevocation.status !== "fulfilled") throw raceRevocation.reason;
@@ -117,9 +126,10 @@ try {
   }
   console.log("radar RPC flow: passed (invite, acceptance, notice, self answers, grant, snapshot, revocation, concurrent race)");
 } finally {
+  await owner.query(`DELETE FROM "Notification" WHERE "recipientId" IN ($1,$2,$3)`, [id.admin,id.predictor,id.target]);
   await owner.query(`DELETE FROM "AuditLog" WHERE "actorId" IN ($1,$2,$3)`, [id.admin,id.predictor,id.target]);
-  if (id.snapshot) await owner.query(`DELETE FROM "SocialPredictionSnapshot" WHERE id=$1`, [id.snapshot]);
   if (id.snapshot2) await owner.query(`DELETE FROM "SocialPredictionSnapshot" WHERE id=$1`, [id.snapshot2]);
+  if (id.snapshot) await owner.query(`DELETE FROM "SocialPredictionSnapshot" WHERE id=$1`, [id.snapshot]);
   if (id.revocation) await owner.query(`DELETE FROM "ConsentRevocation" WHERE id=$1`, [id.revocation]);
   if (id.revocation2) await owner.query(`DELETE FROM "ConsentRevocation" WHERE id=$1`, [id.revocation2]);
   await owner.query(`DELETE FROM "AnswerVersion" WHERE id IN ($1,$2,$3)`,

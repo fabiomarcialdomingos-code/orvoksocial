@@ -69,7 +69,7 @@ describe.skipIf(!databaseUrl)("Fase 1: estrutura PostgreSQL", () => {
       await db.query(`INSERT INTO "User" (id,role,"updatedAt") VALUES ($1,'ADMIN',clock_timestamp())`, [adminId]);
       await db.query(`INSERT INTO "AuthSession" (id,"userId","tokenHash","familyId","expiresAt") VALUES ($1,$2,$3,$4,clock_timestamp()+interval '1 hour'),($5,$6,$7,$8,clock_timestamp()+interval '1 hour')`, [predictorSession, predictorId, "1".repeat(64), randomUUID(), targetSession, targetId, "2".repeat(64), randomUUID()]);
       await db.query(
-        `INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById") VALUES ($1,'SELF_ANSWER','fixture',$3,$4,'APPROVED',clock_timestamp(),$5),($2,'BE_PREDICTED','fixture',$3,$4,'APPROVED',clock_timestamp(),$5)`,
+        `INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById","testOnly") VALUES ($1,'SELF_ANSWER','fixture',$3,$4,'APPROVED',clock_timestamp(),$5,true),($2,'BE_PREDICTED','fixture',$3,$4,'APPROVED',clock_timestamp(),$5,true)`,
         [selfNoticeId, radarNoticeId, noticeContent, noticeHash, adminId],
       );
       await db.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","presentedAt") VALUES ($1,$2,$3,$4,clock_timestamp()),($5,$6,$3,$7,clock_timestamp())`, [predictorPresentationId, predictorId, selfNoticeId, predictorSession, targetPresentationId, targetId, targetSession]);
@@ -99,7 +99,7 @@ describe.skipIf(!databaseUrl)("Fase 1: estrutura PostgreSQL", () => {
         `INSERT INTO "RadarInvitationAcceptance" (id,"invitationId","targetId","acceptedAt") VALUES ($1,$2,$3,clock_timestamp())`,
         [acceptanceId, invitationId, targetId],
       );
-      await db.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","presentedAt") VALUES ($1,$2,$3,$4,clock_timestamp())`, [radarPresentationId, targetId, radarNoticeId, targetSession]);
+      await db.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","invitationAcceptanceId","presentedAt") VALUES ($1,$2,$3,$4,$5,clock_timestamp())`, [radarPresentationId, targetId, radarNoticeId, targetSession, acceptanceId]);
       await db.query(
         `INSERT INTO "ConsentGrant" (id,"subjectId",purpose,scope,"noticeVersion","noticeHash","noticePresentationId","grantedAt")
          VALUES ($1,$3,'SELF_ANSWER','PRIVATE','fixture',$5,$6,clock_timestamp()),

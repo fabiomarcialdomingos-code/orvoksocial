@@ -20,13 +20,16 @@ export class RadarRpc {
     return result.rows[0]!.id;
   }
 
-  async presentNotice(purpose: "SELF_ANSWER" | "BE_PREDICTED") {
+  async presentNotice(purpose: "SELF_ANSWER" | "BE_PREDICTED", acceptanceId?: string) {
     const result = await this.pool.query<{
       presentation_id: string;
       notice_version: string;
       notice_hash: string;
       notice_content: string;
-    }>(`SELECT * FROM orvok_radar_present_notice($1,$2::"ConsentPurpose")`, [this.sessionHash, purpose]);
+    }>(purpose === "BE_PREDICTED"
+      ? `SELECT * FROM orvok_radar_present_notice($1,$2::"ConsentPurpose",$3::uuid)`
+      : `SELECT * FROM orvok_radar_present_notice($1,$2::"ConsentPurpose")`,
+    purpose === "BE_PREDICTED" ? [this.sessionHash, purpose, acceptanceId] : [this.sessionHash, purpose]);
     const row = result.rows[0]!;
     return {
       presentationId: row.presentation_id,

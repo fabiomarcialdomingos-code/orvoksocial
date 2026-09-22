@@ -30,11 +30,18 @@ let createdDatabase = false;
 let createdArchive = false;
 await admin.connect();
 try {
-  const before = await admin.query<{ users: number; grants: number; migrations: number }>(
-    `SELECT (SELECT COUNT(*)::integer FROM "User") AS users,
-            (SELECT COUNT(*)::integer FROM "ConsentGrant") AS grants,
-            (SELECT COUNT(*)::integer FROM "_prisma_migrations" WHERE finished_at IS NOT NULL) AS migrations`,
-  );
+  const integrityCounts = `SELECT
+    (SELECT COUNT(*)::integer FROM "User") AS users,
+    (SELECT COUNT(*)::integer FROM "RadarInvitation") AS invitations,
+    (SELECT COUNT(*)::integer FROM "ConsentGrant") AS grants,
+    (SELECT COUNT(*)::integer FROM "ConsentRevocation") AS revocations,
+    (SELECT COUNT(*)::integer FROM "QuestionVersion") AS question_versions,
+    (SELECT COUNT(*)::integer FROM "AnswerVersion") AS answer_versions,
+    (SELECT COUNT(*)::integer FROM "SocialPredictionSnapshot") AS snapshots,
+    (SELECT COUNT(*)::integer FROM "Notification") AS notifications,
+    (SELECT COUNT(*)::integer FROM "AuditLog") AS audit_events,
+    (SELECT COUNT(*)::integer FROM "_prisma_migrations" WHERE finished_at IS NOT NULL) AS migrations`;
+  const before = await admin.query(integrityCounts);
   const dump = spawnSync(executable("pg_dump"), ["--format=custom", "--file", archive, "--no-owner", "--no-acl"], {
     env: pgEnv, encoding: "utf8",
   });
@@ -51,14 +58,10 @@ try {
   const restored = new Client({ connectionString: restoredUrl.toString() });
   await restored.connect();
   try {
-    const after = await restored.query<{ users: number; grants: number; migrations: number }>(
-      `SELECT (SELECT COUNT(*)::integer FROM "User") AS users,
-              (SELECT COUNT(*)::integer FROM "ConsentGrant") AS grants,
-              (SELECT COUNT(*)::integer FROM "_prisma_migrations" WHERE finished_at IS NOT NULL) AS migrations`,
-    );
+    const after = await restored.query(integrityCounts);
     if (JSON.stringify(before.rows[0]) !== JSON.stringify(after.rows[0]))
       throw new Error("RESTORE_COUNTS_MISMATCH");
-    console.log(`backup/restore rehearsal: passed (${after.rows[0]?.migrations} migrations, users/grants preserved)`);
+    console.log(`backup/restore rehearsal: passed (${after.rows[0]?.migrations} migrations, Radar record counts preserved)`);
   } finally {
     await restored.end();
   }

@@ -26,6 +26,8 @@ describe.skipIf(!url)(
       noticeRadar: randomUUID(),
       predictorSession: randomUUID(),
       targetSession: randomUUID(),
+      predictorTokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
+      targetTokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
       predictorPresentation: randomUUID(),
       targetPresentation: randomUUID(),
       radarPresentation: randomUUID(),
@@ -33,6 +35,7 @@ describe.skipIf(!url)(
     };
     const hash = "a".repeat(64);
     const noticeContent = "FIXTURE NOTICE ONLY";
+    const noticeVersion = `FIXTURE-${randomUUID()}`;
     const noticeHash = createHash("sha256").update(noticeContent).digest("hex");
     const snapshotIds: string[] = [];
     const invitationIds: string[] = [];
@@ -44,10 +47,10 @@ describe.skipIf(!url)(
         [ids.predictor, ids.target],
       );
       await pool.query(`INSERT INTO "User" (id,role,"updatedAt") VALUES ($1,'ADMIN',clock_timestamp())`, [ids.admin]);
-      await pool.query(`INSERT INTO "AuthSession" (id,"userId","tokenHash","familyId","expiresAt") VALUES ($1,$2,$3,$4,clock_timestamp()+interval '1 hour'),($5,$6,$7,$8,clock_timestamp()+interval '1 hour')`, [ids.predictorSession, ids.predictor, "3".repeat(64), randomUUID(), ids.targetSession, ids.target, "4".repeat(64), randomUUID()]);
+      await pool.query(`INSERT INTO "AuthSession" (id,"userId","tokenHash","familyId","expiresAt") VALUES ($1,$2,$3,$4,clock_timestamp()+interval '1 hour'),($5,$6,$7,$8,clock_timestamp()+interval '1 hour')`, [ids.predictorSession, ids.predictor, ids.predictorTokenHash, randomUUID(), ids.targetSession, ids.target, ids.targetTokenHash, randomUUID()]);
       await pool.query(
-        `INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById") VALUES ($1,'SELF_ANSWER','FIXTURE',$3,$4,'APPROVED',clock_timestamp(),$5),($2,'BE_PREDICTED','FIXTURE',$3,$4,'APPROVED',clock_timestamp(),$5)`,
-        [ids.noticeSelf, ids.noticeRadar, noticeContent, noticeHash, ids.admin],
+        `INSERT INTO "ConsentNotice" (id,purpose,version,content,"contentHash",status,"approvedAt","approvedById","testOnly") VALUES ($1,'SELF_ANSWER',$6,$3,$4,'APPROVED',clock_timestamp(),$5,true),($2,'BE_PREDICTED',$6,$3,$4,'APPROVED',clock_timestamp(),$5,true)`,
+        [ids.noticeSelf, ids.noticeRadar, noticeContent, noticeHash, ids.admin, noticeVersion],
       );
       await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","presentedAt") VALUES ($1,$2,$3,$4,clock_timestamp()),($5,$6,$3,$7,clock_timestamp())`, [ids.predictorPresentation, ids.predictor, ids.noticeSelf, ids.predictorSession, ids.targetPresentation, ids.target, ids.targetSession]);
       await pool.query(
@@ -63,12 +66,13 @@ describe.skipIf(!url)(
         [ids.option, ids.secondOption, ids.version],
       );
       await pool.query(
-        `INSERT INTO "ConsentGrant" (id,"subjectId",purpose,scope,"noticeVersion","noticeHash","noticePresentationId","grantedAt") VALUES ($1,$3,'SELF_ANSWER','PRIVATE','FIXTURE',$5,$6,clock_timestamp()),($2,$4,'SELF_ANSWER','PRIVATE','FIXTURE',$5,$7,clock_timestamp())`,
-        [ids.selfGrant, ids.targetSelfGrant, ids.predictor, ids.target, noticeHash, ids.predictorPresentation, ids.targetPresentation],
+        `INSERT INTO "ConsentGrant" (id,"subjectId",purpose,scope,"noticeVersion","noticeHash","noticePresentationId","grantedAt") VALUES ($1,$3,'SELF_ANSWER','PRIVATE',$8,$5,$6,clock_timestamp()),($2,$4,'SELF_ANSWER','PRIVATE',$8,$5,$7,clock_timestamp())`,
+        [ids.selfGrant, ids.targetSelfGrant, ids.predictor, ids.target, noticeHash, ids.predictorPresentation, ids.targetPresentation, noticeVersion],
       );
     });
     afterAll(async () => {
       // Only fixture IDs created here are removed; no real catalog data is touched.
+      await pool.query(`DELETE FROM "Notification" WHERE "recipientId"=ANY($1::uuid[])`, [[ids.predictor, ids.target]]);
       await pool.query(
         `DELETE FROM "AuditLog" WHERE "actorId"=ANY($1::uuid[])`,
         [[ids.predictor, ids.target]],
@@ -87,6 +91,7 @@ describe.skipIf(!url)(
       await pool.query(`DELETE FROM "ConsentGrant" WHERE id=ANY($1::uuid[])`, [
         [...grantIds, ids.selfGrant, ids.targetSelfGrant],
       ]);
+      await pool.query(`DELETE FROM "ConsentNoticePresentation" WHERE id=ANY($1::uuid[])`, [[ids.predictorPresentation, ids.targetPresentation, ids.radarPresentation, ids.radarPresentationRenewal]]);
       await pool.query(
         `DELETE FROM "RadarInvitationAcceptance" WHERE "invitationId"=ANY($1::uuid[])`,
         [invitationIds],
@@ -95,7 +100,6 @@ describe.skipIf(!url)(
         `DELETE FROM "RadarInvitation" WHERE id=ANY($1::uuid[])`,
         [invitationIds],
       );
-      await pool.query(`DELETE FROM "ConsentNoticePresentation" WHERE id=ANY($1::uuid[])`, [[ids.predictorPresentation, ids.targetPresentation, ids.radarPresentation, ids.radarPresentationRenewal]]);
       await pool.query(`DELETE FROM "AnswerOption" WHERE id=ANY($1::uuid[])`, [[ids.option, ids.secondOption]]);
       await pool.query(`DELETE FROM "QuestionVersion" WHERE id=$1`, [
         ids.version,
@@ -119,7 +123,7 @@ describe.skipIf(!url)(
         service.grant({
           acceptanceId: randomUUID(),
           targetId: ids.target,
-          notice: { version: "FIXTURE", hash: noticeHash },
+          notice: { version: noticeVersion, hash: noticeHash },
           presentationId: ids.radarPresentation,
           sessionId: ids.targetSession,
           scope: "SHARED",
@@ -153,16 +157,28 @@ describe.skipIf(!url)(
         invitationId: invitation,
         targetId: ids.target,
       });
-      await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","presentedAt") VALUES ($1,$2,$3,$4,clock_timestamp())`, [ids.radarPresentation, ids.target, ids.noticeRadar, ids.targetSession]);
+      await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","invitationAcceptanceId","presentedAt") VALUES ($1,$2,$3,$4,$5,clock_timestamp())`, [ids.radarPresentation, ids.target, ids.noticeRadar, ids.targetSession, acceptance]);
       const grant = await service.grant({
         acceptanceId: acceptance,
         targetId: ids.target,
-        notice: { version: "FIXTURE", hash: noticeHash },
+        notice: { version: noticeVersion, hash: noticeHash },
         presentationId: ids.radarPresentation,
         sessionId: ids.targetSession,
         scope: "SHARED",
       });
       grantIds.push(grant.id);
+      await expect(service.grant({
+        acceptanceId: acceptance,
+        targetId: ids.target,
+        notice: { version: noticeVersion, hash: noticeHash },
+        presentationId: ids.radarPresentation,
+        sessionId: ids.targetSession,
+        scope: "SHARED",
+      })).rejects.toMatchObject({ code: "CONSENT_ALREADY_ACTIVE" });
+      await expect(pool.query(
+        `INSERT INTO "ConsentGrant" (id,"subjectId",purpose,scope,"noticeVersion","noticeHash","consentVersion","invitationAcceptanceId","noticePresentationId","grantedAt") VALUES ($1,$2,'BE_PREDICTED','SHARED',$3,$4,$5,$6,$7,clock_timestamp())`,
+        [randomUUID(), ids.target, noticeVersion, noticeHash, grant.version + 1, acceptance, ids.radarPresentation],
+      )).rejects.toMatchObject({ code: "23505" });
       const auditGrant = await pool.query(
         `SELECT 1 FROM "AuditLog" WHERE action='RADAR_CONSENT_GRANTED' AND "objectId"=$1`,
         [grant.id],
@@ -228,11 +244,11 @@ describe.skipIf(!url)(
           "RADAR_CONSENT_REVOKED",
         ]),
       );
-      await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","presentedAt") VALUES ($1,$2,$3,$4,clock_timestamp())`, [ids.radarPresentationRenewal, ids.target, ids.noticeRadar, ids.targetSession]);
+      await pool.query(`INSERT INTO "ConsentNoticePresentation" (id,"userId","noticeId","sessionId","invitationAcceptanceId","presentedAt") VALUES ($1,$2,$3,$4,$5,clock_timestamp())`, [ids.radarPresentationRenewal, ids.target, ids.noticeRadar, ids.targetSession, acceptance]);
       const newGrant = await service.grant({
         acceptanceId: acceptance,
         targetId: ids.target,
-        notice: { version: "FIXTURE", hash: noticeHash },
+        notice: { version: noticeVersion, hash: noticeHash },
         presentationId: ids.radarPresentationRenewal,
         sessionId: ids.targetSession,
         scope: "PRIVATE",
