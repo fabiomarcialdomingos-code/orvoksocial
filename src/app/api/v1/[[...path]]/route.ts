@@ -431,6 +431,46 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     );
     return apiJson(page(result.rows));
   }
+  if (method === "GET" && route === "/admin/metrics") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const queries = [
+      ["users", `SELECT count(*)::int AS count FROM "User"`],
+      ["activeUsers", `SELECT count(*)::int AS count FROM "User" WHERE status='ACTIVE'`],
+      ["questions", `SELECT count(*)::int AS count FROM "Question"`],
+      ["answers", `SELECT count(*)::int AS count FROM "AnswerVersion"`],
+      ["events", `SELECT count(*)::int AS count FROM "WorldEvent"`],
+      ["publishedEvents", `SELECT count(*)::int AS count FROM "WorldEvent" WHERE status='PUBLISHED'`],
+      ["posts", `SELECT count(*)::int AS count FROM "SocialPost"`],
+      ["messages", `SELECT count(*)::int AS count FROM "SocialMessage"`],
+      ["reports", `SELECT count(*)::int AS count FROM "SocialReport" WHERE state IN ('OPEN','REVIEWING')`],
+    ] as const;
+    const values = await Promise.all(queries.map(async ([key, sql]) => {
+      try { const result = await pool.query<{ count: number }>(sql); return [key, Number(result.rows[0]?.count ?? 0)] as const; }
+      catch { return [key, 0] as const; }
+    }));
+    return apiJson({ metrics: Object.fromEntries(values), generatedAt: new Date().toISOString() });
+  }
+  if (method === "GET" && route === "/admin/questions") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const result = await pool.query(`SELECT q.id,q."stableKey",q.domain,q.createdAt,qv.id AS "versionId",qv.version,qv.text,qv."familyKey",qv."catalogStatus",COALESCE(jsonb_agg(jsonb_build_object('id',ao.id,'code',ao.code,'label',ao.label,'position',ao.position) ORDER BY ao.position) FILTER (WHERE ao.id IS NOT NULL),'[]') AS options FROM "Question" q JOIN LATERAL (SELECT * FROM "QuestionVersion" v WHERE v."questionId"=q.id ORDER BY v.version DESC LIMIT 1) qv ON true LEFT JOIN "AnswerOption" ao ON ao."questionVersionId"=qv.id GROUP BY q.id,qv.id ORDER BY q.createdAt DESC LIMIT 100`);
+    return apiJson({ items: result.rows });
+  }
+  if (method === "POST" && route === "/admin/questions") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const body = z.strictObject({ stableKey:z.string().trim().min(1).max(120), familyKey:z.string().trim().min(1).max(120), text:z.string().trim().min(1).max(2000), domain:z.enum(["WORLD","RADAR"]), catalogStatus:z.enum(["TEST_ONLY","CANDIDATE","PROPOSTA_PARA_APROVACAO","APPROVED"]), options:z.array(z.strictObject({ code:z.string().trim().min(1).max(40), label:z.string().trim().min(1).max(300) })).min(2).max(20), reason:z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));
+    const questionId = randomUUID(); const versionId = randomUUID(); const contentHash = createHash("sha256").update(JSON.stringify(body)).digest("hex"); const client = await pool.connect();
+    try { await client.query("BEGIN"); await client.query(`INSERT INTO "Question" (id,"stableKey",domain) VALUES ($1,$2,$3)`, [questionId, body.stableKey, body.domain]); await client.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash","catalogStatus") VALUES ($1,$2,1,$3,$4,$5,$6)`, [versionId, questionId, body.text, body.familyKey, contentHash, body.catalogStatus]); for (const [position, option] of body.options.entries()) await client.query(`INSERT INTO "AnswerOption" (id,"questionVersionId",code,label,position) VALUES ($1,$2,$3,$4,$5)`, [randomUUID(), versionId, option.code, option.label, position]); await client.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'QUESTION_CREATE','Question',$3,clock_timestamp())`, [randomUUID(), actorId, questionId]); await client.query("COMMIT"); return apiJson({ id: questionId, versionId }, 201); } catch (cause) { await client.query("ROLLBACK"); throw cause; } finally { client.release(); }
+  }
+  if (method === "GET" && route === "/admin/messages") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const result = await pool.query(`SELECT id,"senderId","recipientId",body,"createdAt","readAt" FROM "SocialMessage" ORDER BY "createdAt" DESC LIMIT 100`);
+    return apiJson({ items: result.rows });
+  }
+  if (method === "GET" && route === "/admin/reports") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const result = await pool.query(`SELECT id,"reporterId","targetUserId","postId",reason,state,"createdAt","resolvedAt" FROM "SocialReport" ORDER BY "createdAt" DESC LIMIT 100`);
+    return apiJson({ items: result.rows });
+  }
   if (method === "GET" && route === "/social/feed") {
     const result = await pool.query(`SELECT p.id,p."authorId",p."groupId",p."eventId",p.body,p."createdAt",COALESCE((SELECT count(*) FROM "SocialComment" c WHERE c."postId"=p.id),0)::int AS "commentCount",COALESCE((SELECT count(*) FROM "SocialReaction" r WHERE r."postId"=p.id),0)::int AS "reactionCount" FROM "SocialPost" p WHERE p."groupId" IS NULL OR EXISTS (SELECT 1 FROM "SocialGroupMember" m WHERE m."groupId"=p."groupId" AND m."userId"=$1 AND m.state='ACTIVE') ORDER BY p."createdAt" DESC,p.id DESC LIMIT 50`, [actorId]);
     return apiJson({ items: result.rows });

@@ -505,6 +505,10 @@ a {
 .admin-tabs { display:flex; flex-wrap:wrap; gap:var(--space-2); margin:var(--space-5) 0; }
 .admin-form { display:grid; gap:var(--space-4); margin-top:var(--space-5); padding-top:var(--space-5); border-top:1px solid var(--orvok-stone); }
 .admin-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); }
+.admin-metric-list { display:grid; gap:var(--space-4); }
+.admin-metric > div:first-child { display:flex; justify-content:space-between; gap:var(--space-3); margin-bottom:var(--space-2); }
+.admin-meter { height:8px; border-radius:999px; background:var(--orvok-stone); overflow:hidden; }
+.admin-meter i { display:block; height:100%; border-radius:inherit; background:var(--orvok-ink); }
 .admin-timeline { display:grid; gap:var(--space-3); margin:var(--space-4) 0 0; padding:0; list-style:none; }
 .admin-timeline li { display:flex; justify-content:space-between; gap:var(--space-3); padding-bottom:var(--space-3); border-bottom:1px solid var(--orvok-stone); }
 .admin-timeline span { color:var(--orvok-muted); font-size:.875rem; }
