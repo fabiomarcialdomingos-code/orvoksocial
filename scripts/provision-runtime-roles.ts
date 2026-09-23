@@ -71,7 +71,8 @@ try {
 
     await owner.query(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM orvok_auth_runtime,orvok_app_runtime`);
     await owner.query(`GRANT SELECT ON "User" TO orvok_auth_runtime`);
-    await owner.query(`GRANT INSERT (id,"updatedAt") ON "User" TO orvok_auth_runtime`);
+    await owner.query(`GRANT INSERT (id,role,"updatedAt") ON "User" TO orvok_auth_runtime`);
+    await owner.query(`GRANT UPDATE (role,"updatedAt") ON "User" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT,INSERT,UPDATE ON "AuthIdentity","AuthProviderIdentity","AuthSession","AuthToken","AuthRateLimit","AuthMailOutbox","AuditLog" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "User","Question","QuestionVersion","AnswerOption","ConsentGrant",
       "ConsentRevocation","AnswerVersion","RadarInvitation","RadarInvitationAcceptance",
