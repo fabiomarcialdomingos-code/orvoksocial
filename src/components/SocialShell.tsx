@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 type Section = "perfil" | "grupos" | "feed" | "notificacoes" | "admin";
 
@@ -12,7 +12,7 @@ const nav: Array<{ id: Section; label: string; href: string }> = [
   { id: "notificacoes", label: "Notificações", href: "/notificacoes" },
 ];
 
-export function SocialShell({ section = "perfil" }: { section?: Section }) {
+export function SocialShell({ section = "perfil", mathPanel }: { section?: Section; mathPanel?: ReactNode }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [reaction, setReaction] = useState(false);
   const title = section === "perfil" ? "Seu espaço de perspectivas" : nav.find((item) => item.id === section)?.label ?? "Administração";
@@ -38,6 +38,7 @@ export function SocialShell({ section = "perfil" }: { section?: Section }) {
           {section === "feed" && <><section className="social-card"><SectionTitle eyebrow="Perspectivas" title="Feed autenticado" /><p className="muted">O feed mostra somente conteúdo compartilhado com você e ações auditáveis.</p><div className="feed-item"><div className="social-avatar">MR</div><div><strong>Marina Rocha</strong><span className="muted"> · evento de teste · agora</span><p>Uma previsão só faz sentido quando podemos voltar à evidência.</p><div className="feed-actions"><button className="text-link" aria-pressed={reaction} onClick={() => setReaction(!reaction)}>{reaction ? "Reação registrada" : "Reagir"}</button><button className="text-link" onClick={() => setNotice("Comentários serão gravados pela API e auditados.")}>Comentar</button><button className="text-link" onClick={() => setNotice("Denúncias serão encaminhadas à moderação.")}>Denunciar</button></div></div></div></section></>}
           {section === "notificacoes" && <section className="social-card"><SectionTitle eyebrow="Acompanhar" title="Notificações" /><div className="notification-row"><span className="notification-dot" aria-hidden="true" /><div><strong>Convites e consentimentos</strong><p className="muted">As notificações operacionais do Radar estão disponíveis no painel.</p></div><Link href="/radar#notificacoes" className="text-link">Abrir</Link></div><Empty text="Nenhuma notificação social nova." /></section>}
           {section === "admin" && <AdminPanel onNotice={setNotice} />}
+          {section === "perfil" && mathPanel}
           {notice && <p className="form-message" role="status">{notice}</p>}
         </div>
       </div>

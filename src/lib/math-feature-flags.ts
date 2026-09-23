@@ -31,6 +31,27 @@ export function parseMathFeatureFlags(
   return mathFeatureFlagSchema.parse(input);
 }
 
+/** Internal calculations are allowed only in controlled environments. */
+export function assertMathCalculationEnvironment(
+  appEnv: string = String(process.env.APP_ENV ?? "development"),
+  flags: MathFeatureFlags = parseMathFeatureFlags(),
+): void {
+  if (flags.MATH_ENGINE_ENABLED && appEnv === "production") {
+    throw new Error("ORVOK_MATH_ENGINE_PRODUCTION_DISABLED");
+  }
+  if (flags.MATH_ENGINE_ENABLED && !["development", "test", "staging"].includes(appEnv)) {
+    throw new Error("ORVOK_MATH_ENGINE_ENVIRONMENT_UNSUPPORTED");
+  }
+}
+
+export function isInternalMathCalculationEnabled(
+  appEnv: string = String(process.env.APP_ENV ?? "development"),
+  flags: MathFeatureFlags = parseMathFeatureFlags(),
+): boolean {
+  assertMathCalculationEnvironment(appEnv, flags);
+  return flags.MATH_ENGINE_ENABLED;
+}
+
 export function assertMathPublicationDisabled(flags = parseMathFeatureFlags()): void {
   if (
     flags.SCORE_PUBLICATION_ENABLED ||

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertMathCalculationEnvironment,
   assertMathPublicationDisabled,
+  isInternalMathCalculationEnabled,
   isMathPublicationEnabled,
   parseMathFeatureFlags,
 } from "@/lib/math-feature-flags";
@@ -31,5 +33,15 @@ describe("mathematical engine publication gates", () => {
     const flags = parseMathFeatureFlags({ MATH_ENGINE_ENABLED: "true" });
     expect(flags.MATH_ENGINE_ENABLED).toBe(true);
     expect(isMathPublicationEnabled(flags)).toBe(false);
+  });
+
+  it("allows internal calculation only in controlled environments", () => {
+    const enabled = parseMathFeatureFlags({ MATH_ENGINE_ENABLED: "true" });
+    expect(isInternalMathCalculationEnabled("development", enabled)).toBe(true);
+    expect(isInternalMathCalculationEnabled("test", enabled)).toBe(true);
+    expect(isInternalMathCalculationEnabled("staging", enabled)).toBe(true);
+    expect(() => assertMathCalculationEnvironment("production", enabled)).toThrow(
+      "ORVOK_MATH_ENGINE_PRODUCTION_DISABLED",
+    );
   });
 });
