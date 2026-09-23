@@ -1,0 +1,30 @@
+import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
+import { OperationalApiError } from "./response";
+
+export class SocialOperations {
+  constructor(private readonly pool: Pool) {}
+  private async audit(actor: string, action: string, type: string, id: string, reason?: string) {
+    await this.pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,$3,$4,$5,clock_timestamp())`, [randomUUID(), actor, action, type, id]);
+    if (reason) await this.pool.query(`INSERT INTO "AdminAction" (id,"adminId","targetUserId",action,reason) VALUES ($1,$2,$3,$4,$5)`, [randomUUID(), actor, type === "User" ? id : null, action, reason]);
+  }
+  async profile(actor: string, input: { displayName: string; avatarUrl?: string | undefined; bio?: string | undefined }) {
+    const id = actor;
+    await this.pool.query(`INSERT INTO "UserProfile" ("userId","displayName","avatarUrl",bio) VALUES ($1,$2,$3,$4) ON CONFLICT ("userId") DO UPDATE SET "displayName"=EXCLUDED."displayName","avatarUrl"=EXCLUDED."avatarUrl",bio=EXCLUDED.bio,"updatedAt"=clock_timestamp()`, [actor, input.displayName, input.avatarUrl ?? null, input.bio ?? null]);
+    return (await this.pool.query(`SELECT "userId","displayName","avatarUrl",bio,"updatedAt" FROM "UserProfile" WHERE "userId"=$1`, [id])).rows[0];
+  }
+  async createGroup(actor: string, input: { name: string; description?: string | undefined }) {
+    const id = randomUUID(); const c = await this.pool.connect();
+    try { await c.query("BEGIN"); await c.query(`INSERT INTO "SocialGroup" (id,"ownerId",name,description) VALUES ($1,$2,$3,$4)`, [id,actor,input.name,input.description ?? null]); await c.query(`INSERT INTO "SocialGroupMember" ("groupId","userId",role) VALUES ($1,$2,'OWNER')`,[id,actor]); await c.query("COMMIT"); await this.audit(actor,"GROUP_CREATED","SocialGroup",id); return { id }; } catch(e) { await c.query("ROLLBACK"); throw e; } finally { c.release(); }
+  }
+  async inviteGroup(actor: string, groupId: string, inviteeId: string) { const id=randomUUID(); const r=await this.pool.query(`INSERT INTO "SocialGroupInvitation" (id,"groupId","inviterId","inviteeId") SELECT $1,$2,$3,$4 WHERE EXISTS (SELECT 1 FROM "SocialGroupMember" WHERE "groupId"=$2 AND "userId"=$3 AND state='ACTIVE') RETURNING id`,[id,groupId,actor,inviteeId]); if(!r.rowCount) throw new OperationalApiError(403,"FORBIDDEN"); await this.pool.query(`SELECT orvok_social_notify($1,'GROUP_INVITATION',$2)`,[inviteeId,id]); return {id}; }
+  async acceptGroup(actor: string, inviteId: string) { const c=await this.pool.connect(); try { await c.query("BEGIN"); const r=await c.query<{groupId:string}>(`UPDATE "SocialGroupInvitation" SET state='ACCEPTED',"respondedAt"=clock_timestamp() WHERE id=$1 AND "inviteeId"=$2 AND state='PENDING' RETURNING "groupId"`,[inviteId,actor]); if(!r.rowCount) throw new OperationalApiError(404,"NOT_FOUND"); await c.query(`INSERT INTO "SocialGroupMember" ("groupId","userId") VALUES ($1,$2) ON CONFLICT ("groupId","userId") DO UPDATE SET state='ACTIVE'`,[r.rows[0]!.groupId,actor]); await c.query("COMMIT"); return {groupId:r.rows[0]!.groupId}; } catch(e){await c.query("ROLLBACK");throw e;}finally{c.release();} }
+  async createEvent(actor:string, input:{groupId:string;title:string;description?:string | undefined}) { const id=randomUUID(); const r=await this.pool.query(`INSERT INTO "SocialGroupEvent" (id,"groupId","creatorId",title,description) SELECT $1,$2,$3,$4,$5 WHERE EXISTS (SELECT 1 FROM "SocialGroupMember" WHERE "groupId"=$2 AND "userId"=$3 AND state='ACTIVE') RETURNING id`,[id,input.groupId,actor,input.title,input.description??null]);if(!r.rowCount)throw new OperationalApiError(403,"FORBIDDEN");return{id}; }
+  async setEventState(actor:string,id:string,state:"FROZEN"|"RESOLVED_TEST"|"CANCELLED") { const r=await this.pool.query(`UPDATE "SocialGroupEvent" SET state=$1,"resolvedAt"=CASE WHEN $1='RESOLVED_TEST' THEN clock_timestamp() ELSE "resolvedAt" END WHERE id=$2 AND EXISTS (SELECT 1 FROM "SocialGroupMember" WHERE "groupId"="SocialGroupEvent"."groupId" AND "userId"=$3 AND role IN ('OWNER','MODERATOR')) RETURNING id`,[state,id,actor]);if(!r.rowCount)throw new OperationalApiError(403,"FORBIDDEN");return{id}; }
+  async post(actor:string,input:{body:string;groupId?:string | undefined;eventId?:string | undefined}){const id=randomUUID();await this.pool.query(`INSERT INTO "SocialPost" (id,"authorId","groupId","eventId",body) VALUES ($1,$2,$3,$4,$5) RETURNING id`,[id,actor,input.groupId??null,input.eventId??null,input.body]);return{id};}
+  async comment(actor:string,postId:string,body:string){const id=randomUUID();await this.pool.query(`INSERT INTO "SocialComment" (id,"postId","authorId",body) VALUES ($1,$2,$3,$4)`,[id,postId,actor,body]);return{id};}
+  async react(actor:string,postId:string,kind:string){await this.pool.query(`INSERT INTO "SocialReaction" ("postId","userId",kind) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,[postId,actor,kind]);return{postId,kind};}
+  async message(actor:string,recipientId:string,body:string,predictionId?:string){const id=randomUUID();await this.pool.query(`INSERT INTO "SocialMessage" (id,"senderId","recipientId",body,"predictionId") SELECT $1,$2,$3,$4,$5 WHERE NOT EXISTS (SELECT 1 FROM "SocialBlock" WHERE ("blockerId"=$2 AND "blockedId"=$3) OR ("blockerId"=$3 AND "blockedId"=$2))`,[id,actor,recipientId,body,predictionId??null]);const r=await this.pool.query(`SELECT id FROM "SocialMessage" WHERE id=$1`,[id]);if(!r.rowCount)throw new OperationalApiError(403,"FORBIDDEN");return{id};}
+  async block(actor:string,target:string){await this.pool.query(`INSERT INTO "SocialBlock" ("blockerId","blockedId") VALUES ($1,$2) ON CONFLICT DO NOTHING`,[actor,target]);return{blockedId:target};}
+  async report(actor:string,input:{targetUserId?:string | undefined;postId?:string | undefined;reason:string}){const id=randomUUID();await this.pool.query(`INSERT INTO "SocialReport" (id,"reporterId","targetUserId","postId",reason) VALUES ($1,$2,$3,$4,$5)`,[id,actor,input.targetUserId??null,input.postId??null,input.reason]);return{id};}
+}

@@ -472,6 +472,38 @@ a {
 .radar-record div { border-bottom: 1px solid var(--orvok-stone); padding-bottom: var(--space-3); }
 .radar-record dt { font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; }
 .radar-record dd { margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
+.social-main { padding-block: clamp(40px, 6vw, 88px); }
+.social-heading { display:flex; justify-content:space-between; align-items:end; gap:var(--space-6); margin-bottom:var(--space-7); }
+.social-heading h1 { font-size:clamp(42px,5vw,68px); line-height:1; margin:var(--space-3) 0; }
+.social-layout { display:grid; grid-template-columns:220px minmax(0,1fr); gap:var(--space-7); align-items:start; }
+.social-sidebar { display:grid; gap:var(--space-3); position:sticky; top:24px; }
+.social-sidebar > .muted { font-size:13px; }
+.social-avatar { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:var(--orvok-ink); color:var(--orvok-ivory); font-size:12px; letter-spacing:.08em; }
+.social-avatar-large { width:88px; height:88px; font-size:20px; }
+.social-nav { display:grid; gap:4px; margin-top:var(--space-4); }
+.social-nav a { padding:11px 12px; text-decoration:none; border-left:2px solid transparent; }
+.social-nav a:hover,.social-nav a[aria-current="page"] { border-color:var(--orvok-ink); background:var(--orvok-white); }
+.social-content { display:grid; gap:var(--space-5); min-width:0; }
+.social-card { display:grid; gap:var(--space-4); background:var(--orvok-white); border:1px solid var(--orvok-stone); padding:clamp(20px,3vw,36px); min-width:0; }
+.profile-hero { grid-template-columns:auto 1fr auto; align-items:center; }
+.profile-hero h2 { margin:0; font-size:clamp(26px,3vw,40px); }
+.social-section-title { display:grid; gap:var(--space-2); }
+.social-section-title h2 { margin:0; font-size:clamp(28px,3.5vw,44px); }
+.stat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-4); }
+.stat strong { font-family:var(--font-display); font-size:42px; font-weight:400; }
+.stat { min-height:150px; align-content:space-between; }
+.social-empty { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-5); border:1px dashed var(--orvok-stone); color:var(--orvok-graphite); }
+.social-empty p { margin:0; }
+.feed-item { display:grid; grid-template-columns:auto 1fr; gap:var(--space-4); border-top:1px solid var(--orvok-stone); padding-top:var(--space-4); }
+.feed-item p { margin:var(--space-3) 0; }
+.feed-actions { display:flex; flex-wrap:wrap; gap:var(--space-4); }
+.feed-actions button { border:0; background:none; padding:0; }
+.notification-row { display:grid; grid-template-columns:auto 1fr auto; gap:var(--space-3); align-items:center; padding-block:var(--space-3); border-top:1px solid var(--orvok-stone); }
+.notification-dot { width:9px; height:9px; background:var(--orvok-accent); border-radius:50%; }
+.notification-row p { margin:var(--space-2) 0 0; }
+.admin-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-3); }
+.admin-tile { display:grid; gap:var(--space-3); text-align:left; min-height:100px; padding:var(--space-4); border:1px solid var(--orvok-stone); background:var(--orvok-ivory); color:var(--orvok-ink); }
+.admin-tile:hover { border-color:var(--orvok-ink); }
 @media (max-width: 1024px) {
   .container {
     width: min(100% - 64px, 960px);
@@ -535,11 +567,20 @@ a {
     gap: var(--space-7);
   }
   .radar-grid { grid-template-columns: 1fr; }
+  .social-layout { grid-template-columns:1fr; }
+  .social-sidebar { position:static; }
+  .social-nav { display:flex; flex-wrap:wrap; border-bottom:1px solid var(--orvok-stone); padding-bottom:var(--space-3); }
 }
 @media (max-width: 400px) {
   .header-actions > .text-link {
     display: none;
   }
+}
+@media (max-width: 650px) {
+  .social-heading { align-items:start; flex-direction:column; }
+  .profile-hero { grid-template-columns:auto 1fr; }
+  .profile-hero .button { grid-column:1/-1; }
+  .stat-grid,.admin-grid { grid-template-columns:1fr; }
 }
 @media (max-width: 340px) {
   .header-actions > .button { display: none; }
