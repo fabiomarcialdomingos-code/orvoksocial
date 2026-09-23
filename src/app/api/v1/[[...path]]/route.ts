@@ -136,8 +136,8 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     const cursor = pageCursor(request);
     const rows = await pool.query<{
       questionVersionId: string; version: number; text: string; instrumentVersion: string;
-      catalogStatus: string; options: { id: string; label: string; position: number }[];
-    }>(`SELECT qv.id AS "questionVersionId",qv.version,qv.text,qv."instrumentVersion",qv."catalogStatus",
+      catalogStatus: string; language: string; responseType: string; sensitivity: string; effectiveAt: Date; options: { id: string; label: string; position: number }[];
+    }>(`SELECT qv.id AS "questionVersionId",qv.version,qv.text,qv."instrumentVersion",qv."catalogStatus",qv.language,qv."responseType",qv.sensitivity,qv."effectiveAt",
       COALESCE(jsonb_agg(jsonb_build_object('id',ao.id,'label',ao.label,'position',ao.position)
         ORDER BY ao.position) FILTER (WHERE ao.id IS NOT NULL),'[]'::jsonb) AS options
       FROM "QuestionVersion" qv JOIN "Question" q ON q.id=qv."questionId"

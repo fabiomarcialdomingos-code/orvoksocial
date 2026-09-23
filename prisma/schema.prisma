@@ -28,6 +28,7 @@ enum QuestionDomain {
 enum RadarCatalogStatus {
   TEST_ONLY
   CANDIDATE
+  PROPOSTA_PARA_APROVACAO
   APPROVED
 }
 
@@ -264,6 +265,10 @@ model QuestionVersion {
   contentHash       String                     @db.VarChar(64)
   instrumentVersion String                     @default("TEST_ONLY_LEGACY") @db.VarChar(80)
   catalogStatus     RadarCatalogStatus         @default(TEST_ONLY)
+  language          String                     @default("pt-BR") @db.VarChar(16)
+  responseType      String                     @default("SINGLE_CHOICE") @db.VarChar(32)
+  sensitivity       String                     @default("LOW") @db.VarChar(32)
+  effectiveAt       DateTime                   @default(now()) @db.Timestamptz(6)
   approvedAt        DateTime?                  @db.Timestamptz(6)
   createdAt         DateTime                   @default(now()) @db.Timestamptz(6)
   question          Question                   @relation(fields: [questionId], references: [id], onDelete: Restrict)

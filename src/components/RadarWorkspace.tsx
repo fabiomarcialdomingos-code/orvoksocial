@@ -8,7 +8,7 @@ type Question = {
   version: number | string;
   text: string;
   instrumentVersion: string;
-  catalogStatus: "TEST_ONLY";
+  catalogStatus: "TEST_ONLY" | "PROPOSTA_PARA_APROVACAO";
   options: { id: string; label: string; position: number }[];
 };
 type Answer = {
@@ -131,7 +131,7 @@ export function RadarWorkspace() {
         getPaged<{ id: string; purpose: string; revokedAt: string | null }>("/api/v1/radar/consents", signal),
       ]);
       if (signal?.aborted) return;
-      setQuestions(catalog.items.filter((item) => item.catalogStatus === "TEST_ONLY"));
+      setQuestions(catalog.items.filter((item) => item.catalogStatus === "TEST_ONLY" || item.catalogStatus === "PROPOSTA_PARA_APROVACAO"));
       setAnswers(own.items);
       setDashboard(panel);
       setNotifications(alerts.items);
@@ -275,7 +275,7 @@ export function RadarWorkspace() {
 
   return (
     <div className="radar-workspace">
-      <p className="radar-test-banner" role="status"><strong>TEST_ONLY</strong> · Este catálogo usa somente fixtures de teste. Nenhuma pergunta oficial foi publicada.</p>
+      <p className="radar-test-banner" role="status"><strong>TEST_ONLY · Este catálogo</strong> usa fixtures/propostas para homologação controlada. Status candidato: PROPOSTA_PARA_APROVACAO. Nenhuma pergunta oficial foi publicada.</p>
       <nav aria-label="Seções do Radar" className="radar-sections">
         <a href="#painel">Painel</a><a href="#responder">Responder</a><a href="#prever">Prever</a><a href="#notificacoes">Notificações</a><a href="#meus-dados">Meus dados</a>
       </nav>
@@ -300,7 +300,7 @@ export function RadarWorkspace() {
             {noticeState === "loading" && <p role="status">Carregando aviso…</p>}
             {noticeState === "error" && <Empty>O aviso não está disponível. Responder permanece bloqueado.</Empty>}
             {notice && !selfGrantId && <div className="radar-panel"><h3>Aviso de respostas próprias · versão {notice.version}</h3><div className="notice" tabIndex={0}>{notice.content}</div><label className="checkbox-row"><input type="checkbox" checked={confirmNotice} onChange={(event) => setConfirmNotice(event.target.checked)} />Li o aviso acima e consinto, separadamente, em registrar minhas respostas.</label><button type="button" className="button" disabled={!confirmNotice || busy} onClick={() => void submitOwnConsent()}>{busy ? "Aguarde…" : "Confirmar consentimento"}</button></div>}
-            {selfGrantId && <form className="form-stack" onSubmit={(event) => void submitAnswer(event)}><div className="field"><label htmlFor="own-question">Pergunta de teste</label><select id="own-question" name="questionVersionId" required value={ownSelectedQuestion} onChange={(event) => setOwnSelectedQuestion(event.target.value)}><option value="" disabled>Selecione</option>{questions.map((item) => <option key={item.questionVersionId} value={item.questionVersionId}>{item.text} · TEST_ONLY</option>)}</select></div><div className="field"><label htmlFor="own-option">Sua resposta</label><select id="own-option" name="optionId" required key={ownSelectedQuestion} defaultValue=""><option value="" disabled>Selecione uma opção</option>{questions.find((item) => item.questionVersionId === ownSelectedQuestion)?.options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></div><button type="submit" className="button" disabled={busy || !ownSelectedQuestion}>Registrar versão da resposta</button></form>}
+            {selfGrantId && <form className="form-stack" onSubmit={(event) => void submitAnswer(event)}><div className="field"><label htmlFor="own-question">Pergunta de teste</label><select id="own-question" name="questionVersionId" required value={ownSelectedQuestion} onChange={(event) => setOwnSelectedQuestion(event.target.value)}><option value="" disabled>Selecione</option>{questions.map((item) => <option key={item.questionVersionId} value={item.questionVersionId}>{item.text} · {item.catalogStatus}</option>)}</select></div><div className="field"><label htmlFor="own-option">Sua resposta</label><select id="own-option" name="optionId" required key={ownSelectedQuestion} defaultValue=""><option value="" disabled>Selecione uma opção</option>{questions.find((item) => item.questionVersionId === ownSelectedQuestion)?.options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></div><button type="submit" className="button" disabled={busy || !ownSelectedQuestion}>Registrar versão da resposta</button></form>}
             <h3>Respostas registradas</h3>{answers.length ? <ul className="radar-list">{answers.map((item) => <li key={item.id}>Pergunta {questions.find((q) => q.questionVersionId === item.questionVersionId)?.text ?? item.questionVersionId} · versão {item.version} · {dateLabel(item.answeredAt)}</li>)}</ul> : <Empty>Você ainda não respondeu às perguntas de teste.</Empty>}
           </>}
         </section>

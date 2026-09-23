@@ -10,13 +10,17 @@ const question = z.strictObject({
   familyKey: z.string().min(1).max(120), text: z.string().min(1), options: z.array(option).min(2).max(20),
 });
 const manifest = z.strictObject({
-  instrumentVersion: z.string().min(1).max(80), status: z.enum(["TEST_ONLY", "CANDIDATE"]),
+  instrumentVersion: z.string().min(1).max(80), status: z.enum(["TEST_ONLY", "CANDIDATE", "PROPOSTA_PARA_APROVACAO"]),
+  language: z.string().length(5).default("pt-BR"), responseType: z.literal("SINGLE_CHOICE").default("SINGLE_CHOICE"),
+  sensitivity: z.literal("LOW").default("LOW"), effectiveAt: z.string().datetime().default(new Date().toISOString()),
   questions: z.array(question).min(1).max(100),
 });
 
 const path = process.argv[2];
 if (!path) throw new Error("MANIFEST_PATH_REQUIRED");
 const data = manifest.parse(JSON.parse(await readFile(path, "utf8")));
+if (data.status === "PROPOSTA_PARA_APROVACAO" && data.questions.some((item) => item.options.length !== 4))
+  throw new Error("PROPOSAL_REQUIRES_FOUR_OPTIONS");
 if (new Set(data.questions.map((item) => item.stableKey)).size !== data.questions.length)
   throw new Error("DUPLICATE_STABLE_KEY");
 for (const item of data.questions) {
@@ -26,7 +30,7 @@ for (const item of data.questions) {
 }
 const url = process.env.DB_OWNER_URL ?? process.env.DATABASE_URL;
 if (!url) throw new Error("DB_OWNER_URL_REQUIRED");
-if (data.status === "TEST_ONLY") {
+if (data.status === "TEST_ONLY" || data.status === "PROPOSTA_PARA_APROVACAO") {
   if (process.env.ORVOK_ALLOW_TEST_SEED !== "1" ||
       !/(_dev|_test)$/.test(decodeURIComponent(new URL(url).pathname.slice(1))) ||
       process.env.APP_ENV === "staging" || process.env.APP_ENV === "production")
@@ -39,7 +43,7 @@ const client = await pool.connect();
 try {
   await client.query("BEGIN");
   for (const item of data.questions) {
-    const contentHash = createHash("sha256").update(JSON.stringify({ instrumentVersion: data.instrumentVersion, ...item })).digest("hex");
+    const contentHash = createHash("sha256").update(JSON.stringify({ instrumentVersion: data.instrumentVersion, language: data.language, responseType: data.responseType, sensitivity: data.sensitivity, effectiveAt: data.effectiveAt, ...item })).digest("hex");
     const existing = await client.query<{ id: string; domain: string }>(`SELECT id,domain FROM "Question" WHERE "stableKey"=$1 FOR UPDATE`, [item.stableKey]);
     if (existing.rows[0] && existing.rows[0].domain !== "RADAR") throw new Error("QUESTION_DOMAIN_CONFLICT");
     const questionId = existing.rows[0]?.id ?? randomUUID();
@@ -59,9 +63,9 @@ try {
       continue;
     }
     const versionId = randomUUID();
-    await client.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash","instrumentVersion","catalogStatus")
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::"RadarCatalogStatus")`,
-      [versionId, questionId, item.version, item.text, item.familyKey, contentHash, data.instrumentVersion, data.status]);
+    await client.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash","instrumentVersion","catalogStatus","language","responseType","sensitivity","effectiveAt")
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::"RadarCatalogStatus",$9,$10,$11,$12)`,
+      [versionId, questionId, item.version, item.text, item.familyKey, contentHash, data.instrumentVersion, data.status, data.language, data.responseType, data.sensitivity, data.effectiveAt]);
     for (const value of item.options) await client.query(`INSERT INTO "AnswerOption" (id,"questionVersionId",code,label,position)
       VALUES ($1,$2,$3,$4,$5)`, [randomUUID(), versionId, value.code, value.label, value.position]);
   }

@@ -1,3 +1,4 @@
 import { SiteHeader } from "../../components/SiteHeader";
 import { CommandCenter } from "../../components/CommandCenter";
-export default function AdminPage() { return <><SiteHeader /><CommandCenter /></>; }
+import { CatalogStatusPanel } from "../../components/CatalogStatusPanel";
+export default function AdminPage() { return <><SiteHeader /><div className="container social-main"><CatalogStatusPanel /></div><CommandCenter /></>; }
