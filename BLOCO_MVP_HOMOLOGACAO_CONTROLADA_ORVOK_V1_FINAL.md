@@ -69,6 +69,6 @@ Liberar somente quando H1–H4 do pacote forem executados em banco isolado, com 
 
 ## 10. Commit e recomendação
 
-Commit anterior do núcleo social: `d3cb566601252956c43c73266ef7ef684d61b052`. O commit desta entrega será registrado após o hook final de lint, typecheck e testes.
+Commit anterior do núcleo social: `d3cb566601252956c43c73266ef7ef684d61b052`. Commit desta entrega: `6f0f481acf80eded6fcdef8eb9becea2711ee40a`.
 
 Recomendação: aceitar o pacote como preparação técnica de homologação local controlada. Não liberar usuários reais. O próximo bloco deve fechar os testes E2E dos novos domínios, tornar o Command Center operacional com reautorização/MFA, configurar CI e infraestrutura hospedada e obter as aprovações jurídica, documental e de resolução antes de qualquer abertura.
