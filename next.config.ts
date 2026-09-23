@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Playwright exercises the local server through the explicit loopback host.
+  // Allow that development origin so Next's HMR/client boundary does not
+  // suppress hydration during authenticated E2E runs.
+  allowedDevOrigins: ["127.0.0.1"],
   async headers() {
     const common = [
       { key: "X-Content-Type-Options", value: "nosniff" },
