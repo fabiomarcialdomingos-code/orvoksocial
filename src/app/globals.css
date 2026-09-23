@@ -291,10 +291,12 @@ a {
 .form-stack {
   display: grid;
   gap: var(--space-5);
+  width: 100%;
 }
 .field {
   display: grid;
   gap: var(--space-2);
+  min-width: 0;
 }
 .field label {
   font-size: 14px;
@@ -308,6 +310,20 @@ a {
   border: 1px solid var(--orvok-graphite);
   border-radius: 2px;
   color: var(--orvok-ink);
+  display: block;
+  line-height: 1.4;
+}
+.field textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: 10px 14px;
+  background: var(--orvok-white);
+  border: 1px solid var(--orvok-graphite);
+  border-radius: 2px;
+  color: var(--orvok-ink);
+  font: inherit;
+  line-height: 1.4;
+  resize: vertical;
 }
 .field input[aria-invalid="true"] {
   border-width: 2px;
@@ -333,6 +349,11 @@ a {
   flex-wrap: wrap;
   gap: var(--space-5);
 }
+.auth-card .form-stack { gap: 28px; }
+.auth-card .field { gap: 10px; }
+.auth-card .field-hint { display: block; line-height: 1.45; }
+.auth-provider-actions { display: grid; gap: 14px; margin-top: 28px; }
+.auth-provider-actions .button { width: 100%; }
 .form-message {
   border-left: 3px solid var(--orvok-ink);
   padding: 12px 16px;

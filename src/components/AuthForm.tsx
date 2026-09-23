@@ -83,18 +83,34 @@ export function AuthForm({ mode }: { mode: Mode }) {
         body: JSON.stringify(body),
       });
       if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { code?: string } | null;
+        if (payload?.code === "GOOGLE_ACCOUNT_EXISTS") {
+          setMessage({ kind: "error", text: "Esta conta foi criada com Google. Entre com Google para continuar ou defina uma senha nas configurações da conta." });
+          return;
+        }
+        const errorText: Record<string, string> = {
+          INVALID_CREDENTIALS: "E-mail ou senha inválidos.",
+          INVALID_INPUT: "Confira o e-mail e a senha informados.",
+          ACCOUNT_DISABLED: "Esta conta está desativada.",
+          RATE_LIMITED: "Muitas tentativas. Aguarde e tente novamente.",
+          ORIGIN_REJECTED: "A sessão expirou. Atualize a página e tente novamente.",
+        };
         setMessage({
           kind: "error",
           text:
             response.status === 429
-              ? "Muitas tentativas. Aguarde e tente novamente."
+              ? errorText[payload?.code ?? ""] ?? "Muitas tentativas. Aguarde e tente novamente."
               : "Não foi possível concluir esta ação. Confira os dados e tente novamente.",
         });
         return;
       }
       setMessage({ kind: "success", text: config[mode].success });
       if (needsToken && tokenInputRef.current) tokenInputRef.current.value = "";
-      if (mode === "login") router.push("/radar");
+      if (mode === "login") {
+        const requested = new URLSearchParams(window.location.search).get("returnTo");
+        const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/radar";
+        router.push(destination);
+      }
     } catch {
       setMessage({
         kind: "error",
@@ -183,7 +199,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {(mode === "login" || mode === "register") && (
         <div className="auth-provider-actions">
           <span className="muted">ou</span>
-          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent("/radar")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
+          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent((typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnTo")) || "/radar")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
             {mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}
           </a>
         </div>

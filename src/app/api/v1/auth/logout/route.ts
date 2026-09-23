@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { AuthService } from "@/lib/auth/service";
 import { authEndpoint, empty } from "@/lib/auth/http";
 import { authPool, clearSessionCookie, readSessionCookie } from "@/lib/auth/session";
@@ -12,4 +13,3 @@ export async function POST(request: Request) {
     return response;
   });
 }
-import { z } from "zod";

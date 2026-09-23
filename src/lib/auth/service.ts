@@ -108,10 +108,11 @@ export class AuthService {
     const passwordHash = await hashPassword(password);
     await this.tx(async (client) => {
       await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`auth-register:${email}`]);
-      const existing = await client.query<{ userId: string; verifiedAt: Date | null }>(
-        `SELECT "userId","verifiedAt" FROM "AuthIdentity" WHERE email=$1`, [email],
+      const existing = await client.query<{ userId: string; verifiedAt: Date | null; passwordHash: string | null }>(
+        `SELECT "userId","verifiedAt","passwordHash" FROM "AuthIdentity" WHERE email=$1`, [email],
       );
       if (existing.rows[0]) {
+        if (!existing.rows[0].passwordHash) throw new AuthError("GOOGLE_ACCOUNT_EXISTS", 409);
         // Keep the public response identical for known and unknown addresses.
         await this.audit(client, existing.rows[0].userId, "AUTH_REGISTER_DUPLICATE");
         return;
