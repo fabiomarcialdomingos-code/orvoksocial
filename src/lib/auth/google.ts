@@ -22,9 +22,9 @@ function cookieHeader(value: string, maxAge: number): string {
   return COOKIE + "=" + value + "; HttpOnly; SameSite=Lax; Path=/; Max-Age=" + maxAge + secure;
 }
 
-export function googleStartResponse(returnTo = "/convites"): Response {
+export function googleStartResponse(returnTo = "/radar"): Response {
   const { clientId, redirectUri, authSecret } = config();
-  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/convites";
+  const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/radar";
   const context = { state: randomBytes(24).toString("base64url"), nonce: randomBytes(24).toString("base64url"), returnTo: safeReturn, exp: Date.now() + 10 * 60_000 };
   const payload = Buffer.from(JSON.stringify(context)).toString("base64url");
   const value = payload + "." + sign(payload, authSecret);

@@ -95,7 +95,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
       setMessage({ kind: "success", text: config[mode].success });
       if (needsToken && tokenInputRef.current) tokenInputRef.current.value = "";
-      if (mode === "login") router.push("/convites");
+      if (mode === "login") router.push("/radar");
     } catch {
       setMessage({
         kind: "error",
@@ -184,7 +184,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {(mode === "login" || mode === "register") && (
         <div className="auth-provider-actions">
           <span className="muted">ou</span>
-          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent("/convites")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
+          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent("/radar")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
             {mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}
           </a>
         </div>

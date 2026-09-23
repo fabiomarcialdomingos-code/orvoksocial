@@ -1,6 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { OrvokLogo } from "./brand/OrvokLogo";
 export function SiteHeader() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/v1/auth/session", { credentials: "same-origin", cache: "no-store" })
+      .then((response) => response.ok ? response.json() as Promise<{ role?: string }> : null)
+      .then((session) => { if (active) setIsAdmin(session?.role === "ADMIN"); })
+      .catch(() => { if (active) setIsAdmin(false); });
+    return () => { active = false; };
+  }, []);
   return (
     <header className="site-header">
       <div className="container header-inner">
@@ -25,11 +37,13 @@ export function SiteHeader() {
               <Link href="/#sobre">Sobre</Link>
               <Link href="/convites">Convites</Link>
               <Link href="/radar">Radar</Link>
+              {isAdmin && <Link href="/admin">Admin</Link>}
               <Link href="/entrar">Entrar</Link>
               <Link href="/cadastro">Criar conta</Link>
             </nav>
           </details>
           <Link href="/radar" className="text-link">Radar</Link>
+          {isAdmin && <Link href="/admin" className="text-link">Admin</Link>}
           <Link href="/entrar" className="text-link">
             Entrar
           </Link>
