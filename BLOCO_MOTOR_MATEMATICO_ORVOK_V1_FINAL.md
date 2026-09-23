@@ -48,7 +48,7 @@ Os artefatos matemáticos são inacessíveis ao papel runtime e não são retorn
 
 Arquivos principais: `src/lib/math-engine.ts`, `src/lib/math/engine.ts`, `src/lib/math-feature-flags.ts`, `prisma/migrations/20260923050000_math_engine_artifacts/migration.sql`, testes unitários/adversariais, contratos, runbook, variáveis `.env.*.example` e rastreabilidade.
 
-Commit anterior do MVP: `6f0f481acf80eded6fcdef8eb9becea2711ee40a`; relatório anterior: `70bad480c07e6c119a551bf612652e2939ece5c9`. O commit deste bloco será registrado após o hook final.
+Commit anterior do MVP: `6f0f481acf80eded6fcdef8eb9becea2711ee40a`; relatório anterior: `70bad480c07e6c119a551bf612652e2939ece5c9`. Commit de implementação e testes deste bloco: `dd34d8a409317923d68b1a01bba65dcc2da8e4f8`.
 
 ## Recomendação
 
