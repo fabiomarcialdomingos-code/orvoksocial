@@ -72,7 +72,7 @@ try {
     await owner.query(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM orvok_auth_runtime,orvok_app_runtime`);
     await owner.query(`GRANT SELECT ON "User" TO orvok_auth_runtime`);
     await owner.query(`GRANT INSERT (id,"updatedAt") ON "User" TO orvok_auth_runtime`);
-    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "AuthIdentity","AuthSession","AuthToken","AuthRateLimit","AuthMailOutbox","AuditLog" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "AuthIdentity","AuthProviderIdentity","AuthSession","AuthToken","AuthRateLimit","AuthMailOutbox","AuditLog" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "User","Question","QuestionVersion","AnswerOption","ConsentGrant",
       "ConsentRevocation","AnswerVersion","RadarInvitation","RadarInvitationAcceptance",
       "SocialPredictionSnapshot","ConsentNotice","ConsentNoticePresentation","DataRequest",
@@ -83,6 +83,9 @@ try {
     // Operational request/export audit is append-only. Radar audit rows are
     // emitted by the privileged functions; no Radar table DML is granted.
     await owner.query(`GRANT INSERT ON "AuditLog" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT ON "MathAlgorithmVersion","MathCalculationRun","MathConsensusSnapshot","MathScoreSnapshot","MathRadarSnapshot","MathRankingSnapshot","MathReputationSnapshot" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "MathDomainEvent" TO orvok_app_runtime`);
+    await owner.query(`GRANT INSERT ON "MathProcessingJob" TO orvok_app_runtime`);
     await owner.query(`REVOKE ALL ON FUNCTION
       orvok_radar_invite(text,uuid),orvok_radar_accept(text,uuid),
       orvok_radar_present_notice(text,"ConsentPurpose"),
