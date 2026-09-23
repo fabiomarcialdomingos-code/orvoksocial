@@ -17,6 +17,10 @@ const tokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const DUMMY_HASH = "scrypt-v1$fixed-dummy-salt$Uk-txZBBzDoIbfIppKjaPBY-hZwxQfJ0TM7UAQmhe1yM5nAry6tPkqjgA4VZkG1w3oH2n9UJY2HiDD9TmrUg2g";
 const SESSION_SECONDS = 7 * 24 * 60 * 60;
 
+function isConfiguredAdminEmail(email: string): boolean {
+  return process.env.ADMIN_EMAIL?.trim().toLowerCase() === email;
+}
+
 export const registrationSchema = z.strictObject({ email: emailSchema, password: passwordSchema });
 export const loginSchema = registrationSchema;
 export const emailRequestSchema = z.strictObject({ email: emailSchema });
@@ -113,7 +117,10 @@ export class AuthService {
         return;
       }
       const userId = randomUUID();
-      await client.query(`INSERT INTO "User" (id,"updatedAt") VALUES ($1,clock_timestamp())`, [userId]);
+      await client.query(`INSERT INTO "User" (id,role,"updatedAt") VALUES ($1,$2,clock_timestamp())`, [
+        userId,
+        isConfiguredAdminEmail(email) ? "ADMIN" : "USER",
+      ]);
       await client.query(
         `INSERT INTO "AuthIdentity" ("userId",email,"passwordHash") VALUES ($1,$2,$3)`,
         [userId, email, passwordHash],
@@ -186,9 +193,14 @@ export class AuthService {
           linked = true;
         } else {
           userId = randomUUID();
-          await client.query(`INSERT INTO "User" (id,"updatedAt") VALUES ($1,clock_timestamp())`, [userId]);
+          await client.query(`INSERT INTO "User" (id,role,"updatedAt") VALUES ($1,$2,clock_timestamp())`, [
+            userId,
+            isConfiguredAdminEmail(email) ? "ADMIN" : "USER",
+          ]);
           await client.query(`INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt") VALUES ($1,$2,NULL,clock_timestamp())`, [userId, email]);
         }
+        if (isConfiguredAdminEmail(email))
+          await client.query(`UPDATE "User" SET role='ADMIN',"updatedAt"=clock_timestamp() WHERE id=$1`, [userId]);
         await client.query(`INSERT INTO "AuthProviderIdentity" (id,"userId",provider,subject,email) VALUES ($1,$2,'google',$3,$4)`, [randomUUID(), userId, claims.subject, email]);
         await this.audit(client, userId, linked ? "AUTH_GOOGLE_LINKED" : "AUTH_GOOGLE_REGISTERED");
       }
