@@ -2,6 +2,8 @@
 
 Estado: contrato técnico para testes controlados. Os avisos aprovados e o catálogo Radar oficial não são semeados. Fontes: REV02 canônica, `DECISOES_CONTRATOS_FASE_1_V1.md` D07–D13, matriz de acesso operacional e invariantes da Fase 1. Não há Score, consenso, RadarScore ou publicação.
 
+O contrato interno do motor está em [`CONTRATOS_MOTOR_MATEMATICO_V1.md`](CONTRATOS_MOTOR_MATEMATICO_V1.md). Cálculos privados podem ser persistidos sob flag própria, mas nenhum endpoint operacional publica métricas, fórmulas, parâmetros, resultados individuais, ranking ou reputação enquanto os gates permanecerem fechados.
+
 Todas as respostas são JSON UTF-8 com `schemaVersion: "1"` e `Cache-Control: no-store`. Todas as rotas exigem sessão verificada e conta `ACTIVE`. Mutações exigem `Content-Type: application/json`, `Origin` da aplicação e `Idempotency-Key` (16–128 caracteres ASCII seguros). GETs são limitados a 20 itens, com cursor opaco `nextCursor`; o cliente o envia em `?cursor=`. Erro: `{code,message,requestId}`; 400 entrada inválida, 401 sessão ausente/inválida, 403 acesso ou Origin negado, 404 objeto invisível, 409 conflito/replay pendente, 422 invariante, 503 aviso indisponível, 500 erro interno. Sem detalhes internos de banco no corpo.
 
 Limite técnico inicial `API-RATE-01`: 20 convites e 60 outras mutações por ator/rota por minuto, ajustável por `ORVOK_INVITE_RATE_PER_MIN` e `ORVOK_API_MUTATION_RATE_PER_MIN`. Exceder retorna 429. Esses números são configuração operacional inicial, não limiar de produto congelado.

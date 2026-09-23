@@ -6,4 +6,6 @@ Os operadores devem acompanhar por janela de tempo, em agregados sem identificad
 
 `corepack pnpm radar:metrics [horas]` emite agregados JSON de eventos Radar e estados da inbox, usando somente a URL administrativa no processo do operador. O valor padrão é 24 horas e o máximo é 720; o script não retorna IDs de pessoas ou conteúdo das respostas. O monitor hospedado e seus alertas ainda dependem da infraestrutura de implantação.
 
+Para o motor matemático, acompanhe somente duração, erro e quantidade agregada por `engineVersion`, estado de evidência, fila de reprocessamento, correções pendentes e divergências de checksum. As flags de publicação estão centralizadas em `src/lib/math-feature-flags.ts`; todos os gates de publicação, ranking, reputação matemática, catálogo oficial e homologação real permanecem fechados. Uma tentativa de abri-los deve falhar no bootstrap e gerar alerta operacional sem expor a configuração completa.
+
 Antes de qualquer ambiente hospedado, definir destino de logs, acesso restrito, política jurídica de retenção e procedimento de incidente. O repositório não tem remoto Git configurado nesta etapa; por isso, a execução do CI remoto e dos alertas hospedados não pode ser atestada localmente.

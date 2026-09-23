@@ -70,3 +70,13 @@ Após a Fase 0, uma referência adicional foi encontrada. A análise inicial est
 | F1S-04        | R32/R33         | AuditLog e EvidenceAssessment com enum oficial             | três estados, trilha append-only                        | Preparado; nenhum cálculo autorizado  |
 
 Esta é **preparação parcial da Fase 1**, não conclusão da fase inteira do Blueprint. Scoring, consenso, RadarScore, γ, shrinkage, ranking e telas continuam sem autorização. A política LGPD segue técnica provisória e o catálogo das 12 perguntas ainda não foi fornecido.
+
+## Motor Matemático V1 — rastreabilidade adicional
+
+| ID | Requisito | Implementação/contrato | Estado |
+|---|---|---|---|
+| MATH-01 | Versionar engine, instrumento, baseline, parâmetros e snapshots | `docs/CONTRATOS_MOTOR_MATEMATICO_V1.md`; persistência interna versionada | Preparado; validar com motor |
+| MATH-02 | Manter publicação, ranking, reputação e catálogo oficial desligados | `src/lib/math-feature-flags.ts`; `.env.*.example` | Implementado |
+| MATH-03 | Estados oficiais de evidência | Contrato MATH-01, sem publicação automática | Implementado como contrato; validar com testes matemáticos |
+| MATH-04 | Privacidade e ausência de vazamento em logs/APIs | `docs/MOTOR_MATEMATICO_OPERACAO_V1.md` e contratos operacionais | Implementado como política; auditoria final pendente |
+| MATH-05 | Reprocessamento e correção sem mutação histórica | Contrato do motor e trilha AuditLog | Dependente do motor |
