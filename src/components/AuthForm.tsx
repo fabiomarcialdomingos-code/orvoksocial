@@ -14,8 +14,7 @@ const config: Record<
     title: "Criar conta",
     path: "/register",
     action: "Criar conta",
-    success:
-      "Se o cadastro puder prosseguir, você receberá as próximas instruções no e-mail informado.",
+    success: "Conta criada. Você já pode entrar com seu e-mail e senha.",
   },
   login: {
     title: "Entrar",

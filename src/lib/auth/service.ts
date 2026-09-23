@@ -122,10 +122,9 @@ export class AuthService {
         isConfiguredAdminEmail(email) ? "ADMIN" : "USER",
       ]);
       await client.query(
-        `INSERT INTO "AuthIdentity" ("userId",email,"passwordHash") VALUES ($1,$2,$3)`,
+        `INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt") VALUES ($1,$2,$3,clock_timestamp())`,
         [userId, email, passwordHash],
       );
-      await this.queueMail(client, userId, email, "VERIFY_EMAIL", 60 * 24);
       await this.audit(client, userId, "AUTH_REGISTERED");
     });
   }
