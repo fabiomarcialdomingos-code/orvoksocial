@@ -23,6 +23,7 @@ const ids = {
 const predictorHash = randomBytes(32).toString("hex");
 const targetHash = randomBytes(32).toString("hex");
 let created = false;
+let testCatalogWasEnabled = false;
 const lock = await owner.connect();
 let pendingPrediction: Promise<unknown> | undefined;
 try {
@@ -42,6 +43,17 @@ try {
     ORDER BY qv.id LIMIT 1`);
   const q = fixture.rows[0];
   if (!q) throw new Error("TEST_ONLY_CATALOG_AND_NOTICES_REQUIRED");
+
+  // This verifier uses TEST_ONLY catalog and notices. Enable the explicit
+  // local gate for the duration of the rehearsal and restore it in finally;
+  // production and ordinary runtime roles cannot change this control.
+  const gate = await owner.query<{ allowTestOnly: boolean }>(
+    `SELECT "allowTestOnly" FROM "RadarCatalogControl" WHERE id=1`,
+  );
+  testCatalogWasEnabled = gate.rows[0]?.allowTestOnly === true;
+  if (!testCatalogWasEnabled) {
+    await owner.query(`UPDATE "RadarCatalogControl" SET "allowTestOnly"=true,"updatedAt"=clock_timestamp() WHERE id=1`);
+  }
 
   await owner.query(`INSERT INTO "User" (id,"updatedAt") VALUES ($1,clock_timestamp()),($2,clock_timestamp())`, [predictor, target]);
   created = true;
@@ -159,6 +171,9 @@ try {
     await owner.query(`DELETE FROM "AuthSession" WHERE "userId" IN ($1,$2)`, [predictor,target]);
     await owner.query(`DELETE FROM "AuthIdentity" WHERE "userId" IN ($1,$2)`, [predictor,target]);
     await owner.query(`DELETE FROM "User" WHERE id IN ($1,$2)`, [predictor,target]);
+  }
+  if (!testCatalogWasEnabled) {
+    await owner.query(`UPDATE "RadarCatalogControl" SET "allowTestOnly"=false,"updatedAt"=clock_timestamp() WHERE id=1`);
   }
   await Promise.all([owner.end(),app.end()]);
 }

@@ -60,7 +60,7 @@ try {
   try {
     const after = await restored.query(integrityCounts);
     if (JSON.stringify(before.rows[0]) !== JSON.stringify(after.rows[0]))
-      throw new Error("RESTORE_COUNTS_MISMATCH");
+      throw new Error(`RESTORE_COUNTS_MISMATCH:${JSON.stringify({ before: before.rows[0], after: after.rows[0] })}`);
     console.log(`backup/restore rehearsal: passed (${after.rows[0]?.migrations} migrations, Radar record counts preserved)`);
   } finally {
     await restored.end();

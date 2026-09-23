@@ -389,9 +389,14 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     return apiJson({ items: result.rows });
   }
   if (method === "GET" && route === "/world/events") {
-    const cursor = new URL(request.url).searchParams.get("cursor");
+    const params = new URL(request.url).searchParams;
+    const cursor = params.get("cursor");
     const decoded = cursor ? uuid.parse(Buffer.from(cursor,"base64url").toString("utf8")) : null;
-    return apiJson(await world.listEvents(actorId, decoded));
+    const category = params.get("category");
+    const status = params.get("status");
+    if (category && !/^[A-Za-z0-9_-]{1,80}$/.test(category)) throw new OperationalApiError(400, "VALIDATION_ERROR");
+    if (status && !/^[A-Z_]{1,16}$/.test(status)) throw new OperationalApiError(400, "VALIDATION_ERROR");
+    return apiJson(await world.listEvents(actorId, decoded, { category, status }));
   }
   if (method === "POST" && route === "/world/events") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
