@@ -34,6 +34,8 @@
     "db:verify:radar-concurrency": "tsx scripts/verify-radar-concurrency.ts",
     "db:verify:radar-hardening": "tsx scripts/verify-radar-hardening.ts",
     "radar:metrics": "tsx scripts/radar-metrics.ts",
+    "math:worker": "tsx scripts/math-engine-worker.ts",
+    "db:verify:math-persistence": "tsx scripts/verify-math-persistence.ts",
     "db:provision:local": "tsx scripts/provision-runtime-roles.ts --local",
     "db:provision:reapply": "tsx scripts/provision-runtime-roles.ts --reapply-local",
     "auth:mail-worker": "tsx scripts/auth-mail-worker.ts"

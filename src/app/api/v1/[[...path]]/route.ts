@@ -12,6 +12,8 @@ import { enforceOperationalRateLimit } from "@/lib/api/rate-limit";
 import { apiError, apiJson, OperationalApiError } from "@/lib/api/response";
 import { SocialOperations } from "@/lib/api/social-operations";
 import { WorldOperations } from "@/lib/api/world-operations";
+import { MathPersistence } from "@/lib/math/persistence";
+import { isInternalMathCalculationEnabled } from "@/lib/math-feature-flags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,8 +99,10 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   const rights = new DataRightsService(pool);
   const social = new SocialOperations(pool);
   const world = new WorldOperations(pool);
+  const math = new MathPersistence(pool);
   void social;
   const route = `/${path.join("/")}`;
+  if (route.startsWith("/math/") && !isInternalMathCalculationEnabled()) throw new OperationalApiError(503, "RULE_VIOLATION");
   if (method === "POST") await enforceOperationalRateLimit(pool, route);
 
   const isRevocation = method === "POST" && path.length === 4 && path[0] === "radar" &&
@@ -199,6 +203,49 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
       hasMore: { made: made.rows.length > 20, received: received.rows.length > 20,
         pendingInvitations: pending.rows.length > 20, matches: matches.rows.length > 20 },
     });
+  }
+
+  if (method === "GET" && route === "/math/score") {
+    const subjectKey = new URL(request.url).searchParams.get("subjectKey") ?? actorId;
+    requireAccess(subjectKey === actorId || role === "ADMIN" || role === "MODERATOR");
+    const result = await pool.query(`SELECT "subjectKey",score,baseline,gain,"nEff",margin,state,"snapshotHash","calculationRunId","createdAt" FROM "MathScoreSnapshot" WHERE "subjectKey"=$1 ORDER BY "createdAt" DESC LIMIT 1`, [subjectKey]);
+    return apiJson({ item: result.rows[0] ?? null, publication: "INTERNAL_ONLY" });
+  }
+  if (method === "GET" && route === "/math/radar") {
+    const params = new URL(request.url).searchParams;
+    const predictorId = params.get("predictorId") ?? actorId;
+    const targetId = params.get("targetId");
+    requireAccess((predictorId === actorId || targetId === actorId) || role === "ADMIN" || role === "MODERATOR");
+    const result = await pool.query(`SELECT "predictorId","targetId","nEff","rA","rB","daPreliminary",alpha,beta,gamma,"gammaCi95",state,"snapshotHash","calculationRunId","createdAt" FROM "MathRadarSnapshot" WHERE "predictorId"=$1 AND ($2::uuid IS NULL OR "targetId"=$2) ORDER BY "createdAt" DESC LIMIT 20`, [predictorId, targetId]);
+    return apiJson({ items: result.rows, publication: "INTERNAL_ONLY" });
+  }
+  if (method === "GET" && (route === "/math/ranking" || route === "/math/reputation" || route === "/math/history")) {
+    const subjectKey = new URL(request.url).searchParams.get("subjectKey") ?? actorId;
+    requireAccess(subjectKey === actorId || role === "ADMIN" || role === "MODERATOR");
+    if (route === "/math/ranking") {
+      const result = await pool.query(`SELECT "subjectKey",rank,category,value,"calculationRunId","createdAt" FROM "MathRankingSnapshot" WHERE "subjectKey"=$1 ORDER BY "createdAt" DESC LIMIT 50`, [subjectKey]);
+      return apiJson({ items: result.rows, publication: "INTERNAL_ONLY" });
+    }
+    if (route === "/math/reputation") {
+      const result = await pool.query(`SELECT "subjectKey",value,"evidenceState","sourceSnapshotIds","calculationRunId","createdAt" FROM "MathReputationSnapshot" WHERE "subjectKey"=$1 ORDER BY "createdAt" DESC LIMIT 1`, [subjectKey]);
+      return apiJson({ item: result.rows[0] ?? null, publication: "INTERNAL_ONLY" });
+    }
+    const result = await pool.query(`SELECT id,domain,"asOf",status,"inputManifestHash","parameterSnapshot","createdAt" FROM "MathCalculationRun" WHERE "createdAt">clock_timestamp()-interval '90 days' ORDER BY "createdAt" DESC LIMIT 50`);
+    return apiJson({ items: result.rows, publication: "INTERNAL_ONLY" });
+  }
+  if (method === "POST" && route === "/math/jobs") {
+    requireAccess(role === "ADMIN" || role === "MODERATOR");
+    const body = z.strictObject({ kind: z.enum(["WORLD", "CONSENSUS", "RADAR"]), payload: z.record(z.string(), z.unknown()), idempotencyKey: z.string().min(8).max(180) }).parse(await readJsonBody(request));
+    const result = await math.enqueue(body.kind, body.payload as never, body.idempotencyKey);
+    await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'MATH_JOB_ENQUEUED','MathProcessingJob',$3,clock_timestamp())`, [randomUUID(), actorId, result.id]);
+    return apiJson(result, 202);
+  }
+  if (method === "POST" && route === "/math/reprocess") {
+    requireAccess(role === "ADMIN" || role === "MODERATOR");
+    const body = z.strictObject({ sourceKey: z.string().min(1).max(180), kind: z.enum(["WORLD", "CONSENSUS", "RADAR"]), payload: z.record(z.string(), z.unknown()), reason: z.string().trim().min(1).max(500) }).parse(await readJsonBody(request));
+    const result = await math.requestReprocess(body.sourceKey, body.kind, body.payload as never, actorId, body.reason);
+    await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'MATH_REPROCESS_REQUESTED','MathReprocessRequest',$3,clock_timestamp())`, [randomUUID(), actorId, result.requestId]);
+    return apiJson(result, 202);
   }
   if (method === "POST" && route === "/radar/invitations") {
     const body = inviteBody.parse(await readJsonBody(request));
