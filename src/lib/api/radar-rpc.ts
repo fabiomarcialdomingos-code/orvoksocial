@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { enqueueRadarSnapshot, publishMathEventAtomic } from "../math/orchestration";
 
 // Only these server-side calls may create Radar records with APP_DATABASE_URL.
 // The database derives the actor from an active, verified AuthSession; an
@@ -10,14 +11,14 @@ export class RadarRpc {
     const result = await this.pool.query<{ id: string }>(
       `SELECT orvok_radar_invite($1,$2) AS id`, [this.sessionHash, targetId],
     );
-    return result.rows[0]!.id;
+    const id = result.rows[0]!.id; await publishMathEventAtomic(this.pool,{eventType:"RADAR_INVITATION_CREATED",aggregateType:"RadarInvitation",aggregateId:id,payload:{targetId},idempotencyKey:"radar-invite:"+id}); return id;
   }
 
   async accept(invitationId: string): Promise<string> {
     const result = await this.pool.query<{ id: string }>(
       `SELECT orvok_radar_accept($1,$2) AS id`, [this.sessionHash, invitationId],
     );
-    return result.rows[0]!.id;
+    const id = result.rows[0]!.id; await publishMathEventAtomic(this.pool,{eventType:"RADAR_INVITATION_ACCEPTED",aggregateType:"RadarInvitationAcceptance",aggregateId:id,payload:{invitationId},idempotencyKey:"radar-accept:"+id}); return id;
   }
 
   async presentNotice(purpose: "SELF_ANSWER" | "BE_PREDICTED", acceptanceId?: string) {
@@ -51,7 +52,7 @@ export class RadarRpc {
     const result = await this.pool.query<{ id: string }>(
       `SELECT orvok_radar_revoke($1,$2) AS id`, [this.sessionHash, grantId],
     );
-    return result.rows[0]!.id;
+    const id = result.rows[0]!.id; await publishMathEventAtomic(this.pool,{eventType:"RADAR_CONSENT_REVOKED",aggregateType:"ConsentGrant",aggregateId:grantId,payload:{revocationId:id},idempotencyKey:"radar-revoke:"+id}); return id;
   }
 
   async grantSelf(presentationId: string, noticeVersion: string, noticeHash: string) {
@@ -65,7 +66,7 @@ export class RadarRpc {
     const result = await this.pool.query<{ id: string }>(
       `SELECT orvok_radar_revoke_self($1,$2) AS id`, [this.sessionHash, grantId],
     );
-    return result.rows[0]!.id;
+    const id = result.rows[0]!.id; await publishMathEventAtomic(this.pool,{eventType:"RADAR_SELF_CONSENT_REVOKED",aggregateType:"ConsentGrant",aggregateId:grantId,payload:{revocationId:id},idempotencyKey:"radar-self-revoke:"+id}); return id;
   }
 
   async answer(questionId: string, optionId: string, grantId: string, supersedesId?: string) {
@@ -73,7 +74,7 @@ export class RadarRpc {
       `SELECT * FROM orvok_radar_answer($1,$2,$3,$4,$5)`,
       [this.sessionHash, questionId, optionId, grantId, supersedesId ?? null],
     );
-    return { id: result.rows[0]!.answer_id, version: result.rows[0]!.answer_version };
+    const answerId = result.rows[0]!.answer_id; await publishMathEventAtomic(this.pool,{eventType:"RADAR_TARGET_ANSWER_RECORDED",aggregateType:"AnswerVersion",aggregateId:answerId,payload:{questionVersionId:questionId},idempotencyKey:"radar-answer:"+answerId}); return { id: answerId, version: result.rows[0]!.answer_version };
   }
 
   async predict(input: {
@@ -89,7 +90,7 @@ export class RadarRpc {
       [this.sessionHash, input.targetId, input.questionVersionId, input.selfAnswerVersionId,
         input.grantId, JSON.stringify(input.probabilityVector), input.supersedesId ?? null],
     );
-    return { id: result.rows[0]!.snapshot_id, consentVersion: result.rows[0]!.consent_version };
+    const snapshotId = result.rows[0]!.snapshot_id; await enqueueRadarSnapshot(this.pool,snapshotId); return { id: snapshotId, consentVersion: result.rows[0]!.consent_version };
   }
 
   async auditBlocked(action: string, objectType: string, objectId: string, reason: string) {

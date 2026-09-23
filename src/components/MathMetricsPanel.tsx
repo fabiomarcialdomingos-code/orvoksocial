@@ -1,61 +1,45 @@
-import { consensusLeaveOneOut, estimateRadar, scoreWorldBinary } from "../lib/math-engine";
+"use client";
 
-type MathMetricsPanelProps = { enabled: boolean };
+import { useEffect, useState } from "react";
 
-/**
- * Controlled local/staging view of versioned mathematical artifacts.
- * It deliberately uses deterministic TEST_ONLY observations and does not
- * read or expose production/user data. Publication gates remain separate.
- */
-export function MathMetricsPanel({ enabled }: MathMetricsPanelProps) {
+type Props = { enabled: boolean };
+type Score = { score: number; baseline: number; gain: number; nEff: number; margin: number | null; state: string; calculationRunId: string; createdAt: string } | null;
+type Radar = { gamma: number; gammaCi95: [number, number] | null; nEff: number; rA: number; rB: number; state: string; calculationRunId: string; createdAt: string };
+
+export function MathMetricsPanel({ enabled }: Props) {
+  const [score, setScore] = useState<Score>(null);
+  const [radar, setRadar] = useState<Radar | null>(null);
+  const [reputation, setReputation] = useState<{ value: number; evidenceState: string; calculationRunId: string } | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "empty">("loading");
+
+  useEffect(() => {
+    if (!enabled) return;
+    const controller = new AbortController();
+    Promise.all([
+      fetch("/api/v1/math/score", { credentials: "same-origin", cache: "no-store", signal: controller.signal }).then((response) => response.ok ? response.json() as Promise<{ item: Score }> : { item: null }),
+      fetch("/api/v1/math/radar", { credentials: "same-origin", cache: "no-store", signal: controller.signal }).then((response) => response.ok ? response.json() as Promise<{ items: Radar[] }> : { items: [] }),
+      fetch("/api/v1/math/reputation", { credentials: "same-origin", cache: "no-store", signal: controller.signal }).then((response) => response.ok ? response.json() as Promise<{ item: typeof reputation }> : { item: null }),
+    ]).then(([world, human, rep]) => {
+      if (controller.signal.aborted) return;
+      setScore(world.item); setRadar(human.items[0] ?? null); setReputation(rep.item); setState(world.item || human.items[0] || rep.item ? "ready" : "empty");
+    }).catch(() => { if (!controller.signal.aborted) setState("empty"); });
+    return () => controller.abort();
+  }, [enabled]);
+
   if (!enabled) return null;
-
-  const world = scoreWorldBinary([0.8, 0.6, 0.4, 0.7, 0.3], [1, 0, 1, 1, 0], 5);
-  const consensus = consensusLeaveOneOut([
-    { predictorId: "TEST_PREDICTOR_A", probability: 0.72 },
-    { predictorId: "TEST_PREDICTOR_B", probability: 0.61 },
-    { predictorId: "TEST_PREDICTOR_C", probability: 0.55 },
-    { predictorId: "TEST_PREDICTOR_D", probability: 0.68 },
-    { predictorId: "TEST_PREDICTOR_E", probability: 0.64 },
-    { predictorId: "TEST_PREDICTOR_F", probability: 0.59 },
-  ], "TEST_PREDICTOR_A");
-  const radar = estimateRadar([
-    { predictorId: "TEST_PREDICTOR_A", targetId: "TEST_TARGET_A", predicted: 0.72, actual: 0.8 },
-    { predictorId: "TEST_PREDICTOR_A", targetId: "TEST_TARGET_B", predicted: 0.41, actual: 0.3 },
-    { predictorId: "TEST_PREDICTOR_B", targetId: "TEST_TARGET_A", predicted: 0.63, actual: 0.7 },
-    { predictorId: "TEST_PREDICTOR_B", targetId: "TEST_TARGET_B", predicted: 0.52, actual: 0.4 },
-  ]);
-
-  return (
-    <section className="social-card math-metrics" aria-labelledby="math-metrics-title">
-      <header className="social-section-title">
-        <span className="eyebrow">Motor Matemático V1 · TEST_ONLY</span>
-        <h2 id="math-metrics-title">Evidências calculadas</h2>
-        <p className="muted">Fixtures determinísticas para inspeção local/homologação. Nenhum dado de usuário é consultado.</p>
-      </header>
-      <div className="stat-grid">
-        <Metric label="Score Brier" value={world.score.toFixed(4)} hint={`N=${world.n} · ${world.state}`} />
-        <Metric label="Baseline" value={world.baseline.toFixed(4)} hint="climatologia empírica" />
-        <Metric label="Ganho" value={world.gain.toFixed(4)} hint={`margem ${world.margin?.toFixed(4) ?? "—"}`} />
-        <Metric label="Consenso LOO" value={consensus === null ? "—" : consensus.toFixed(4)} hint="quórum operacional" />
-        <Metric label="Radar γ" value={radar.gamma.toFixed(4)} hint={`IC95% ${formatInterval(radar.gammaCi95)}`} />
-        <Metric label="Estado Radar" value={radar.state} hint={`n_eff=${radar.nEff.toFixed(2)} · R_A=${radar.rA} · R_B=${radar.rB}`} />
-      </div>
-      <dl className="radar-record math-provenance">
-        <div><dt>Algoritmo mundo</dt><dd>{world.algorithmVersion}</dd></div>
-        <div><dt>Algoritmo Radar</dt><dd>{radar.algorithmVersion}</dd></div>
-        <div><dt>Parâmetros</dt><dd>{Object.entries(radar.parameters).map(([key, value]) => `${key}=${String(value)}`).join(" · ")}</dd></div>
-        <div><dt>Ranking e reputação</dt><dd>Barreira de publicação fechada</dd></div>
-      </dl>
-      <p className="form-message" role="status">A exibição é exclusiva de ambiente autorizado. Publicação externa, ranking e reputação permanecem bloqueados pelas flags de release.</p>
-    </section>
-  );
+  return <section className="social-card math-metrics" aria-labelledby="math-metrics-title">
+    <header className="social-section-title"><span className="eyebrow">Motor Matemático V1 · INTERNO</span><h2 id="math-metrics-title">Evidências persistidas</h2><p className="muted">Valores carregados dos snapshots versionados. A publicação externa permanece bloqueada.</p></header>
+    {state === "loading" && <p role="status">Carregando artefatos persistidos…</p>}
+    {state === "empty" && <p className="social-empty" role="status">Ainda não há cálculos persistidos para esta conta.</p>}
+    {state === "ready" && <><div className="stat-grid">
+      {score && <><Metric label="Score Brier" value={score.score.toFixed(4)} hint={"N_eff=" + score.nEff + " · " + score.state} /><Metric label="Baseline" value={score.baseline.toFixed(4)} hint="climatologia empírica" /><Metric label="Ganho" value={score.gain.toFixed(4)} hint={"margem " + (score.margin?.toFixed(4) ?? "—")} /></>}
+      {radar && <><Metric label="Radar γ" value={radar.gamma.toFixed(4)} hint={"IC95% " + formatInterval(radar.gammaCi95)} /><Metric label="Estado Radar" value={radar.state} hint={"n_eff=" + radar.nEff + " · R_A=" + radar.rA + " · R_B=" + radar.rB} /></>}
+      {reputation && <Metric label="Reputação interna" value={reputation.value.toFixed(4)} hint={reputation.evidenceState} />}
+    </div><dl className="radar-record math-provenance"><div><dt>Origem</dt><dd>MathCalculationRun versionado</dd></div><div><dt>Execução</dt><dd>{score?.calculationRunId ?? radar?.calculationRunId ?? reputation?.calculationRunId}</dd></div><div><dt>Publicação</dt><dd>Bloqueada por feature flag</dd></div></dl></>}
+  </section>;
 }
 
 function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
   return <div className="social-card stat"><span className="eyebrow">{label}</span><strong>{value}</strong><span className="muted">{hint}</span></div>;
 }
-
-function formatInterval(interval: [number, number] | null) {
-  return interval ? `[${interval[0].toFixed(4)}, ${interval[1].toFixed(4)}]` : "—";
-}
+function formatInterval(interval: [number, number] | null) { return interval ? "[" + interval[0].toFixed(4) + ", " + interval[1].toFixed(4) + "]" : "—"; }
