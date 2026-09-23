@@ -1,2 +1,3 @@
 import { SiteHeader } from "../../components/SiteHeader";
-export default function EventosPage() { return <><SiteHeader /><main id="conteudo" className="container social-main"><section className="social-card"><span className="eyebrow">Mundo · TEST_ONLY</span><h1 className="display">Eventos e oportunidades</h1><p className="muted">O ciclo estrutural de eventos será habilitado quando o contrato de resolução for aprovado.</p><div className="social-empty" role="status"><p>Nenhum evento disponível para homologação.</p></div></section></main></>; }
+import { WorldWorkspace } from "../../components/WorldWorkspace";
+export default function EventosPage() { return <><SiteHeader /><WorldWorkspace /></>; }

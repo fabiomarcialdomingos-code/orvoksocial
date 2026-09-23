@@ -11,6 +11,7 @@ import { RadarRpc } from "@/lib/api/radar-rpc";
 import { enforceOperationalRateLimit } from "@/lib/api/rate-limit";
 import { apiError, apiJson, OperationalApiError } from "@/lib/api/response";
 import { SocialOperations } from "@/lib/api/social-operations";
+import { WorldOperations } from "@/lib/api/world-operations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,6 +96,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   const operations = new RadarOperations(pool);
   const rights = new DataRightsService(pool);
   const social = new SocialOperations(pool);
+  const world = new WorldOperations(pool);
   void social;
   const route = `/${path.join("/")}`;
   if (method === "POST") await enforceOperationalRateLimit(pool, route);
@@ -385,6 +387,34 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   if (method === "GET" && route === "/social/feed") {
     const result = await pool.query(`SELECT p.id,p."authorId",p."groupId",p."eventId",p.body,p."createdAt",COALESCE((SELECT count(*) FROM "SocialComment" c WHERE c."postId"=p.id),0)::int AS "commentCount",COALESCE((SELECT count(*) FROM "SocialReaction" r WHERE r."postId"=p.id),0)::int AS "reactionCount" FROM "SocialPost" p WHERE p."groupId" IS NULL OR EXISTS (SELECT 1 FROM "SocialGroupMember" m WHERE m."groupId"=p."groupId" AND m."userId"=$1 AND m.state='ACTIVE') ORDER BY p."createdAt" DESC,p.id DESC LIMIT 50`, [actorId]);
     return apiJson({ items: result.rows });
+  }
+  if (method === "GET" && route === "/world/events") {
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    const decoded = cursor ? uuid.parse(Buffer.from(cursor,"base64url").toString("utf8")) : null;
+    return apiJson(await world.listEvents(actorId, decoded));
+  }
+  if (method === "POST" && route === "/world/events") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const body = z.strictObject({ category:z.string().trim().min(1).max(80), title:z.string().trim().min(1).max(240), description:z.string().max(4000).optional(), sourceUrl:z.string().url().max(2000).optional(), resolutionCriteria:z.string().trim().min(1).max(4000), opensAt:z.string().datetime(), closesAt:z.string().datetime(), startsAt:z.string().datetime().optional(), opportunities:z.array(z.strictObject({code:z.string().trim().min(1).max(64),label:z.string().trim().min(1).max(300)})).min(2).max(32), reason:z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));
+    return apiJson(await world.createEvent(actorId,body,body.reason),201);
+  }
+  if (method === "POST" && path.length===3 && path[0]==="world" && path[1]==="events" && path[2]!.length>0) {
+    const body = z.strictObject({opportunityId:uuid,confidence:z.number().finite().min(0).max(1)}).parse(await readJsonBody(request));
+    return apiJson(await world.predict(actorId,path[2]!,body.opportunityId,body.confidence),201);
+  }
+  if (method === "POST" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="resolve") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
+    const body=z.strictObject({state:z.enum(["TEST","OFFICIAL","CANCELLED","VOID"]),outcomeOpportunityId:uuid.optional(),rationale:z.string().trim().min(1).max(4000)}).parse(await readJsonBody(request));
+    return apiJson(await world.resolve(actorId,path[2]!,body));
+  }
+  if (method === "POST" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="comments") {
+    const body=z.strictObject({body:z.string().trim().min(1).max(2000)}).parse(await readJsonBody(request)); return apiJson(await world.comment(actorId,path[2]!,body.body),201);
+  }
+  if (method === "POST" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="reactions") {
+    const body=z.strictObject({kind:z.string().trim().min(1).max(32)}).parse(await readJsonBody(request)); return apiJson(await world.react(actorId,path[2]!,body.kind),201);
+  }
+  if (method === "GET" && route === "/admin/users") {
+    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" })); const cursor=pageCursor(request); return apiJson(await world.adminUsers(actorId,cursor));
   }
   if (method === "GET" && route === "/social/profile") {
     const result = await pool.query(`SELECT "userId","displayName","avatarUrl",bio,"updatedAt" FROM "UserProfile" WHERE "userId"=$1`, [actorId]);
