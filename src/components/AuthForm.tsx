@@ -51,7 +51,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [message, setMessage] = useState<{
     kind: "success" | "error";
     text: string;
-  } | null>(null);
+  } | null>(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("oauth") === "error"
+    ? { kind: "error", text: "Não foi possível concluir o login com Google. Tente novamente ou use sua senha." }
+    : null);
   const needsEmail =
     mode === "register" || mode === "login" || mode === "request-reset";
   const needsPassword =
@@ -132,11 +134,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
               }
-              minLength={mode === "login" ? undefined : 12}
-              required
+                minLength={mode === "login" ? undefined : 8}
+                pattern={mode === "login" ? undefined : "(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}"}
+                required
             />
             <span className="field-hint">
-              {mode === "login" ? "" : "Use pelo menos 12 caracteres."}
+              {mode === "login" ? "" : "A senha deve conter no mínimo 8 caracteres, incluindo uma letra minúscula, uma letra maiúscula e um caractere especial."}
             </span>
           </div>
         )}
@@ -178,6 +181,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
           )}
         </div>
       </form>
+      {(mode === "login" || mode === "register") && (
+        <div className="auth-provider-actions">
+          <span className="muted">ou</span>
+          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent("/convites")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
+            {mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}
+          </a>
+        </div>
+      )}
     </>
   );
 }

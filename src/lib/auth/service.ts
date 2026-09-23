@@ -11,7 +11,8 @@ import {
 import { AuthError } from "./session";
 
 const emailSchema = z.email().max(320).transform((email) => email.trim().toLowerCase());
-const passwordSchema = z.string().min(12).max(1024);
+export const PASSWORD_POLICY_MESSAGE = "A senha deve conter no mínimo 8 caracteres, incluindo uma letra minúscula, uma letra maiúscula e um caractere especial.";
+const passwordSchema = z.string().min(8, PASSWORD_POLICY_MESSAGE).max(1024).regex(/[a-z]/, PASSWORD_POLICY_MESSAGE).regex(/[A-Z]/, PASSWORD_POLICY_MESSAGE).regex(/[^A-Za-z0-9]/, PASSWORD_POLICY_MESSAGE);
 const tokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const DUMMY_HASH = "scrypt-v1$fixed-dummy-salt$Uk-txZBBzDoIbfIppKjaPBY-hZwxQfJ0TM7UAQmhe1yM5nAry6tPkqjgA4VZkG1w3oH2n9UJY2HiDD9TmrUg2g";
 const SESSION_SECONDS = 7 * 24 * 60 * 60;
@@ -21,12 +22,15 @@ export const loginSchema = registrationSchema;
 export const emailRequestSchema = z.strictObject({ email: emailSchema });
 export const tokenRequestSchema = z.strictObject({ token: tokenSchema });
 export const resetSchema = z.strictObject({ token: tokenSchema, password: passwordSchema });
+export const changePasswordSchema = z.strictObject({ currentPassword: z.string().min(1).max(1024), password: passwordSchema });
 
 export type AuthMailPayload = {
   email: string;
   purpose: "VERIFY_EMAIL" | "RESET_PASSWORD";
   token: string;
 };
+
+export type GoogleIdentityClaims = { subject: string; email: string; emailVerified: boolean };
 
 export class AuthService {
   constructor(private readonly pool: Pool) {}
@@ -82,6 +86,15 @@ export class AuthService {
       `INSERT INTO "AuthMailOutbox" (id,"userId",purpose,"encryptedPayload") VALUES ($1,$2,$3,$4)`,
       [randomUUID(), userId, purpose, encryptMailPayload({ email, purpose, token } satisfies AuthMailPayload)],
     );
+  }
+
+  private async createSession(client: PoolClient, userId: string): Promise<string> {
+    const token = randomToken();
+    await client.query(
+      `INSERT INTO "AuthSession" (id,"userId","tokenHash","familyId","expiresAt") VALUES ($1,$2,$3,$4,clock_timestamp()+($5::int * interval '1 second'))`,
+      [randomUUID(), userId, tokenHash(token), randomUUID(), SESSION_SECONDS],
+    );
+    return token;
   }
 
   async register(raw: unknown): Promise<void> {
@@ -143,15 +156,59 @@ export class AuthService {
       await this.tx((client) => this.audit(client, identity?.userId ?? null, "AUTH_LOGIN_REJECTED"));
       throw new AuthError("INVALID_CREDENTIALS", 401);
     }
-    const token = randomToken();
     await this.tx(async (client) => {
-      await client.query(
-        `INSERT INTO "AuthSession" (id,"userId","tokenHash","familyId","expiresAt") VALUES ($1,$2,$3,$4,clock_timestamp()+($5::int * interval '1 second'))`,
-        [randomUUID(), identity.userId, tokenHash(token), randomUUID(), SESSION_SECONDS],
-      );
       await this.audit(client, identity.userId, "AUTH_LOGIN_SUCCESS");
     });
+    const token = await this.tx(async (client) => this.createSession(client, identity.userId));
     return { token, userId: identity.userId };
+  }
+
+  async loginWithGoogle(claims: GoogleIdentityClaims): Promise<{ token: string; userId: string; linked: boolean }> {
+    const email = emailSchema.parse(claims.email);
+    if (!claims.emailVerified || !claims.subject || claims.subject.length > 255) throw new AuthError("GOOGLE_EMAIL_UNVERIFIED", 401);
+    await this.limit("google-login:global", 1000, 15 * 60);
+    await this.limit(`google-login:${email}`, 10, 15 * 60);
+    let userId = "";
+    let linked = false;
+    await this.tx(async (client) => {
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`google:${claims.subject}`]);
+      const provider = await client.query<{ userId: string; email: string }>(`SELECT "userId",email FROM "AuthProviderIdentity" WHERE provider='google' AND subject=$1 FOR UPDATE`, [claims.subject]);
+      if (provider.rows[0]) {
+        if (provider.rows[0].email !== email) throw new AuthError("GOOGLE_EMAIL_MISMATCH", 409);
+        userId = provider.rows[0].userId;
+        await client.query(`UPDATE "AuthProviderIdentity" SET "lastLoginAt"=clock_timestamp() WHERE provider='google' AND subject=$1`, [claims.subject]);
+      } else {
+        const existing = await client.query<{ userId: string; status: string; verifiedAt: Date | null }>(`SELECT ai."userId",u.status,ai."verifiedAt" FROM "AuthIdentity" ai JOIN "User" u ON u.id=ai."userId" WHERE ai.email=$1 FOR UPDATE`, [email]);
+        if (existing.rows[0]) {
+          userId = existing.rows[0].userId;
+          if (existing.rows[0].status !== "ACTIVE") throw new AuthError("ACCOUNT_DISABLED", 403);
+          if (!existing.rows[0].verifiedAt) await client.query(`UPDATE "AuthIdentity" SET "verifiedAt"=clock_timestamp() WHERE "userId"=$1`, [userId]);
+          linked = true;
+        } else {
+          userId = randomUUID();
+          await client.query(`INSERT INTO "User" (id,"updatedAt") VALUES ($1,clock_timestamp())`, [userId]);
+          await client.query(`INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt") VALUES ($1,$2,NULL,clock_timestamp())`, [userId, email]);
+        }
+        await client.query(`INSERT INTO "AuthProviderIdentity" (id,"userId",provider,subject,email) VALUES ($1,$2,'google',$3,$4)`, [randomUUID(), userId, claims.subject, email]);
+        await this.audit(client, userId, linked ? "AUTH_GOOGLE_LINKED" : "AUTH_GOOGLE_REGISTERED");
+      }
+      const status = await client.query<{ status: string }>(`SELECT status FROM "User" WHERE id=$1`, [userId]);
+      if (status.rows[0]?.status !== "ACTIVE") throw new AuthError("ACCOUNT_DISABLED", 403);
+      await this.audit(client, userId, "AUTH_GOOGLE_LOGIN");
+    });
+    const token = await this.tx(async (client) => this.createSession(client, userId));
+    return { token, userId, linked };
+  }
+
+  async unlinkGoogle(userId: string): Promise<void> {
+    await this.tx(async (client) => {
+      const methods = await client.query<{ passwordHash: string | null; providers: string }>(`SELECT ai."passwordHash",(SELECT count(*)::text FROM "AuthProviderIdentity" WHERE "userId"=$1) AS providers FROM "AuthIdentity" ai WHERE ai."userId"=$1 FOR UPDATE`, [userId]);
+      const row = methods.rows[0];
+      if (!row) throw new AuthError("NOT_FOUND", 404);
+      if (!row.passwordHash && Number(row.providers) <= 1) throw new AuthError("AUTH_METHOD_REQUIRED", 409);
+      const removed = await client.query(`DELETE FROM "AuthProviderIdentity" WHERE "userId"=$1 AND provider='google' RETURNING id`, [userId]);
+      if (removed.rowCount) await this.audit(client, userId, "AUTH_GOOGLE_UNLINKED");
+    });
   }
 
   async logout(token: string): Promise<void> {
@@ -231,6 +288,19 @@ export class AuthService {
       await client.query(`UPDATE "AuthSession" SET "revokedAt"=clock_timestamp() WHERE "userId"=$1 AND "revokedAt" IS NULL`, [row.userId]);
       await client.query(`UPDATE "AuthToken" SET "consumedAt"=clock_timestamp() WHERE "userId"=$1 AND purpose='RESET_PASSWORD' AND "consumedAt" IS NULL`, [row.userId]);
       await this.audit(client, row.userId, "AUTH_PASSWORD_RESET");
+    });
+  }
+
+  async changePassword(userId: string, raw: unknown): Promise<void> {
+    const { currentPassword, password } = changePasswordSchema.parse(raw);
+    await this.limit(`change-password:${userId}`, 5, 3600);
+    const found = await this.pool.query<{ passwordHash: string | null }>(`SELECT "passwordHash" FROM "AuthIdentity" WHERE "userId"=$1`, [userId]);
+    if (!found.rows[0]?.passwordHash || !(await verifyPassword(currentPassword, found.rows[0].passwordHash))) throw new AuthError("INVALID_CREDENTIALS", 401);
+    const passwordHash = await hashPassword(password);
+    await this.tx(async (client) => {
+      await client.query(`UPDATE "AuthIdentity" SET "passwordHash"=$2,"passwordChangedAt"=clock_timestamp() WHERE "userId"=$1`, [userId, passwordHash]);
+      await client.query(`UPDATE "AuthSession" SET "revokedAt"=clock_timestamp() WHERE "userId"=$1 AND "revokedAt" IS NULL`, [userId]);
+      await this.audit(client, userId, "AUTH_PASSWORD_CHANGED");
     });
   }
 }

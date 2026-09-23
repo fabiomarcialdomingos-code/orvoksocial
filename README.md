@@ -50,3 +50,12 @@ As rotas `POST /api/v1/auth/register`, `login`, `logout`, `rotate`, `request-res
 ## Git e decisões
 
 Após instalar dependências, ative os hooks locais com `git config core.hooksPath .githooks`. Mensagens seguem `type(scope): descrição`; o pre-commit executa lint, typecheck e testes. Consulte [ADR-001](docs/ADR-001-fundacao.md), [ADR-002](docs/ADR-002-fundacao-operacional.md), a [matriz inicial](docs/RASTREABILIDADE_INICIAL.md) e o [contrato estrutural](docs/CONTRATOS_DADOS_FASE_1_ESTRUTURAL.md). A autorização atual não cobre scoring, consenso, RadarScore, γ, shrinkage, ranking, perguntas oficiais ou telas completas de produto; novas etapas dependem de autorização expressa.
+## Login Google (configuração por ambiente)
+
+O login Google usa OAuth/OIDC oficial e permanece desativado enquanto `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REDIRECT_URI` não estiverem configurados. Crie um cliente Web no Google Cloud, habilite Google Identity, cadastre as origens autorizadas e use exatamente estes callbacks:
+
+- local: `http://localhost:3000/api/v1/auth/google/callback`;
+- homologação: callback HTTPS do ambiente homologado;
+- produção: callback HTTPS do domínio oficial.
+
+Os valores reais devem existir somente no secret manager ou no arquivo `.env` local ignorado. Para rotação, crie um novo segredo no provedor, atualize o ambiente, valide o callback e revogue o segredo anterior. O callback valida state, nonce, issuer, audience, redirect URI, expiração e e-mail verificado; tokens Google não são persistidos.
