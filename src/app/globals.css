@@ -1471,3 +1471,65 @@ th,td { text-align:left; padding:var(--space-3); border-top:1px solid var(--orvo
   .home-step-body h2 { font-size: 23px; }
   .home-step-body p { font-size: 14px; }
 }
+
+
+/* Living-globe treatment: subtle motion keeps the approved visual alive without becoming decorative noise. */
+.home-orbit {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.home-orbit > img {
+  position: absolute;
+  left: 0;
+  top: -8%;
+  width: 100%;
+  height: 116%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center center;
+  mix-blend-mode: multiply;
+  filter: saturate(1.04) contrast(.99);
+  animation: orvok-globe-breathe 8s ease-in-out infinite;
+  transform-origin: 50% 52%;
+}
+.home-orbit-fallback { display: none; }
+.home-orbit::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 12% 12%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 38% 36%, rgba(255,255,255,.42), transparent 10%, transparent 30%), radial-gradient(circle at 73% 56%, rgba(191,225,226,.18), transparent 16%, transparent 42%);
+  mix-blend-mode: screen;
+  animation: orvok-globe-light 11s ease-in-out infinite;
+}
+.home-orbit::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 20% 14%;
+  border: 1px solid rgba(218,187,116,.2);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: orvok-globe-ring 12s linear infinite;
+}
+@keyframes orvok-globe-breathe {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  45% { transform: translate3d(-.5%, -1%, 0) scale(1.018); }
+  70% { transform: translate3d(.7%, .4%, 0) scale(1.008); }
+}
+@keyframes orvok-globe-light {
+  0%, 100% { opacity: .42; transform: translate3d(-2%, 1%, 0) scale(.98); }
+  50% { opacity: .8; transform: translate3d(3%, -2%, 0) scale(1.04); }
+}
+@keyframes orvok-globe-ring {
+  from { transform: rotate(0deg) scale(.98); opacity: .28; }
+  50% { transform: rotate(180deg) scale(1.015); opacity: .52; }
+  to { transform: rotate(360deg) scale(.98); opacity: .28; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-orbit > img, .home-orbit::before, .home-orbit::after { animation: none; }
+}

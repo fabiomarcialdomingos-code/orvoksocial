@@ -1,10 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SiteHeader } from "../components/SiteHeader";
 
 function PerspectiveOrbit() {
   return (
     <div className="home-orbit" aria-label="Universo de perspectivas ORVOK">
-      <svg viewBox="0 0 760 600" role="img" aria-labelledby="orbit-title orbit-desc">
+      <Image src="/orvok-globe-approved.png" alt="Esferas translúcidas conectadas ao redor do universo ORVOK" width={1380} height={885} priority />
+      {/* The SVG definition remains below as an accessible fallback reference for browsers that do not load the asset. */}
+      <svg className="home-orbit-fallback" viewBox="0 0 760 600" role="img" aria-labelledby="orbit-title orbit-desc">
         <title id="orbit-title">ORVOK: você, pessoas e mundo em perspectiva</title>
         <desc id="orbit-desc">Uma esfera ORVOK conectada a diferentes perspectivas humanas e eventos do mundo.</desc>
         <defs>
