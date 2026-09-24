@@ -1533,3 +1533,93 @@ th,td { text-align:left; padding:var(--space-3); border-top:1px solid var(--orvo
 @media (prefers-reduced-motion: reduce) {
   .home-orbit > img, .home-orbit::before, .home-orbit::after { animation: none; }
 }
+
+
+/* Living product system: the frozen journey keeps a quiet pulse across every screen. */
+.foundation-orbit {
+  animation: foundation-orbit-float 10s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+.foundation-orbit::before { animation: foundation-orbit-inner 9s ease-in-out infinite reverse; }
+.foundation-orbit::after { animation: foundation-orbit-glow 7s ease-in-out infinite; }
+.foundation-orbit-node { animation: foundation-node-breathe 5s ease-in-out infinite; }
+.foundation-orbit-node-b { animation-delay: -1.5s; }
+.foundation-orbit-node-c { animation-delay: -3s; }
+
+.foundation-content .auth-card,
+.journey-empty {
+  animation: journey-card-in .8s cubic-bezier(.2,.75,.25,1) both;
+}
+.foundation-journey-step {
+  transition: background-color .35s ease, color .35s ease, transform .35s ease;
+}
+.foundation-journey-step:hover { transform: translateY(-2px); background: rgba(244,230,198,.32); }
+.foundation-journey-step.is-active { animation: journey-active-pulse 4s ease-in-out infinite; }
+
+.radar-hero-visual {
+  animation: radar-sphere-float 9s ease-in-out infinite;
+}
+.radar-hero-visual::before { animation: radar-orbit-spin 18s linear infinite; }
+.radar-hero-visual::after { animation: radar-orbit-spin-reverse 22s linear infinite; }
+.radar-node { animation: radar-node-float 6s ease-in-out infinite; transition: transform .3s ease, box-shadow .3s ease; }
+.radar-node-b { animation-delay: -1.3s; }
+.radar-node-c { animation-delay: -2.6s; }
+.radar-node-d { animation-delay: -4s; }
+.radar-node:hover { transform: scale(1.08); box-shadow: 0 0 0 11px rgba(255,255,255,.25), 0 0 30px rgba(218,187,116,.22); }
+.radar-journey-step { transition: color .3s ease, transform .3s ease, border-color .3s ease; }
+.radar-journey-step:hover { color: var(--orvok-ink); transform: translateY(-2px); }
+.radar-journey-step.is-active span { animation: number-glow 3s ease-in-out infinite; }
+
+.radar-workspace > * { animation: workspace-in .7s ease both; }
+.radar-workspace > *:nth-child(2) { animation-delay: .08s; }
+.radar-workspace > *:nth-child(3) { animation-delay: .16s; }
+.radar-workspace > *:nth-child(4) { animation-delay: .24s; }
+.radar-panel, .radar-section { transition: border-color .35s ease, box-shadow .35s ease; }
+.radar-panel:hover { border-color: #cdb176; box-shadow: 0 8px 28px rgba(24,43,60,.05); }
+
+@keyframes foundation-orbit-float {
+  0%,100% { transform: rotate(-12deg) translate3d(0,0,0); }
+  50% { transform: rotate(-9deg) translate3d(5px,-8px,0); }
+}
+@keyframes foundation-orbit-inner {
+  0%,100% { transform: scale(1) rotate(0deg); opacity: .9; }
+  50% { transform: scale(1.04) rotate(5deg); opacity: .65; }
+}
+@keyframes foundation-orbit-glow {
+  0%,100% { box-shadow: 0 0 0 rgba(231,214,173,0); opacity: .8; }
+  50% { box-shadow: 0 0 24px rgba(231,214,173,.42); opacity: 1; }
+}
+@keyframes foundation-node-breathe {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.12) translateY(-3px); }
+}
+@keyframes journey-card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes journey-active-pulse {
+  0%,100% { background: rgba(244,230,198,.25); }
+  50% { background: rgba(244,230,198,.54); }
+}
+@keyframes radar-sphere-float {
+  0%,100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(0,-8px,0) scale(1.012); }
+}
+@keyframes radar-orbit-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes radar-orbit-spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+@keyframes radar-node-float {
+  0%,100% { margin-top: 0; }
+  50% { margin-top: -7px; }
+}
+@keyframes number-glow {
+  0%,100% { text-shadow: 0 0 0 rgba(196,155,85,0); }
+  50% { text-shadow: 0 0 14px rgba(196,155,85,.55); }
+}
+@keyframes workspace-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .foundation-orbit, .foundation-orbit::before, .foundation-orbit::after, .foundation-orbit-node,
+  .foundation-content .auth-card, .journey-empty, .foundation-journey-step.is-active,
+  .radar-hero-visual, .radar-hero-visual::before, .radar-hero-visual::after, .radar-node,
+  .radar-journey-step.is-active span, .radar-workspace > * { animation: none; }
+}
