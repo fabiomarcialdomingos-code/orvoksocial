@@ -228,19 +228,78 @@ function OrbDefs({ variant }: { variant: Variant }) {
   return (
     <defs>
       <radialGradient id={`${variant}-core`} cx="38%" cy="30%" r="72%">
-        <stop offset="0" stopColor="#fffdf5" />
-        <stop offset=".34" stopColor="#f8e6c4" />
-        <stop offset=".7" stopColor="#dcaf68" />
-        <stop offset="1" stopColor="#9e6d2f" stopOpacity=".65" />
+        <stop offset="0" stopColor="#ffffff" />
+        <stop offset=".28" stopColor="#fffdf4" />
+        <stop offset=".58" stopColor="#e9f0ee" />
+        <stop offset=".84" stopColor="#d8d9c9" />
+        <stop offset="1" stopColor="#b3a77e" stopOpacity=".4" />
       </radialGradient>
       <radialGradient id={`${variant}-center-halo`} cx="42%" cy="34%" r="68%">
         <stop offset="0" stopColor="#fff" stopOpacity=".98" />
-        <stop offset=".28" stopColor="#fff0d0" stopOpacity=".85" />
-        <stop offset=".58" stopColor="#e4b871" stopOpacity=".54" />
+        <stop offset=".28" stopColor="#fff8e7" stopOpacity=".8" />
+        <stop offset=".58" stopColor="#cfe7e9" stopOpacity=".44" />
         <stop offset="1" stopColor="#d7a35a" stopOpacity="0" />
       </radialGradient>
+      <linearGradient id={`${variant}-orbit-cool`} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#a9d9f0" stopOpacity="0" />
+        <stop offset=".16" stopColor="#a9d9f0" stopOpacity=".42" />
+        <stop offset=".44" stopColor="#ffffff" stopOpacity=".17" />
+        <stop offset=".72" stopColor="#85c5e7" stopOpacity=".34" />
+        <stop offset="1" stopColor="#85c5e7" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id={`${variant}-orbit-warm`} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#f0c77a" stopOpacity="0" />
+        <stop offset=".21" stopColor="#f0c77a" stopOpacity=".38" />
+        <stop offset=".5" stopColor="#fff" stopOpacity=".15" />
+        <stop offset=".78" stopColor="#d4a052" stopOpacity=".4" />
+        <stop offset="1" stopColor="#d4a052" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id={`${variant}-orbit-sage`} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#aed8be" stopOpacity="0" />
+        <stop offset=".25" stopColor="#aed8be" stopOpacity=".27" />
+        <stop offset=".52" stopColor="#fff" stopOpacity=".12" />
+        <stop offset=".8" stopColor="#7ebd9c" stopOpacity=".3" />
+        <stop offset="1" stopColor="#7ebd9c" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id={`${variant}-orbit-inner`} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#fff" stopOpacity="0" />
+        <stop offset=".22" stopColor="#fff" stopOpacity=".22" />
+        <stop offset=".5" stopColor="#f1d39b" stopOpacity=".23" />
+        <stop offset=".82" stopColor="#fff" stopOpacity=".18" />
+        <stop offset="1" stopColor="#fff" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient id={`${variant}-filament`} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#8cc7e7" stopOpacity="0" />
+        <stop offset=".24" stopColor="#b8e3f1" stopOpacity=".42" />
+        <stop offset=".52" stopColor="#fff" stopOpacity=".2" />
+        <stop offset=".75" stopColor="#e2ba70" stopOpacity=".42" />
+        <stop offset="1" stopColor="#e2ba70" stopOpacity="0" />
+      </linearGradient>
+      <linearGradient
+        id={`${variant}-filament-sage`}
+        x1="0"
+        y1="1"
+        x2="1"
+        y2="0"
+      >
+        <stop offset="0" stopColor="#9bd3ba" stopOpacity="0" />
+        <stop offset=".4" stopColor="#9bd3ba" stopOpacity=".3" />
+        <stop offset=".7" stopColor="#fff" stopOpacity=".16" />
+        <stop offset="1" stopColor="#80b0d3" stopOpacity="0" />
+      </linearGradient>
       <filter id="softBlur">
         <feGaussianBlur stdDeviation="8" />
+      </filter>
+      <filter id="filamentGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="2.4" result="blur" />
+        <feColorMatrix
+          in="blur"
+          type="matrix"
+          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .55 0"
+        />
+      </filter>
+      <filter id="filamentSoft" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="7" />
       </filter>
       <filter id="bigBlur">
         <feGaussianBlur stdDeviation="18" />
@@ -280,6 +339,62 @@ function OrbDefs({ variant }: { variant: Variant }) {
         </g>
       ))}
     </defs>
+  );
+}
+
+function OrvokFilament({
+  d,
+  variant,
+  tone = "mixed",
+  delay = 0,
+  duration = 16,
+  className = "",
+}: {
+  d: string;
+  variant: Variant;
+  tone?: "mixed" | "sage";
+  delay?: number;
+  duration?: number;
+  className?: string;
+}) {
+  const gradient =
+    tone === "sage" ? `${variant}-filament-sage` : `${variant}-filament`;
+  return (
+    <g
+      className={`orvok-filament ${className}`}
+      style={
+        {
+          "--filament-delay": `${delay}s`,
+          "--filament-duration": `${duration}s`,
+        } as Vars
+      }
+      aria-hidden="true"
+    >
+      <path
+        pathLength="1"
+        className="orvok-filament-atmosphere"
+        d={d}
+        stroke={`url(#${gradient})`}
+      />
+      <path
+        pathLength="1"
+        className="orvok-filament-glow"
+        d={d}
+        stroke={`url(#${gradient})`}
+      />
+      <path
+        pathLength="1"
+        className="orvok-filament-core"
+        d={d}
+        stroke={`url(#${gradient})`}
+      />
+      <path
+        pathLength="1"
+        className="orvok-filament-glint"
+        d={d}
+        stroke={`url(#${gradient})`}
+      />
+    </g>
   );
 }
 
@@ -329,6 +444,7 @@ export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
         <OrbDefs variant="home" />
         <ellipse
           className="orvok-orbit-line orbit-cool"
+          stroke="url(#home-orbit-cool)"
           cx="548"
           cy="300"
           rx="440"
@@ -337,6 +453,7 @@ export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
         />
         <ellipse
           className="orvok-orbit-line orbit-warm"
+          stroke="url(#home-orbit-warm)"
           cx="548"
           cy="300"
           rx="366"
@@ -345,6 +462,7 @@ export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
         />
         <ellipse
           className="orvok-orbit-line orbit-sage"
+          stroke="url(#home-orbit-sage)"
           cx="548"
           cy="300"
           rx="323"
@@ -353,19 +471,42 @@ export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
         />
         <ellipse
           className="orvok-orbit-line orbit-inner"
+          stroke="url(#home-orbit-inner)"
           cx="548"
           cy="300"
           rx="264"
           ry="120"
           transform="rotate(3 548 300)"
         />
-        <path
-          className="orvok-orbit-thread"
-          d="M115 325C300 210 698 170 958 338"
+        <OrvokFilament
+          variant="home"
+          d="M84 382 C242 160 504 188 690 304 S891 478 1002 258"
+          delay={-2.8}
+          duration={18}
+          className="filament-back"
         />
-        <path
-          className="orvok-orbit-thread"
-          d="M202 530C405 390 615 226 895 102"
+        <OrvokFilament
+          variant="home"
+          tone="sage"
+          d="M132 132 C284 286 362 504 590 462 S794 246 954 126"
+          delay={-7.1}
+          duration={21}
+          className="filament-back filament-sage"
+        />
+        <OrvokFilament
+          variant="home"
+          d="M126 516 C332 430 390 152 612 132 S830 240 955 466"
+          delay={-11.3}
+          duration={19}
+          className="filament-front"
+        />
+        <OrvokFilament
+          variant="home"
+          tone="sage"
+          d="M224 82 C428 250 652 352 884 206"
+          delay={-4.4}
+          duration={24}
+          className="filament-front filament-short"
         />
         <circle
           className="orvok-center-glow"
@@ -476,6 +617,7 @@ export function OrvokOrbitMap({
         <OrbDefs variant={variant} />
         <ellipse
           className="orvok-map-orbit orbit-cool"
+          stroke={`url(#${variant}-orbit-cool)`}
           cx="500"
           cy="300"
           rx="350"
@@ -484,6 +626,7 @@ export function OrvokOrbitMap({
         />
         <ellipse
           className="orvok-map-orbit orbit-warm"
+          stroke={`url(#${variant}-orbit-warm)`}
           cx="500"
           cy="300"
           rx="268"
@@ -492,6 +635,7 @@ export function OrvokOrbitMap({
         />
         <ellipse
           className="orvok-map-orbit orbit-sage"
+          stroke={`url(#${variant}-orbit-sage)`}
           cx="500"
           cy="300"
           rx="220"
@@ -500,6 +644,7 @@ export function OrvokOrbitMap({
         />
         <ellipse
           className="orvok-map-orbit orbit-inner"
+          stroke={`url(#${variant}-orbit-inner)`}
           cx="500"
           cy="300"
           rx="155"
@@ -510,13 +655,15 @@ export function OrvokOrbitMap({
           const y = node.y * 6;
           return (
             <g key={node.id}>
-              <line
-                className="orvok-map-connection"
-                x1={center.x}
-                y1={center.y}
-                x2={x}
-                y2={y}
-                transform={`rotate(${index % 2 === 0 ? 1 : -1} ${center.x} ${center.y})`}
+              <OrvokFilament
+                variant={variant}
+                tone={index % 2 === 0 ? "mixed" : "sage"}
+                delay={-index * 2.2}
+                duration={15 + index * 2.4}
+                d={`M ${center.x - 8} ${center.y + (index % 2 ? 9 : -7)} C ${center.x + (x - center.x) * 0.18} ${center.y + (index % 2 ? 78 : -74)}, ${center.x + (x - center.x) * 0.72} ${y + (index % 2 ? -52 : 52)}, ${x} ${y}`}
+                className={
+                  index % 2 ? "filament-map-sage" : "filament-map-mixed"
+                }
               />
               <circle
                 className="orvok-map-particle"

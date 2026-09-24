@@ -5346,30 +5346,74 @@ body:has(.orvok-globe) {
 .orvok-orbit-line,
 .orvok-map-orbit {
   fill: none;
-  stroke-width: 1.2;
+  stroke-width: 0.72;
   vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
 }
 .orbit-cool {
-  stroke: rgba(105, 169, 206, 0.55);
-  stroke-dasharray: 2 13;
+  stroke-dasharray: 1 16;
+  stroke-dashoffset: 0;
+  animation: rebuild-orbit-flow 28s linear infinite;
 }
 .orbit-warm {
-  stroke: rgba(210, 164, 86, 0.66);
-  stroke-dasharray: 1 8;
+  stroke-dasharray: 1 12;
+  stroke-dashoffset: 0;
+  animation: rebuild-orbit-flow-reverse 34s linear -8s infinite;
 }
 .orbit-sage {
-  stroke: rgba(117, 174, 151, 0.4);
-  stroke-dasharray: 1 15;
+  stroke-dasharray: 1 19;
+  stroke-dashoffset: 0;
+  animation: rebuild-orbit-flow 38s linear -14s infinite;
 }
 .orbit-inner {
-  stroke: rgba(219, 187, 128, 0.33);
-  stroke-dasharray: 1 7;
+  stroke-dasharray: 1 10;
+  stroke-dashoffset: 0;
+  animation: rebuild-orbit-flow-reverse 24s linear -5s infinite;
 }
-.orvok-orbit-thread {
+.orvok-filament {
   fill: none;
-  stroke: rgba(216, 169, 90, 0.32);
-  stroke-width: 1;
-  stroke-dasharray: 2 11;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+.orvok-filament path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.orvok-filament-atmosphere {
+  stroke-width: 7;
+  opacity: 0.045;
+  filter: url(#filamentSoft);
+}
+.orvok-filament-glow {
+  stroke-width: 3.2;
+  opacity: 0.16;
+  filter: url(#filamentGlow);
+}
+.orvok-filament-core {
+  stroke-width: 0.62;
+  opacity: 0.48;
+  stroke-dasharray: 0.42 0.58;
+  animation: rebuild-filament-breathe var(--filament-duration) ease-in-out
+    var(--filament-delay) infinite;
+}
+.orvok-filament-glint {
+  stroke-width: 0.46;
+  opacity: 0.75;
+  stroke-dasharray: 0.028 0.972;
+  stroke-dashoffset: 0;
+  animation: rebuild-filament-glint var(--filament-duration) linear
+    var(--filament-delay) infinite;
+}
+.filament-front {
+  opacity: 0.88;
+}
+.filament-back {
+  opacity: 0.62;
+}
+.filament-short {
+  opacity: 0.52;
 }
 .orvok-center-ring {
   fill: none;
@@ -5504,13 +5548,6 @@ body:has(.orvok-globe) {
   min-height: 470px;
   overflow: visible;
 }
-.orvok-map-connection {
-  stroke: rgba(216, 165, 78, 0.67);
-  stroke-width: 1.2;
-  stroke-dasharray: 4 9;
-  vector-effect: non-scaling-stroke;
-  animation: rebuild-connection 5s ease-in-out infinite;
-}
 .orvok-map-particle {
   fill: #e8b461;
   filter: url(#softBlur);
@@ -5608,9 +5645,8 @@ body:has(.orvok-globe) {
 .orvok-orbit-map-invite .orvok-map-center {
   filter: drop-shadow(0 0 20px rgba(231, 187, 106, 0.5));
 }
-.orvok-orbit-map-prediction .orvok-map-connection {
-  stroke-width: 1.7;
-  stroke-dasharray: 1 7;
+.orvok-orbit-map-prediction .orvok-filament-core {
+  opacity: 0.58;
 }
 .orvok-orbit-map-result .orvok-map-label {
   width: 180px;
@@ -5710,6 +5746,8 @@ body:has(.orvok-globe) {
   color: #28639b;
 }
 .home-hero .orvok-globe {
+  width: min(128%, 940px);
+  margin-left: -10%;
   transform: translateX(2%);
 }
 .home-universe-band {
@@ -5872,6 +5910,75 @@ body:has(.orvok-globe) {
   font-size: 10px;
 }
 
+/* Final proportion pass: the scene leads; copy supports it. */
+.home-hero {
+  grid-template-columns: minmax(330px, 0.68fr) minmax(650px, 1.32fr);
+  min-height: 650px;
+  align-items: center;
+}
+.home-hero-copy h1 {
+  max-width: 570px;
+  margin-top: 28px;
+  font-size: clamp(42px, 3.8vw, 62px);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+.home-hero-description {
+  max-width: 425px;
+  font-size: 17px;
+  line-height: 1.42;
+}
+.home-hero .orvok-globe {
+  width: min(142%, 1040px);
+  margin-left: -17%;
+}
+.home-primary-button,
+.home-secondary-action,
+.home-page .button,
+.home-page .button-gold,
+.home-page .button-outline {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 260ms ease,
+    box-shadow 260ms ease,
+    color 260ms ease,
+    border-color 260ms ease;
+}
+.home-primary-button::after,
+.home-page .button-gold::after {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -32%;
+  width: 22%;
+  transform: skewX(-18deg) translateX(-180%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.58),
+    transparent
+  );
+  transition: transform 560ms ease;
+}
+.home-primary-button:hover,
+.home-page .button:hover,
+.home-page .button-gold:hover,
+.home-page .button-outline:hover,
+.home-secondary-action:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 28px rgba(63, 103, 130, 0.16),
+    0 0 0 1px rgba(216, 174, 95, 0.18);
+}
+.home-primary-button:hover::after,
+.home-page .button-gold:hover::after {
+  transform: skewX(-18deg) translateX(720%);
+}
+.home-secondary-action:hover {
+  color: #b47e35;
+  text-shadow: 0 0 18px rgba(96, 170, 204, 0.32);
+}
+
 /* Internal route sizing follows the mockup, not the old visual card system. */
 .question-page,
 .invite-page,
@@ -5972,10 +6079,10 @@ body:has(.orvok-globe) {
 
 @media (max-width: 1180px) {
   .home-hero {
-    grid-template-columns: minmax(330px, 0.8fr) minmax(440px, 1.2fr);
+    grid-template-columns: minmax(310px, 0.7fr) minmax(540px, 1.3fr);
   }
   .home-hero-copy h1 {
-    font-size: 56px;
+    font-size: 50px;
   }
   .orvok-home-label {
     font-size: 14px;
@@ -5995,6 +6102,7 @@ body:has(.orvok-globe) {
   }
   .home-hero .orvok-globe {
     width: min(100%, 690px);
+    margin-left: auto;
     margin-top: 15px;
     transform: none;
   }
@@ -6169,13 +6277,59 @@ body:has(.orvok-globe) {
     opacity: 1;
   }
 }
-@keyframes rebuild-connection {
-  0%,
-  100% {
-    opacity: 0.45;
+@keyframes rebuild-orbit-flow {
+  from {
+    stroke-dashoffset: 0;
+    opacity: 0.72;
   }
   50% {
     opacity: 1;
+  }
+  to {
+    stroke-dashoffset: -180;
+    opacity: 0.52;
+  }
+}
+@keyframes rebuild-orbit-flow-reverse {
+  from {
+    stroke-dashoffset: 0;
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.92;
+  }
+  to {
+    stroke-dashoffset: 180;
+    opacity: 0.42;
+  }
+}
+@keyframes rebuild-filament-breathe {
+  0%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+  36% {
+    stroke-dashoffset: -0.16;
+    opacity: 0.66;
+  }
+  67% {
+    stroke-dashoffset: -0.48;
+    opacity: 0.4;
+  }
+}
+@keyframes rebuild-filament-glint {
+  from {
+    stroke-dashoffset: 1.05;
+    opacity: 0;
+  }
+  12%,
+  72% {
+    opacity: 0.8;
+  }
+  to {
+    stroke-dashoffset: -0.1;
+    opacity: 0;
   }
 }
 @keyframes rebuild-slot {
