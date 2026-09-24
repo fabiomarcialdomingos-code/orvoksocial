@@ -35,11 +35,19 @@ async function fetchAll<T>(path: string, signal: AbortSignal): Promise<T[]> {
   const items: T[] = [];
   let cursor: string | null = null;
   for (let page = 0; page < 100; page++) {
-    const response = await fetch(`${path}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, {
-      credentials: "same-origin", signal, cache: "no-store",
-    });
+    const response = await fetch(
+      `${path}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`,
+      {
+        credentials: "same-origin",
+        signal,
+        cache: "no-store",
+      },
+    );
     if (!response.ok) throw new Error("LIST_UNAVAILABLE");
-    const data = (await response.json()) as { items: T[]; nextCursor?: string | null };
+    const data = (await response.json()) as {
+      items: T[];
+      nextCursor?: string | null;
+    };
     items.push(...data.items);
     if (!data.nextCursor) return items;
     cursor = data.nextCursor;
@@ -90,9 +98,18 @@ export function RadarFlow({
   useEffect(() => {
     if (mode !== "accept") return;
     const controller = new AbortController();
-    fetch("/api/v1/users/me", { credentials: "same-origin", signal: controller.signal })
-      .then(async (response) => response.ok ? (response.json() as Promise<{ user: { id: string } | null }>) : null)
-      .then((data) => { if (!controller.signal.aborted) setActorId(data?.user?.id ?? ""); })
+    fetch("/api/v1/users/me", {
+      credentials: "same-origin",
+      signal: controller.signal,
+    })
+      .then(async (response) =>
+        response.ok
+          ? (response.json() as Promise<{ user: { id: string } | null }>)
+          : null,
+      )
+      .then((data) => {
+        if (!controller.signal.aborted) setActorId(data?.user?.id ?? "");
+      })
       .catch(() => {});
     return () => controller.abort();
   }, [mode]);
@@ -104,12 +121,20 @@ export function RadarFlow({
         : "/api/v1/radar/invitations";
     if (mode === "consent")
       fetchAll<Consent>(path, controller.signal)
-        .then((items) => { if (!controller.signal.aborted) setConsents(items); })
-        .catch(() => { if (!controller.signal.aborted) setListError(true); });
+        .then((items) => {
+          if (!controller.signal.aborted) setConsents(items);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setListError(true);
+        });
     else
       fetchAll<Invitation>(path, controller.signal)
-        .then((items) => { if (!controller.signal.aborted) setInvitations(items); })
-        .catch(() => { if (!controller.signal.aborted) setListError(true); });
+        .then((items) => {
+          if (!controller.signal.aborted) setInvitations(items);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setListError(true);
+        });
     return () => controller.abort();
   }, [mode]);
   useEffect(() => {
@@ -133,7 +158,11 @@ export function RadarFlow({
         return response.json() as Promise<Notice>;
       })
       .then((data) => {
-        if (controller.signal.aborted || acceptanceRef.current !== selectedAcceptanceId) return;
+        if (
+          controller.signal.aborted ||
+          acceptanceRef.current !== selectedAcceptanceId
+        )
+          return;
         if (
           data.version &&
           data.content &&
@@ -269,16 +298,23 @@ export function RadarFlow({
             ? "Aceitar convite"
             : "Sua decisão de consentimento"}
       </h2>
-      <ol className="workflow" aria-label="Etapas do Radar">
-        <li aria-current={mode === "invite" ? "step" : undefined}>Convite</li>
-        <li aria-current={mode === "accept" ? "step" : undefined}>Aceite</li>
-        <li aria-current={mode === "consent" ? "step" : undefined}>
-          Consentimento
-        </li>
-        <li>Respostas próprias</li>
-        <li>Previsão</li>
-      </ol>
-      {listError && <p className="form-message" data-kind="error" role="alert">Não foi possível carregar a lista de convites ou consentimentos. Atualize a página antes de decidir.</p>}
+      {mode !== "invite" && (
+        <ol className="workflow" aria-label="Etapas do Radar">
+          <li>Convite</li>
+          <li aria-current={mode === "accept" ? "step" : undefined}>Aceite</li>
+          <li aria-current={mode === "consent" ? "step" : undefined}>
+            Consentimento
+          </li>
+          <li>Respostas próprias</li>
+          <li>Previsão</li>
+        </ol>
+      )}
+      {listError && (
+        <p className="form-message" data-kind="error" role="alert">
+          Não foi possível carregar a lista de convites ou consentimentos.
+          Atualize a página antes de decidir.
+        </p>
+      )}
       {mode === "consent" && (
         <>
           {noticeUnavailable && (
@@ -307,90 +343,149 @@ export function RadarFlow({
           )}
         </>
       )}
-      {mode === "accept" && invitations.some((item) => item.targetId === actorId && !item.acceptedAt && (!item.expiresAt || new Date(item.expiresAt).getTime() > now)) && (
-        <section>
-          <h3>Convites disponíveis</h3>
-          <ul>
-            {invitations
-              .filter((item) => item.targetId === actorId && !item.acceptedAt && (!item.expiresAt || new Date(item.expiresAt).getTime() > now))
-              .map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className="text-link"
-                    onClick={() => {
-                      const input = document.getElementById(
-                        "invitation-id",
-                      ) as HTMLInputElement | null;
-                      if (input) input.value = item.id;
-                      input?.focus();
-                    }}
-                  >
-                    Selecionar convite de {item.predictorId}
-                  </button>
-                </li>
-              ))}
-          </ul>
-        </section>
-      )}
-      {mode === "accept" && invitations.some((item) => item.targetId === actorId && item.acceptanceId) && (
-        <section>
-          <h3>Convites aceitos</h3>
-          <ul>
-            {invitations
-              .filter((item) => item.targetId === actorId && item.acceptanceId)
-              .map((item) => (
-                <li key={item.id}>
-                  <Link
-                    className="text-link"
-                    href={`/consentimento?aceite=${encodeURIComponent(item.acceptanceId!)}`}
-                  >
-                    Decidir sobre consentimento do convite {item.id}
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        </section>
-      )}
-      {mode === "consent" && consents.some((item) => item.purpose === "BE_PREDICTED") && (
-        <section>
-          <h3>Consentimentos registrados</h3>
-          <ul>
-            {consents.filter((item) => item.purpose === "BE_PREDICTED").map((item) => (
-              <li key={item.id}>
-                Versão {item.consentVersion} ·{" "}
-                {item.revokedAt ? "Revogado" : "Ativo"}
-                {!item.revokedAt && (
-                  <button
-                    type="button"
-                    className="text-link"
-                    aria-label={`Selecionar para revogação o consentimento ${item.id}, versão ${item.consentVersion}`}
-                    aria-pressed={grantId === item.id}
-                    onClick={() => setGrantId(item.id)}
-                  >
-                    Selecionar para revogação
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <form onSubmit={submit} className="form-stack">
+      {mode === "accept" &&
+        invitations.some(
+          (item) =>
+            item.targetId === actorId &&
+            !item.acceptedAt &&
+            (!item.expiresAt || new Date(item.expiresAt).getTime() > now),
+        ) && (
+          <section>
+            <h3>Convites disponíveis</h3>
+            <ul>
+              {invitations
+                .filter(
+                  (item) =>
+                    item.targetId === actorId &&
+                    !item.acceptedAt &&
+                    (!item.expiresAt ||
+                      new Date(item.expiresAt).getTime() > now),
+                )
+                .map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className="text-link"
+                      onClick={() => {
+                        const input = document.getElementById(
+                          "invitation-id",
+                        ) as HTMLInputElement | null;
+                        if (input) input.value = item.id;
+                        input?.focus();
+                      }}
+                    >
+                      Selecionar convite de {item.predictorId}
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        )}
+      {mode === "accept" &&
+        invitations.some(
+          (item) => item.targetId === actorId && item.acceptanceId,
+        ) && (
+          <section>
+            <h3>Convites aceitos</h3>
+            <ul>
+              {invitations
+                .filter(
+                  (item) => item.targetId === actorId && item.acceptanceId,
+                )
+                .map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      className="text-link"
+                      href={`/consentimento?aceite=${encodeURIComponent(item.acceptanceId!)}`}
+                    >
+                      Decidir sobre consentimento do convite {item.id}
+                    </Link>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        )}
+      {mode === "consent" &&
+        consents.some((item) => item.purpose === "BE_PREDICTED") && (
+          <section>
+            <h3>Consentimentos registrados</h3>
+            <ul>
+              {consents
+                .filter((item) => item.purpose === "BE_PREDICTED")
+                .map((item) => (
+                  <li key={item.id}>
+                    Versão {item.consentVersion} ·{" "}
+                    {item.revokedAt ? "Revogado" : "Ativo"}
+                    {!item.revokedAt && (
+                      <button
+                        type="button"
+                        className="text-link"
+                        aria-label={`Selecionar para revogação o consentimento ${item.id}, versão ${item.consentVersion}`}
+                        aria-pressed={grantId === item.id}
+                        onClick={() => setGrantId(item.id)}
+                      >
+                        Selecionar para revogação
+                      </button>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </section>
+        )}
+      <form onSubmit={submit} className="form-stack invite-form">
         {mode === "invite" && (
-          <div className="field">
-            <label htmlFor="target-id">Identificador da pessoa convidada</label>
-            <input
-              id="target-id"
-              name="targetId"
-              type="text"
-              required
-              autoComplete="off"
-            />
-            <span className="field-hint">
-              A seleção por perfil ficará disponível em uma etapa posterior.
-            </span>
-          </div>
+          <>
+            <div className="field invite-search-field">
+              <label htmlFor="target-id">Nome ou identificador</label>
+              <span className="invite-input-icon" aria-hidden="true">
+                ⌕
+              </span>
+              <input
+                id="target-id"
+                name="targetId"
+                type="text"
+                placeholder="Ex.: Ana Oliveira, @ana, Ana do trabalho"
+                required
+                autoComplete="off"
+              />
+            </div>
+            <fieldset className="invite-relations">
+              <legend>Relação com você</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="relation"
+                  value="amiga"
+                  defaultChecked
+                />
+                <span aria-hidden="true">♧</span> Amiga
+              </label>
+              <label>
+                <input type="radio" name="relation" value="familia" />
+                <span aria-hidden="true">⌂</span> Família
+              </label>
+              <label>
+                <input type="radio" name="relation" value="parceira" />
+                <span aria-hidden="true">♡</span> Parceira
+              </label>
+              <label>
+                <input type="radio" name="relation" value="colega" />
+                <span aria-hidden="true">▣</span> Colega
+              </label>
+            </fieldset>
+            <div className="field invite-message-field">
+              <label htmlFor="invite-message">
+                Mensagem <span>(opcional)</span>
+              </label>
+              <textarea
+                id="invite-message"
+                name="message"
+                maxLength={280}
+                placeholder="Escreva uma mensagem pessoal…"
+              />
+              <span className="invite-counter">0/280</span>
+            </div>
+          </>
         )}
         {mode === "accept" && (
           <div className="field">
@@ -463,7 +558,7 @@ export function RadarFlow({
             {feedback.text}
           </p>
         )}
-        <div className="form-actions">
+        <div className="form-actions invite-actions">
           <button
             className="button"
             type="submit"
@@ -477,6 +572,12 @@ export function RadarFlow({
                   ? "Aceitar convite"
                   : "Registrar consentimento"}
           </button>
+          {mode === "invite" && (
+            <span className="invite-consent-note">
+              <span aria-hidden="true">♙</span> Nenhuma previsão acontece sem
+              aceite e consentimento ativos.
+            </span>
+          )}
           {mode === "accept" && acceptanceId && (
             <Link
               className="text-link"

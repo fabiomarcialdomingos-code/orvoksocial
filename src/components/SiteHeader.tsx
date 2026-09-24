@@ -7,7 +7,9 @@ import { OrvokLogo } from "./brand/OrvokLogo";
 
 type Session = { authenticated?: boolean; role?: string };
 
-export function SiteHeader() {
+type SiteHeaderProps = { variant?: "public" | "app" };
+
+export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -19,7 +21,9 @@ export function SiteHeader() {
       credentials: "same-origin",
       cache: "no-store",
     })
-      .then((response) => (response.ok ? (response.json() as Promise<Session>) : null))
+      .then((response) =>
+        response.ok ? (response.json() as Promise<Session>) : null,
+      )
       .then((session) => {
         if (!active) return;
         setIsAuthenticated(session?.authenticated === true);
@@ -56,6 +60,62 @@ export function SiteHeader() {
     }
   }
 
+  if (variant === "app") {
+    return (
+      <header className="site-header app-site-header">
+        <div className="container app-header-inner">
+          <Link href="/" className="header-brand" aria-label="ORVOK — início">
+            <OrvokLogo />
+          </Link>
+          <nav className="app-site-nav" aria-label="Navegação do aplicativo">
+            <Link href="/">Início</Link>
+            <Link href="/radar" aria-current="page">
+              Radar Humano
+            </Link>
+            <Link href="/perfil">Pessoas</Link>
+            <Link href="/eventos">Mundo</Link>
+            <Link href="/perfil">Perfil</Link>
+          </nav>
+          <div className="app-header-actions">
+            <button
+              className="app-icon-button"
+              type="button"
+              aria-label="Notificações"
+            >
+              <span className="bell-icon" aria-hidden="true" />
+              <span className="notification-badge" aria-hidden="true" />
+            </button>
+            <span className="header-divider" aria-hidden="true" />
+            <Link
+              className="app-avatar"
+              href="/perfil"
+              aria-label="Abrir perfil"
+            >
+              VC
+            </Link>
+            <Link className="app-user-name" href="/perfil">
+              Você <span aria-hidden="true">⌄</span>
+            </Link>
+            <Link href="/convites" className="button app-header-cta">
+              Convidar pessoa <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+          <details className="mobile-menu app-mobile-menu">
+            <summary aria-label="Abrir menu">Menu</summary>
+            <nav aria-label="Navegação móvel do aplicativo">
+              <Link href="/">Início</Link>
+              <Link href="/radar">Radar Humano</Link>
+              <Link href="/perfil">Pessoas</Link>
+              <Link href="/eventos">Mundo</Link>
+              <Link href="/perfil">Perfil</Link>
+              <Link href="/convites">Convidar pessoa</Link>
+            </nav>
+          </details>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="site-header">
       <div className="container header-inner">
@@ -83,7 +143,12 @@ export function SiteHeader() {
               {isAuthenticated && <Link href="/perfil">Meu painel</Link>}
               {isAdmin && <Link href="/admin">Admin</Link>}
               {isAuthenticated ? (
-                <button type="button" className="text-link" onClick={() => void logout()} disabled={loggingOut}>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => void logout()}
+                  disabled={loggingOut}
+                >
                   {loggingOut ? "Saindo…" : "Sair"}
                 </button>
               ) : (
@@ -96,17 +161,34 @@ export function SiteHeader() {
           </details>
           {isAuthenticated ? (
             <>
-              <Link href="/radar" className="header-quiet-link">Radar Humano</Link>
-              <Link href="/perfil" className="header-quiet-link">Meu painel</Link>
-              {isAdmin && <Link href="/admin" className="header-quiet-link">Admin</Link>}
-              <button type="button" className="header-quiet-link header-logout" onClick={() => void logout()} disabled={loggingOut}>
+              <Link href="/radar" className="header-quiet-link">
+                Radar Humano
+              </Link>
+              <Link href="/perfil" className="header-quiet-link">
+                Meu painel
+              </Link>
+              {isAdmin && (
+                <Link href="/admin" className="header-quiet-link">
+                  Admin
+                </Link>
+              )}
+              <button
+                type="button"
+                className="header-quiet-link header-logout"
+                onClick={() => void logout()}
+                disabled={loggingOut}
+              >
                 {loggingOut ? "Saindo…" : "Sair"}
               </button>
             </>
           ) : (
             <>
-              <Link href="/entrar" className="header-quiet-link">Entrar</Link>
-              <Link href="/cadastro" className="button header-cta">Começar agora <span aria-hidden="true">→</span></Link>
+              <Link href="/entrar" className="header-quiet-link">
+                Entrar
+              </Link>
+              <Link href="/cadastro" className="button header-cta">
+                Começar agora <span aria-hidden="true">→</span>
+              </Link>
             </>
           )}
         </div>
