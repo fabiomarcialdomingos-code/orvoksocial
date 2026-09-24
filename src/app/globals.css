@@ -5912,12 +5912,12 @@ body:has(.orvok-globe) {
 
 /* Final proportion pass: the scene leads; copy supports it. */
 .home-hero {
-  grid-template-columns: minmax(330px, 0.68fr) minmax(650px, 1.32fr);
+  grid-template-columns: minmax(370px, 0.9fr) minmax(560px, 1.1fr);
   min-height: 650px;
   align-items: center;
 }
 .home-hero-copy h1 {
-  max-width: 570px;
+  max-width: 620px;
   margin-top: 28px;
   font-size: clamp(42px, 3.8vw, 62px);
   line-height: 0.98;
@@ -5929,8 +5929,8 @@ body:has(.orvok-globe) {
   line-height: 1.42;
 }
 .home-hero .orvok-globe {
-  width: min(142%, 1040px);
-  margin-left: -17%;
+  width: min(150%, 1080px);
+  margin-left: -18%;
 }
 .home-primary-button,
 .home-secondary-action,
@@ -6079,7 +6079,7 @@ body:has(.orvok-globe) {
 
 @media (max-width: 1180px) {
   .home-hero {
-    grid-template-columns: minmax(310px, 0.7fr) minmax(540px, 1.3fr);
+    grid-template-columns: minmax(350px, 0.88fr) minmax(520px, 1.12fr);
   }
   .home-hero-copy h1 {
     font-size: 50px;
@@ -6343,5 +6343,224 @@ body:has(.orvok-globe) {
     box-shadow:
       0 0 0 15px rgba(255, 255, 255, 0.28),
       0 0 32px rgba(212, 163, 82, 0.35);
+  }
+}
+
+/* Definitive Mockup01 composition pass */
+.home-perspective-inner {
+  padding-block: 13px 0;
+}
+.home-perspective-inner > .eyebrow {
+  display: block;
+  margin-bottom: 9px;
+  color: #193650;
+  letter-spacing: 0.28em;
+}
+.home-perspective-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.home-perspective-card {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  min-height: 136px;
+  padding: 13px 32px 16px 0;
+  border-top: 1px solid rgba(192, 201, 198, 0.56);
+  color: #193650;
+  text-decoration: none;
+  transition:
+    background-color 240ms ease,
+    transform 240ms ease;
+}
+.home-perspective-card + .home-perspective-card {
+  padding-left: 30px;
+  border-left: 1px solid rgba(192, 201, 198, 0.56);
+}
+.home-perspective-card:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(228, 239, 243, 0.22),
+    rgba(255, 246, 220, 0.18)
+  );
+  transform: translateY(-2px);
+}
+.home-perspective-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid #acd1e2;
+  border-radius: 50%;
+  color: #438ec5;
+  font-size: 32px;
+  font-family: Georgia, serif;
+  background: radial-gradient(
+    circle at 34% 25%,
+    #fff,
+    rgba(208, 234, 246, 0.65)
+  );
+  box-shadow:
+    inset 0 0 12px rgba(255, 255, 255, 0.85),
+    0 4px 18px rgba(113, 174, 208, 0.1);
+}
+.home-perspective-world .home-perspective-icon {
+  color: #5a9f88;
+  border-color: #b9d9ca;
+  background: radial-gradient(
+    circle at 34% 25%,
+    #fff,
+    rgba(214, 237, 222, 0.72)
+  );
+}
+.home-perspective-copy {
+  display: grid;
+  gap: 5px;
+}
+.home-perspective-copy .eyebrow {
+  color: #193650;
+  letter-spacing: 0.22em;
+  font-size: 11px;
+}
+.home-perspective-copy strong {
+  max-width: 440px;
+  font:
+    400 22px/1.1 "Playfair Display",
+    Georgia,
+    serif;
+  color: #193650;
+}
+.home-perspective-copy .home-inline-action {
+  margin-top: 3px;
+}
+.orvok-center-facet {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1.2;
+  mix-blend-mode: screen;
+  animation: rebuild-facet-shift 13s ease-in-out infinite;
+}
+.facet-two {
+  stroke: rgba(216, 174, 102, 0.18);
+  animation-delay: -4.4s;
+}
+.facet-three {
+  stroke: rgba(154, 206, 224, 0.2);
+  animation-delay: -8.1s;
+}
+.orvok-micro {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rebuild-micro-float var(--micro-duration) ease-in-out
+    var(--micro-delay) infinite;
+}
+.orvok-micro-halo {
+  fill: currentColor;
+  opacity: 0.18;
+  filter: url(#softBlur);
+}
+.orvok-micro-core {
+  fill: currentColor;
+  opacity: 0.76;
+  filter: url(#glintBlur);
+}
+.orvok-micro-highlight {
+  fill: #fff;
+  opacity: 0.84;
+}
+.orvok-micro-blue {
+  color: #78bfe5;
+}
+.orvok-micro-gold {
+  color: #d7a24d;
+}
+.orvok-micro-sage {
+  color: #88bd9f;
+}
+.orvok-micro-violet {
+  color: #b7a9dd;
+}
+.orvok-micro-white {
+  color: #eaf4f1;
+}
+.home-hero .orvok-globe::before {
+  inset: -3% -3%;
+  background: radial-gradient(
+    ellipse at 50% 48%,
+    rgba(255, 244, 204, 0.55),
+    rgba(184, 220, 238, 0.19) 43%,
+    transparent 72%
+  );
+  filter: blur(33px);
+}
+.home-hero .orvok-globe::after {
+  inset: 21% 22%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.93),
+    rgba(255, 231, 186, 0.3) 39%,
+    rgba(209, 233, 239, 0.12) 60%,
+    transparent 76%
+  );
+}
+
+@keyframes rebuild-micro-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.82);
+    opacity: 0.48;
+  }
+  32% {
+    transform: translate3d(4px, -7px, 0) scale(1.12);
+    opacity: 0.92;
+  }
+  68% {
+    transform: translate3d(-5px, 3px, 0) scale(0.94);
+    opacity: 0.7;
+  }
+}
+@keyframes rebuild-facet-shift {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 0.72;
+    transform: rotate(2deg);
+  }
+}
+@media (max-width: 900px) {
+  .home-perspective-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-perspective-card,
+  .home-perspective-card + .home-perspective-card {
+    padding-left: 0;
+    padding-right: 0;
+    border-left: 0;
+  }
+  .home-perspective-card + .home-perspective-card {
+    border-top: 1px solid rgba(192, 201, 198, 0.56);
+  }
+}
+@media (max-width: 680px) {
+  .home-perspective-copy strong {
+    font-size: 18px;
+  }
+  .home-perspective-card {
+    grid-template-columns: 70px minmax(0, 1fr);
+    min-height: 118px;
+  }
+  .home-perspective-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 26px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orvok-micro,
+  .orvok-center-facet {
+    animation: none !important;
   }
 }

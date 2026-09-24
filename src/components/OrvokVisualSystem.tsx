@@ -398,6 +398,58 @@ function OrvokFilament({
   );
 }
 
+function OrvokMicroSpheres({ variant = "home" }: { variant?: Variant }) {
+  const particles = [
+    [383, 112, 5, "blue", -1.8, 9.8],
+    [670, 105, 6, "gold", -4.2, 11.5],
+    [813, 170, 4, "blue", -7.5, 13.2],
+    [864, 296, 6, "sage", -3.1, 10.4],
+    [795, 454, 5, "gold", -8.8, 12.7],
+    [597, 503, 7, "blue", -1.2, 14.1],
+    [387, 490, 6, "sage", -6.1, 11.8],
+    [197, 437, 5, "blue", -10.4, 13.6],
+    [136, 306, 6, "gold", -2.4, 10.9],
+    [220, 140, 4, "sage", -5.7, 12.3],
+    [488, 77, 4, "white", -9.2, 15.2],
+    [733, 394, 4, "violet", -4.6, 10.6],
+    [332, 339, 4, "gold", -6.8, 12.8],
+    [702, 248, 5, "white", -2.9, 14.8],
+    [455, 452, 4, "blue", -11.3, 11.2],
+    [584, 156, 5, "sage", -7.2, 13.4],
+    [301, 256, 3, "white", -1.5, 9.7],
+    [755, 114, 3, "gold", -5.2, 12.1],
+  ] as const;
+  return (
+    <g
+      className={`orvok-micro-field orvok-micro-field-${variant}`}
+      aria-hidden="true"
+    >
+      {particles.map(([x, y, r, tone, delay, duration], index) => (
+        <g
+          key={`${x}-${y}`}
+          className={`orvok-micro orvok-micro-${tone}`}
+          style={
+            {
+              "--micro-delay": `${delay}s`,
+              "--micro-duration": `${duration}s`,
+              "--micro-index": index,
+            } as Vars
+          }
+        >
+          <circle cx={x} cy={y} r={r * 2.7} className="orvok-micro-halo" />
+          <circle cx={x} cy={y} r={r} className="orvok-micro-core" />
+          <circle
+            cx={x - r * 0.3}
+            cy={y - r * 0.35}
+            r={Math.max(1.2, r * 0.22)}
+            className="orvok-micro-highlight"
+          />
+        </g>
+      ))}
+    </g>
+  );
+}
+
 export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
   const nodes = [
     {
@@ -524,6 +576,18 @@ export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
           fill="url(#home-center-halo)"
           opacity=".82"
         />
+        <path
+          className="orvok-center-facet facet-one"
+          d="M452 250 Q548 182 644 250 Q610 292 548 300 Q486 292 452 250Z"
+        />
+        <path
+          className="orvok-center-facet facet-two"
+          d="M449 353 Q548 420 647 350 Q607 312 548 300 Q487 312 449 353Z"
+        />
+        <path
+          className="orvok-center-facet facet-three"
+          d="M482 208 Q548 300 482 391 Q548 420 614 391 Q548 300 614 208Z"
+        />
         <circle
           className="orvok-center-core"
           cx="548"
@@ -540,6 +604,7 @@ export function OrvokGlobe({ compact = false }: { compact?: boolean }) {
             ORVOK
           </text>
         </g>
+        <OrvokMicroSpheres />
         {nodes.map((node, index) => {
           const gradientId = `home-${node.tone}`;
           const glowId = `home-${node.tone}-glow`;

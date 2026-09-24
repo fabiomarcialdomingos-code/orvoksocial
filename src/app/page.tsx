@@ -45,11 +45,15 @@ export default function HomePage() {
           <div className="home-hero-copy">
             <span className="eyebrow">Um espaço de perspectivas humanas</span>
             <h1 id="hero-title" className="display">
-              Toda pessoa é um ponto de vista. Toda conexão revela alguma coisa.
+              Toda pessoa é um ponto
+              <br />
+              de vista. Toda conexão
+              <br />
+              revela alguma coisa.
             </h1>
             <p className="home-hero-description">
-              O ORVOK é um espaço para descobrir como as pessoas percebem você —
-              e como você percebe o mundo.
+              O ORVOK conecta perspectivas sobre você, sobre as pessoas e sobre
+              o mundo.
             </p>
             <div className="home-hero-actions">
               <Link href="/cadastro" className="button home-primary-button">
@@ -65,30 +69,50 @@ export default function HomePage() {
 
         <section
           className="home-universe-band"
-          aria-label="Os universos do ORVOK"
+          aria-labelledby="perspective-title"
         >
-          <div className="container home-universe-band-inner">
-            <Link href="/radar" className="home-universe-signature">
-              <span className="home-globe-icon" aria-hidden="true">
-                ◎
-              </span>
-              <strong>VOCÊ. PESSOAS. MUNDO.</strong>
-            </Link>
-            <span className="home-band-divider" aria-hidden="true" />
-            <p>
-              Previsões sobre acontecimentos reais, além da nossa própria
-              história.
-              <br />
-              <Link href="/eventos">
-                Faça previsões sobre eventos reais em Economia, Ciência e
-                Tecnologia.
+          <div className="container home-perspective-inner">
+            <span id="perspective-title" className="eyebrow">
+              Escolha uma perspectiva
+            </span>
+            <div className="home-perspective-grid">
+              <Link
+                href="/radar"
+                className="home-perspective-card home-perspective-people"
+              >
+                <span className="home-perspective-icon" aria-hidden="true">
+                  ♧
+                </span>
+                <span className="home-perspective-copy">
+                  <span className="eyebrow">Pessoas</span>
+                  <strong>
+                    Descubra como pessoas que conhecem você antecipam suas
+                    escolhas.
+                  </strong>
+                  <span className="home-inline-action">
+                    Entrar no Radar Humano <span aria-hidden="true">→</span>
+                  </span>
+                </span>
               </Link>
-            </p>
-            <span className="home-band-divider" aria-hidden="true" />
-            <div className="home-band-topics" aria-label="Categorias do mundo">
-              <Link href="/eventos">▥ Economia</Link>
-              <Link href="/eventos">♧ Ciência</Link>
-              <Link href="/eventos">▦ Tecnologia</Link>
+              <Link
+                href="/eventos"
+                className="home-perspective-card home-perspective-world"
+              >
+                <span className="home-perspective-icon" aria-hidden="true">
+                  ▥
+                </span>
+                <span className="home-perspective-copy">
+                  <span className="eyebrow">Mundo</span>
+                  <strong>
+                    Faça previsões sobre eventos reais em Economia, Ciência e
+                    Tecnologia.
+                  </strong>
+                  <span className="home-inline-action">
+                    Explorar previsões do mundo{" "}
+                    <span aria-hidden="true">→</span>
+                  </span>
+                </span>
+              </Link>
             </div>
           </div>
         </section>
