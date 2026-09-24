@@ -4,90 +4,50 @@ import { SiteHeader } from "../components/SiteHeader";
 function PerspectiveOrbit() {
   return (
     <div className="home-orbit" aria-label="Universo de perspectivas ORVOK">
-      <svg viewBox="0 0 600 560" role="img" aria-labelledby="orbit-title orbit-desc">
-        <title id="orbit-title">Perspectivas conectadas no universo ORVOK</title>
-        <desc id="orbit-desc">
-          Uma esfera central ORVOK conectada a você, pessoas, mundo, memória e escolhas.
-        </desc>
-        <ellipse className="home-orbit-line home-orbit-line-blue" cx="300" cy="280" rx="248" ry="184" />
-        <ellipse className="home-orbit-line home-orbit-line-gold" cx="300" cy="280" rx="214" ry="138" transform="rotate(24 300 280)" />
-        <ellipse className="home-orbit-line home-orbit-line-gold" cx="300" cy="280" rx="205" ry="132" transform="rotate(-28 300 280)" />
-        <path className="home-orbit-thread" d="M106 188C215 253 373 321 499 387" />
-        <path className="home-orbit-thread" d="M115 383C218 330 373 244 490 174" />
-        <circle className="home-orbit-center-glow" cx="300" cy="280" r="82" />
-        <circle className="home-orbit-center" cx="300" cy="280" r="64" />
-        <text className="home-orbit-center-mark" x="300" y="274" textAnchor="middle">ORVOK</text>
-        <text className="home-orbit-center-caption" x="300" y="298" textAnchor="middle">um universo de perspectivas</text>
-        <g className="home-orbit-node home-orbit-node-memory">
-          <circle cx="300" cy="48" r="35" />
-          <text x="300" y="53" textAnchor="middle">memória</text>
+      <svg viewBox="0 0 760 600" role="img" aria-labelledby="orbit-title orbit-desc">
+        <title id="orbit-title">ORVOK: você, pessoas e mundo em perspectiva</title>
+        <desc id="orbit-desc">Uma esfera ORVOK conectada a diferentes perspectivas humanas e eventos do mundo.</desc>
+        <defs>
+          <radialGradient id="orb-glow" cx="50%" cy="45%" r="58%">
+            <stop offset="0" stopColor="#fffef9" stopOpacity=".98" />
+            <stop offset=".45" stopColor="#f6e8ca" stopOpacity=".7" />
+            <stop offset="1" stopColor="#dfeaf0" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="orb-you"><stop stopColor="#fff0d0" stopOpacity=".92" /><stop offset="1" stopColor="#e5bd79" stopOpacity=".72" /></radialGradient>
+          <radialGradient id="orb-memory"><stop stopColor="#dceddd" stopOpacity=".92" /><stop offset="1" stopColor="#aac9b1" stopOpacity=".72" /></radialGradient>
+          <radialGradient id="orb-blue"><stop stopColor="#dcecf6" stopOpacity=".94" /><stop offset="1" stopColor="#a9cce2" stopOpacity=".72" /></radialGradient>
+          <filter id="orb-blur"><feGaussianBlur stdDeviation="12" /></filter>
+        </defs>
+        <ellipse className="home-orbit-line home-orbit-outer" cx="386" cy="298" rx="330" ry="238" />
+        <ellipse className="home-orbit-line home-orbit-blue-line" cx="386" cy="298" rx="280" ry="202" transform="rotate(27 386 298)" />
+        <ellipse className="home-orbit-line home-orbit-gold-line" cx="386" cy="298" rx="270" ry="178" transform="rotate(-26 386 298)" />
+        <ellipse className="home-orbit-line home-orbit-gold-line" cx="386" cy="298" rx="260" ry="132" transform="rotate(12 386 298)" />
+        <path className="home-orbit-thread" d="M87 204C256 273 464 381 674 412" />
+        <path className="home-orbit-thread" d="M106 437C286 365 469 238 660 144" />
+        <circle className="home-orbit-glow" cx="386" cy="298" r="134" fill="url(#orb-glow)" filter="url(#orb-blur)" />
+        <circle className="home-orbit-center" cx="386" cy="298" r="91" />
+        <g className="home-orbit-brand-mark">
+          <circle cx="366" cy="278" r="20" /><circle cx="406" cy="278" r="20" />
+          <text x="386" y="337" textAnchor="middle">ORVOK</text>
         </g>
-        <g className="home-orbit-node home-orbit-node-world">
-          <circle cx="500" cy="180" r="35" />
-          <text x="500" y="185" textAnchor="middle">mundo</text>
-        </g>
-        <g className="home-orbit-node home-orbit-node-people">
-          <circle cx="494" cy="385" r="35" />
-          <text x="494" y="390" textAnchor="middle">pessoas</text>
-        </g>
-        <g className="home-orbit-node home-orbit-node-you">
-          <circle cx="105" cy="385" r="35" />
-          <text x="105" y="390" textAnchor="middle">você</text>
-        </g>
-        <g className="home-orbit-node home-orbit-node-choices">
-          <circle cx="104" cy="178" r="35" />
-          <text x="104" y="183" textAnchor="middle">escolhas</text>
-        </g>
-        <circle className="home-orbit-dot home-orbit-dot-gold" cx="161" cy="97" r="5" />
-        <circle className="home-orbit-dot home-orbit-dot-blue" cx="452" cy="92" r="5" />
-        <circle className="home-orbit-dot home-orbit-dot-green" cx="424" cy="467" r="5" />
-        <circle className="home-orbit-dot home-orbit-dot-gold" cx="170" cy="466" r="5" />
+        <g className="home-orbit-node home-orbit-you"><circle cx="188" cy="414" r="48" fill="url(#orb-you)" /><text x="188" y="420" textAnchor="middle">você</text></g>
+        <g className="home-orbit-node home-orbit-memory"><circle cx="552" cy="130" r="55" fill="url(#orb-memory)" /><text x="552" y="136" textAnchor="middle">memória</text></g>
+        <g className="home-orbit-node home-orbit-choice"><circle cx="219" cy="174" r="48" fill="url(#orb-blue)" /><text x="219" y="180" textAnchor="middle">escolhas</text></g>
+        <g className="home-orbit-node home-orbit-world"><circle cx="642" cy="288" r="52" fill="url(#orb-blue)" /><text x="642" y="294" textAnchor="middle">mundo</text></g>
+        <g className="home-orbit-node home-orbit-other"><circle cx="520" cy="455" r="45" fill="#eef1f0" fillOpacity=".92" /><text x="520" y="461" textAnchor="middle">outro</text></g>
+        <g className="home-orbit-node home-orbit-event home-orbit-economy"><circle cx="386" cy="47" r="43" fill="#fffefa" fillOpacity=".82" /><text x="386" y="53" textAnchor="middle">Economia</text></g>
+        <g className="home-orbit-node home-orbit-event home-orbit-science"><circle cx="710" cy="190" r="40" fill="#f4f3ed" fillOpacity=".8" /><text x="710" y="196" textAnchor="middle">Ciência</text></g>
+        <g className="home-orbit-node home-orbit-event home-orbit-tech"><circle cx="672" cy="478" r="42" fill="url(#orb-blue)" /><text x="672" y="484" textAnchor="middle">Tecnologia</text></g>
+        <circle className="home-orbit-dot home-orbit-dot-gold" cx="101" cy="316" r="6" /><circle className="home-orbit-dot home-orbit-dot-blue" cx="286" cy="94" r="5" /><circle className="home-orbit-dot home-orbit-dot-gold" cx="545" cy="68" r="6" /><circle className="home-orbit-dot home-orbit-dot-green" cx="445" cy="495" r="7" /><circle className="home-orbit-dot home-orbit-dot-blue" cx="90" cy="258" r="6" />
       </svg>
     </div>
   );
 }
 
-const universes = [
-  {
-    id: "pessoas",
-    label: "Pessoas",
-    title: "Descubra como pessoas que conhecem você antecipam suas escolhas.",
-    href: "/radar",
-    action: "Entrar no Radar Humano",
-    tone: "people",
-  },
-  {
-    id: "mundo",
-    label: "Mundo",
-    title: "Faça previsões sobre eventos reais em Economia, Ciência e Tecnologia.",
-    href: "/eventos",
-    action: "Explorar previsões do mundo",
-    tone: "world",
-  },
-];
-
 const steps = [
-  {
-    number: "01",
-    title: "Você responde",
-    description: "Registre perspectivas sobre você, as pessoas e o mundo.",
-    href: "/cadastro",
-    action: "Começar a responder",
-  },
-  {
-    number: "02",
-    title: "Você convida",
-    description: "Convide pessoas de confiança com aceite e consentimento.",
-    href: "/convites",
-    action: "Conhecer os convites",
-  },
-  {
-    number: "03",
-    title: "Você descobre",
-    description: "Compare respostas e previsões para encontrar padrões.",
-    href: "/radar",
-    action: "Ver um exemplo",
-  },
+  { number: "01", title: "Você responde", description: "Registre suas próprias perspectivas sobre você, as pessoas e os acontecimentos do mundo.", href: "/cadastro", action: "Começar a responder", tone: "you" },
+  { number: "02", title: "Você convida", description: "Escolha pessoas que conhecem você e permita que participem com aceite e consentimento.", href: "/convites", action: "Conhecer os convites", tone: "people" },
+  { number: "03", title: "Você descobre", description: "Compare respostas, previsões e percepções para encontrar padrões invisíveis.", href: "/radar", action: "Ver um exemplo", tone: "world" },
 ];
 
 export default function HomePage() {
@@ -98,100 +58,37 @@ export default function HomePage() {
         <section className="home-hero container" aria-labelledby="hero-title">
           <div className="home-hero-copy">
             <span className="eyebrow">Um espaço de perspectivas humanas</span>
-            <h1 id="hero-title" className="display">
-              Toda pessoa é um ponto de vista. Toda conexão revela alguma coisa.
-            </h1>
-            <p className="home-hero-description">
-              O ORVOK conecta perspectivas sobre você, sobre as pessoas e sobre o mundo.
-            </p>
+            <h1 id="hero-title" className="display">Toda pessoa é um ponto de vista. Toda conexão revela alguma coisa.</h1>
+            <p className="home-hero-description">O ORVOK é um espaço para descobrir como as pessoas percebem você — e como você percebe o mundo.</p>
             <div className="home-hero-actions">
-              <Link href="/cadastro" className="button home-primary-button">
-                Começar minha jornada <span aria-hidden="true">→</span>
-              </Link>
-              <Link href="#sobre" className="text-link home-secondary-action">
-                Entender o ORVOK <span aria-hidden="true">→</span>
-              </Link>
+              <Link href="/cadastro" className="button home-primary-button">Começar minha jornada <span aria-hidden="true">→</span></Link>
+              <Link href="#sobre" className="text-link home-secondary-action">Entender o ORVOK <span aria-hidden="true">→</span></Link>
             </div>
           </div>
           <PerspectiveOrbit />
         </section>
 
-        <section className="home-universes container" aria-labelledby="universes-title">
-          <div className="home-section-kicker">
-            <span id="universes-title" className="eyebrow">Escolha uma perspectiva</span>
-          </div>
-          <div className="home-universe-grid">
-            {universes.map((universe) => (
-              <article className={`home-universe home-universe-${universe.tone}`} key={universe.id} id={universe.id}>
-                <div className="home-universe-icon" aria-hidden="true">{universe.tone === "people" ? "◌" : "◒"}</div>
-                <div className="home-universe-content">
-                  <span className="eyebrow">{universe.label}</span>
-                  <h2 className="display">{universe.title}</h2>
-                  <Link href={universe.href} className="home-inline-action">
-                    {universe.action} <span aria-hidden="true">→</span>
-                  </Link>
-                </div>
-              </article>
-            ))}
+        <section className="home-universe-band" aria-label="Os universos do ORVOK">
+          <div className="container home-universe-band-inner">
+            <Link href="/radar" className="home-universe-signature"><span className="home-globe-icon" aria-hidden="true">◎</span><strong>VOCÊ. PESSOAS. MUNDO.</strong></Link>
+            <span className="home-band-divider" aria-hidden="true" />
+            <p>Previsões sobre acontecimentos reais, além da nossa própria história.<br /><Link href="/eventos">Faça previsões sobre eventos reais em Economia, Ciência e Tecnologia.</Link></p>
+            <span className="home-band-divider" aria-hidden="true" />
+            <div className="home-band-topics" aria-label="Categorias do mundo"><Link href="/eventos">▥ Economia</Link><Link href="/eventos">♧ Ciência</Link><Link href="/eventos">▦ Tecnologia</Link></div>
           </div>
         </section>
 
         <section id="como-funciona" className="home-how container" aria-labelledby="how-title">
-          <div className="home-section-heading">
-            <span className="eyebrow">Como funciona</span>
-            <h2 id="how-title" className="display">Uma experiência em três movimentos.</h2>
-          </div>
+          <div className="home-section-heading"><span id="how-title" className="eyebrow">O que acontece aqui?</span></div>
           <div className="home-steps">
-            {steps.map((step, index) => (
-              <article className="home-step" key={step.number}>
-                <div className="home-step-marker" aria-hidden="true">
-                  <span>{step.number}</span>
-                  {index < steps.length - 1 && <i />}
-                </div>
-                <div className="home-step-body">
-                  <h3 className="display">{step.title}</h3>
-                  <p>{step.description}</p>
-                  <Link href={step.href} className="home-inline-action">
-                    {step.action} <span aria-hidden="true">→</span>
-                  </Link>
-                </div>
-              </article>
-            ))}
+            {steps.map((step, index) => <article className={`home-step home-step-${step.tone}`} key={step.number}>
+              <div className="home-step-marker" aria-hidden="true"><span>{step.number}</span>{index < steps.length - 1 && <i />}</div>
+              <div className="home-step-body"><h2 className="display">{step.title}</h2><p>{step.description}</p><Link href={step.href} className="home-inline-action">{step.action} <span aria-hidden="true">→</span></Link></div>
+            </article>)}
           </div>
-          <p className="home-auth-note">
-            <span aria-hidden="true">◌</span> Ações de convite exigem cadastro ou login.
-          </p>
         </section>
 
-        <footer id="sobre" className="home-footer">
-          <div className="container home-footer-inner">
-            <div className="home-footer-brand">
-              <span className="brand-word">ORVOK</span>
-              <span>Cada perspectiva só existe com aceite e consentimento ativos.</span>
-            </div>
-            <nav className="home-footer-nav" aria-label="Navegação do rodapé">
-              <div>
-                <span className="eyebrow">Produto</span>
-                <Link href="/radar">Radar Humano</Link>
-                <Link href="/eventos">Prever o mundo</Link>
-                <Link href="/grupos">Grupos</Link>
-              </div>
-              <div>
-                <span className="eyebrow">Sobre</span>
-                <Link href="#sobre">Sobre o ORVOK</Link>
-                <Link href="#como-funciona">Como funciona</Link>
-                <Link href="#manifesto">Manifesto</Link>
-              </div>
-              <div>
-                <span className="eyebrow">Suporte</span>
-                <Link href="#privacidade">Privacidade</Link>
-                <Link href="#termos">Termos de uso</Link>
-                <Link href="/entrar">Entrar</Link>
-                <Link href="/cadastro">Criar conta</Link>
-              </div>
-            </nav>
-          </div>
-        </footer>
+        <footer id="sobre" className="home-footer"><div className="container home-footer-inner"><div className="home-footer-brand"><span className="brand-word">ORVOK</span><span>Cada perspectiva só existe com aceite e consentimento ativos.</span></div><nav className="home-footer-nav" aria-label="Navegação do rodapé"><div><span className="eyebrow">Produto</span><Link href="/radar">Radar Humano</Link><Link href="/eventos">Prever o mundo</Link><Link href="/grupos">Grupos</Link></div><div><span className="eyebrow">Sobre</span><Link href="#sobre">Sobre o ORVOK</Link><Link href="#como-funciona">Como funciona</Link><Link href="#manifesto">Manifesto</Link></div><div><span className="eyebrow">Suporte</span><Link href="#privacidade">Privacidade</Link><Link href="#termos">Termos de uso</Link><Link href="/entrar">Entrar</Link><Link href="/cadastro">Criar conta</Link></div></nav></div></footer>
       </main>
     </>
   );

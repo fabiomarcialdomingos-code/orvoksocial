@@ -1358,3 +1358,116 @@ th,td { text-align:left; padding:var(--space-3); border-top:1px solid var(--orvo
   .radar-journey-step + .radar-journey-step { padding-left: 12px; }
   .radar-journey-step + .radar-journey-step::before { display: none; }
 }
+
+
+/* Mockup fidelity pass: editorial home composition. */
+.home-hero {
+  grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+  min-height: 505px;
+  padding-block: 20px 18px;
+}
+.home-hero-copy { padding-right: 8px; }
+.home-hero-copy h1 {
+  max-width: 650px;
+  margin: 25px 0 24px;
+  font-size: clamp(46px, 4.25vw, 72px);
+  line-height: .99;
+}
+.home-hero-description {
+  max-width: 590px;
+  color: #3c79a7;
+  font-size: clamp(18px, 1.5vw, 25px);
+  line-height: 1.28;
+}
+.home-hero-actions { margin-top: 34px; gap: 44px; }
+.home-primary-button { min-height: 56px; min-width: 300px; font-family: var(--font-display); font-size: 17px; }
+.home-secondary-action { color: #356c99; font-family: var(--font-display); font-size: 17px; }
+.home-orbit {
+  width: min(100%, 760px);
+  aspect-ratio: 760 / 600;
+  justify-self: end;
+  transform: translateX(2%) translateY(3px);
+}
+.home-orbit svg { overflow: visible; }
+.home-orbit-line { stroke-width: 1.05; }
+.home-orbit-outer { stroke: #bfd0d8; }
+.home-orbit-blue-line { stroke: #c1d9e7; }
+.home-orbit-gold-line { stroke: #d9b86c; }
+.home-orbit-thread { stroke: #d6b36c; stroke-width: 1.15; }
+.home-orbit-center { fill: rgba(255,254,249,.78); stroke: #e6d3a7; stroke-width: 1; }
+.home-orbit-glow { opacity: .9; }
+.home-orbit-brand-mark circle { fill: none; stroke: #172e45; stroke-width: 2; }
+.home-orbit-brand-mark text { fill: #172e45; font-family: var(--font-interface); font-size: 18px; letter-spacing: .34em; }
+.home-orbit-node circle { stroke: rgba(255,255,255,.9); stroke-width: 1.4; }
+.home-orbit-node text { fill: #152e45; font-family: var(--font-display); font-size: 16px; }
+.home-orbit-event text { font-size: 14px; }
+.home-orbit-dot-gold { fill: #d8aa50; }
+.home-orbit-dot-blue { fill: #8dbbd4; }
+.home-orbit-dot-green { fill: #8fb49c; }
+
+.home-universe-band {
+  border-top: 1px solid #cfd9d7;
+  border-bottom: 1px solid #cfd9d7;
+  background: rgba(255,254,249,.54);
+}
+.home-universe-band-inner {
+  display: grid;
+  grid-template-columns: auto 1px minmax(300px,1fr) 1px auto;
+  align-items: center;
+  gap: 22px;
+  min-height: 73px;
+}
+.home-universe-signature { display: inline-flex; align-items: center; gap: 17px; color: #17314b; text-decoration: none; white-space: nowrap; }
+.home-universe-signature strong { font-family: var(--font-interface); font-size: 17px; font-weight: 400; letter-spacing: .23em; }
+.home-globe-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #6f9aad; border-radius: 50%; color: #568399; font-size: 29px; line-height: 1; }
+.home-band-divider { width: 1px; height: 43px; background: #d0d7d5; }
+.home-universe-band p { margin: 0; color: #356c99; font-family: var(--font-display); font-size: 15px; line-height: 1.18; }
+.home-universe-band p a { color: inherit; text-decoration: none; }
+.home-universe-band p a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.home-band-topics { display: flex; align-items: center; gap: 22px; white-space: nowrap; }
+.home-band-topics a { color: #42748b; font-family: var(--font-display); font-size: 15px; text-decoration: none; }
+.home-band-topics a:hover { color: #a97832; }
+
+.home-how { padding-block: 25px 28px; }
+.home-section-heading { margin-bottom: 10px; }
+.home-section-heading .eyebrow { color: #17314b; font-size: 14px; letter-spacing: .26em; }
+.home-steps { gap: 0; }
+.home-step { min-height: 145px; grid-template-columns: 92px minmax(0,1fr); gap: 20px; padding-right: 46px; }
+.home-step + .home-step { padding-left: 46px; }
+.home-step-marker { width: 74px; height: 74px; border-color: #eadab9; background: rgba(255,254,249,.6); color: #b68136; font-size: 28px; }
+.home-step-marker::after { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(205,173,111,.35); border-radius: 50%; }
+.home-step-marker i { top: 36px; left: 74px; width: calc(100% + 350px); background: #dfc898; z-index: 0; }
+.home-step-body h2 { margin: 8px 0 7px; color: #17314b; font-size: clamp(24px, 2vw, 31px); line-height: 1; text-transform: uppercase; letter-spacing: .025em; }
+.home-step-body p { max-width: 36ch; color: #4279a2; font-family: var(--font-interface); font-size: 16px; line-height: 1.26; }
+.home-step-you .home-step-marker { color: #b87623; }
+.home-step-people .home-step-marker { border-color: #c5d9e9; color: #5b9bc7; }
+.home-step-world .home-step-marker { border-color: #c4dfca; color: #4d9b87; }
+.home-step .home-inline-action { font-family: var(--font-display); font-size: 15px; }
+.home-footer { margin-top: 0; }
+
+@media (max-width: 1200px) {
+  .home-universe-band-inner { grid-template-columns: auto 1px minmax(220px,1fr) 1px auto; gap: 14px; }
+  .home-universe-signature strong { font-size: 13px; letter-spacing: .15em; }
+  .home-band-topics { gap: 12px; }
+  .home-band-topics a, .home-universe-band p { font-size: 13px; }
+}
+@media (max-width: 900px) {
+  .home-hero { grid-template-columns: 1fr; min-height: auto; padding-block: 40px 24px; }
+  .home-orbit { width: min(100%, 700px); justify-self: center; transform: none; margin-top: 20px; }
+  .home-universe-band-inner { grid-template-columns: 1fr; gap: 12px; padding-block: 16px; }
+  .home-band-divider { width: 100%; height: 1px; }
+  .home-band-topics { justify-content: space-between; }
+}
+@media (max-width: 680px) {
+  .home-hero-copy h1 { font-size: clamp(42px, 11vw, 58px); }
+  .home-primary-button { min-width: 0; }
+  .home-hero-actions { gap: 18px; }
+  .home-orbit { width: 120%; max-width: 760px; margin-left: -10%; }
+  .home-universe-signature strong { font-size: 12px; }
+  .home-step, .home-step + .home-step { grid-template-columns: 66px 1fr; padding-right: 0; padding-left: 0; }
+  .home-step + .home-step { border-left: 0; border-top: 1px solid var(--orvok-stone); padding-top: 18px; margin-top: 18px; }
+  .home-step-marker { width: 58px; height: 58px; font-size: 22px; }
+  .home-step-marker i { display: none; }
+  .home-step-body h2 { font-size: 23px; }
+  .home-step-body p { font-size: 14px; }
+}
