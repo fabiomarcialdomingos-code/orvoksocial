@@ -3,16 +3,16 @@ import { FoundationPage } from "../../components/FoundationPage";
 export default function OnboardingPage() {
   return (
     <FoundationPage
-      eyebrow="Primeiros passos · TEST_ONLY"
-      title="Seu espaço está pronto para começar."
-      description="O onboarding visual está disponível para inspeção. A ativação de conta e as etapas de produto permanecem controladas até a homologação."
+      eyebrow="Radar Humano · 01 de 04"
+      title="Comece pelo seu próprio olhar."
+      description="Responda às perguntas para criar seu gabarito pessoal. Não existe resposta certa; existe a sua perspectiva."
+      activeStep={1}
     >
-      <section className="empty-state" aria-labelledby="onboarding-status">
-        <h2 id="onboarding-status">Onboarding em preparação</h2>
-        <p className="muted">
-          Nenhuma pergunta oficial ou dado real é carregado nesta etapa. Continue para o Radar quando estiver usando uma conta de teste autorizada.
-        </p>
-        <a className="button" href="/radar">Abrir Radar de teste</a>
+      <section className="journey-empty" aria-labelledby="onboarding-status">
+        <span className="eyebrow">Seu gabarito</span>
+        <h2 id="onboarding-status" className="display">Sua primeira perspectiva começa aqui.</h2>
+        <p className="muted">O questionário será aberto em uma conta autorizada. Depois, você poderá convidar pessoas de confiança.</p>
+        <a className="button" href="/radar">Responder às perguntas <span aria-hidden="true">→</span></a>
       </section>
     </FoundationPage>
   );

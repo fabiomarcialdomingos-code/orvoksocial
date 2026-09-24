@@ -1,5 +1,19 @@
 import { FoundationPage } from "../../components/FoundationPage";
 
 export default function PredictionPage() {
-  return <FoundationPage eyebrow="Previsão · TEST_ONLY" title="Previsão estrutural" description="O ciclo de previsão mundial permanece disponível apenas com eventos e fixtures de teste."><section className="empty-state" aria-labelledby="prediction-status"><h2 id="prediction-status">Escolha uma oportunidade no calendário</h2><p className="muted">Confiança, confirmação e snapshot são preparados em ambiente de teste. Score, Brier e ranking continuam desligados.</p><a className="button" href="/eventos">Abrir eventos</a></section></FoundationPage>;
+  return (
+    <FoundationPage
+      eyebrow="Radar Humano · 03 de 04"
+      title="O olhar do outro está chegando."
+      description="A pessoa convidada aceita, consente e antecipa suas respostas. A previsão será comparada ao seu gabarito quando houver evidência suficiente."
+      activeStep={3}
+    >
+      <section className="journey-empty" aria-labelledby="prediction-status">
+        <span className="eyebrow">Em análise</span>
+        <h2 id="prediction-status" className="display">Aguardando uma previsão válida.</h2>
+        <p className="muted">Mais respostas tornam o encontro mais preciso. Você poderá acompanhar o andamento aqui.</p>
+        <a className="button" href="/convites">Ver convites <span aria-hidden="true">→</span></a>
+      </section>
+    </FoundationPage>
+  );
 }
