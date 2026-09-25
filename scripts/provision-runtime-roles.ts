@@ -123,6 +123,21 @@ try {
       orvok_catalog_test_configured(),orvok_catalog_test_material_present(),
       orvok_radar_opportunities(text),orvok_radar_mutual_connections(text)
       TO orvok_app_runtime`);
+    // Social, World and admin catalog privileges. Row access is still decided by
+    // the RLS policies created in the migrations; these grants only restore the
+    // table privileges that the REVOKE ALL above removes on every provision.
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "UserProfile","SocialGroup","SocialGroupMember",
+      "SocialGroupInvitation","SocialGroupEvent","SocialPost","SocialComment","SocialReaction",
+      "SocialMessage","SocialBlock","SocialReport" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "WorldCategory","WorldEvent","WorldOpportunity",
+      "WorldPrediction","WorldResolution","WorldComment","WorldReaction" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT,INSERT ON "AdminAction" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "Question","QuestionVersion","AnswerOption" TO orvok_app_runtime`);
+    await owner.query(`GRANT UPDATE (status) ON "User" TO orvok_app_runtime`);
+    await owner.query(`GRANT EXECUTE ON FUNCTION orvok_social_can_manage(uuid,uuid),
+      orvok_social_is_member(uuid,uuid),orvok_social_notify(uuid,text,uuid),
+      orvok_radar_resolve_target(text,text),
+      orvok_current_actor(),orvok_social_member(uuid,uuid) TO orvok_app_runtime`);
     await owner.query(`REVOKE ALL ON FUNCTION orvok_radar_actor(text) FROM orvok_app_runtime,orvok_auth_runtime,PUBLIC`);
     await owner.query("COMMIT");
   } catch (error) {

@@ -13,13 +13,13 @@ import { apiError, apiJson, OperationalApiError } from "@/lib/api/response";
 import { SocialOperations } from "@/lib/api/social-operations";
 import { WorldOperations } from "@/lib/api/world-operations";
 import { MathPersistence } from "@/lib/math/persistence";
+import { handleExperienceRoute, inviteTargetBody, resolveInviteTarget } from "@/lib/api/experience-routes";
 import { isInternalMathCalculationEnabled } from "@/lib/math-feature-flags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const uuid = z.uuid();
-const inviteBody = z.strictObject({ targetId: uuid });
 const grantBody = z.strictObject({
   acceptanceId: uuid,
   presentationId: uuid,
@@ -248,10 +248,11 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     return apiJson(result, 202);
   }
   if (method === "POST" && route === "/radar/invitations") {
-    const body = inviteBody.parse(await readJsonBody(request));
+    const body = inviteTargetBody.parse(await readJsonBody(request));
+    const targetId = await resolveInviteTarget(pool, sessionHash, body);
     const result = await withIdempotency(pool, actorId, route, request.headers.get("Idempotency-Key"), body, async () => ({
       status: 201,
-      data: { invitationId: await rpc.invite(body.targetId) },
+      data: { invitationId: await rpc.invite(targetId), targetId },
     }));
     return apiJson(result.data, result.status);
   }
@@ -326,6 +327,28 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
       data: { revocationId: await rpc.revokeSelf(grantId) },
     }));
     return apiJson(result.data, result.status);
+  }
+  // Re-confirm the latest self answers as new versions. Predictions only cover
+  // answers given after the consent grant, so after consenting to a new person
+  // the target re-confirms instead of answering the whole questionnaire again.
+  if (method === "POST" && route === "/radar/answers/reconfirm") {
+    z.strictObject({}).parse(await readJsonBody(request));
+    requireAccess(canAccess({ role, actorId, resource: "RADAR_ANSWER", action: "CREATE", ownerId: actorId }));
+    const grant = await pool.query<{ id: string }>(
+      `SELECT g.id FROM "ConsentGrant" g WHERE g."subjectId"=$1 AND g.purpose='SELF_ANSWER'
+         AND NOT EXISTS (SELECT 1 FROM "ConsentRevocation" r WHERE r."grantId"=g.id)
+       ORDER BY g."grantedAt" DESC LIMIT 1`, [actorId]);
+    if (!grant.rows[0]) throw new OperationalApiError(409, "CONFLICT");
+    const latest = await pool.query<{ id: string; questionVersionId: string; optionId: string }>(
+      `SELECT DISTINCT ON (av."questionVersionId") av.id,av."questionVersionId",av."optionId"
+         FROM "AnswerVersion" av WHERE av."subjectId"=$1 AND orvok_catalog_version_enabled(av."questionVersionId")
+         ORDER BY av."questionVersionId",av.version DESC`, [actorId]);
+    let confirmed = 0;
+    for (const row of latest.rows) {
+      await rpc.answer(row.questionVersionId, row.optionId, grant.rows[0].id, row.id);
+      confirmed += 1;
+    }
+    return apiJson({ confirmed }, 201);
   }
   if (method === "POST" && route === "/radar/answers") {
     const body = answerBody.parse(await readJsonBody(request));
@@ -580,6 +603,8 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,$3,'User',$4,clock_timestamp())`, [randomUUID(), actorId, `ADMIN_${body.action}`, targetId]);
     return apiJson({ actionId });
   }
+  const experience = await handleExperienceRoute({ method, path, route, request, pool, actorId });
+  if (experience) return experience;
   throw new OperationalApiError(404, "NOT_FOUND");
 }
 

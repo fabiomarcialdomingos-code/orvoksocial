@@ -69,6 +69,14 @@ export function apiError(error: unknown): Response {
   if (status >= 500) {
     console.error(JSON.stringify({ level: "error", event: "api_failure", requestId }));
   }
+  // Local diagnostics only: database codes and messages never leave the server
+  // and are never logged outside development/test.
+  if (status >= 403 && (process.env.APP_ENV === "development" || process.env.APP_ENV === "test")) {
+    const detail = error as { code?: unknown; message?: unknown } | null;
+    console.warn(JSON.stringify({ level: "debug", event: "api_rejection", requestId, status, code,
+      cause: typeof detail?.code === "string" ? detail.code : undefined,
+      message: typeof detail?.message === "string" ? detail.message.slice(0, 300) : undefined }));
+  }
   return Response.json(
     { schemaVersion: "1", code, message: code, requestId },
     { status, headers: { "Cache-Control": "no-store" } },

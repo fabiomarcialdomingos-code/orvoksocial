@@ -1,0 +1,346 @@
+{
+  "instrumentVersion": "ORVOK_DEMO_RADAR_V1",
+  "status": "TEST_ONLY",
+  "language": "pt-BR",
+  "responseType": "SINGLE_CHOICE",
+  "sensitivity": "LOW",
+  "effectiveAt": "2026-09-01T00:00:00.000Z",
+  "questions": [
+    {
+      "stableKey": "demo.decisao",
+      "version": 1,
+      "familyKey": "decisoes",
+      "text": "Quando precisa tomar uma decisão importante, o que você faz primeiro?",
+      "options": [
+        {
+          "code": "A",
+          "label": "Listo prós e contras",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Sigo a intuição",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Converso com alguém de confiança",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Espero a poeira baixar",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.sabado",
+      "version": 1,
+      "familyKey": "tempo-livre",
+      "text": "Um sábado livre, sem compromissos. Como ele termina?",
+      "options": [
+        {
+          "code": "A",
+          "label": "Em casa, no meu ritmo",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Com amigos, fora de casa",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Resolvendo pendências",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Num lugar onde nunca fui",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.conflito",
+      "version": 1,
+      "familyKey": "relacoes",
+      "text": "Alguém próximo te magoou sem perceber. Você…",
+      "options": [
+        {
+          "code": "A",
+          "label": "Fala na hora",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Espera esfriar e conversa",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Deixa passar",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Demonstra pelo comportamento",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.dinheiro-extra",
+      "version": 1,
+      "familyKey": "dinheiro",
+      "text": "Entrou um dinheiro inesperado. Para onde ele vai?",
+      "options": [
+        {
+          "code": "A",
+          "label": "Reserva ou investimento",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Uma experiência marcante",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Algo que eu queria há tempos",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Dividir com quem eu gosto",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.grupo",
+      "version": 1,
+      "familyKey": "relacoes",
+      "text": "Num grupo novo de pessoas, você costuma…",
+      "options": [
+        {
+          "code": "A",
+          "label": "Puxar conversa",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Observar antes de falar",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Procurar alguém conhecido",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Ficar à vontade logo de cara",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.plano-b",
+      "version": 1,
+      "familyKey": "decisoes",
+      "text": "O plano deu errado na última hora. Sua reação mais provável:",
+      "options": [
+        {
+          "code": "A",
+          "label": "Improviso na hora",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Fico irritado, depois resolvo",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Busco ajuda",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Aceito e mudo de assunto",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.manha",
+      "version": 1,
+      "familyKey": "rotina",
+      "text": "Qual é a sua relação com as manhãs?",
+      "options": [
+        {
+          "code": "A",
+          "label": "Acordo cedo e bem",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Preciso de um tempo para engrenar",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Depende muito do dia",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Sou da noite, sem dúvida",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.elogio",
+      "version": 1,
+      "familyKey": "emocoes",
+      "text": "Quando recebe um elogio em público, você…",
+      "options": [
+        {
+          "code": "A",
+          "label": "Agradece e segue",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Fica sem graça",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Devolve com outro elogio",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Desconversa com humor",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.viagem",
+      "version": 1,
+      "familyKey": "tempo-livre",
+      "text": "Numa viagem, o que mais importa para você?",
+      "options": [
+        {
+          "code": "A",
+          "label": "Roteiro bem planejado",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Liberdade para mudar de ideia",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Boa companhia",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Comida local",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.aprender",
+      "version": 1,
+      "familyKey": "rotina",
+      "text": "Para aprender algo novo, você prefere…",
+      "options": [
+        {
+          "code": "A",
+          "label": "Ler e estudar sozinho",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Ver alguém fazendo",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Fazer e errar",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Ter aulas com alguém",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.opiniao",
+      "version": 1,
+      "familyKey": "relacoes",
+      "text": "Discordou de todo mundo numa roda de conversa. Você…",
+      "options": [
+        {
+          "code": "A",
+          "label": "Defende seu ponto",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Pergunta mais antes de opinar",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Guarda para si",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Muda de assunto",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "stableKey": "demo.futuro",
+      "version": 1,
+      "familyKey": "emocoes",
+      "text": "Pensando nos próximos cinco anos, você se sente…",
+      "options": [
+        {
+          "code": "A",
+          "label": "Animado com o que vem",
+          "position": 0
+        },
+        {
+          "code": "B",
+          "label": "Tranquilo, sem pressa",
+          "position": 1
+        },
+        {
+          "code": "C",
+          "label": "Ansioso, com muitas dúvidas",
+          "position": 2
+        },
+        {
+          "code": "D",
+          "label": "Focado em um objetivo claro",
+          "position": 3
+        }
+      ]
+    }
+  ]
+}

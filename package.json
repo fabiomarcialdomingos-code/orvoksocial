@@ -23,7 +23,9 @@
     "math:worker": "tsx scripts/math-engine-worker.ts",
     "db:provision:local": "tsx scripts/provision-runtime-roles.ts --local",
     "db:provision:reapply": "tsx scripts/provision-runtime-roles.ts --reapply-local",
-    "auth:mail-worker": "tsx scripts/auth-mail-worker.ts"
+    "auth:mail-worker": "tsx scripts/auth-mail-worker.ts",
+    "db:seed:demo": "tsx scripts/seed-demo.ts",
+    "test:e2e": "tsx scripts/simulate-users.ts"
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",
