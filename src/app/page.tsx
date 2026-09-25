@@ -1,186 +1,134 @@
 import Link from "next/link";
-import { SiteHeader } from "../components/SiteHeader";
-import { OrvokGlobe } from "../components/OrvokVisualSystem";
+import { SiteNav } from "../components/site/SiteNav";
+import { SiteFooter } from "../components/site/SiteFooter";
+import { Instrument, type InstrumentNode } from "../components/ui/Instrument";
 
-function PerspectiveOrbit() {
-  return <OrvokGlobe />;
-}
-
-const steps = [
-  {
-    number: "01",
-    title: "Você responde",
-    description:
-      "Registre suas próprias perspectivas sobre você, as pessoas e os acontecimentos do mundo.",
-    href: "/cadastro",
-    action: "Começar a responder",
-    tone: "you",
-  },
-  {
-    number: "02",
-    title: "Você convida",
-    description:
-      "Escolha pessoas que conhecem você e permita que participem com aceite e consentimento.",
-    href: "/convites",
-    action: "Conhecer os convites",
-    tone: "people",
-  },
-  {
-    number: "03",
-    title: "Você descobre",
-    description:
-      "Compare respostas, previsões e percepções para encontrar padrões invisíveis.",
-    href: "/radar",
-    action: "Ver um exemplo",
-    tone: "world",
-  },
+const heroNodes: InstrumentNode[] = [
+  { id: "you", label: "Você", p: "self", r: 0, angle: 0, size: 9 },
+  { id: "ana", label: "Ana, amiga de infância", p: "people", r: 0.42, angle: -58, linked: true },
+  { id: "bruno", label: "Bruno, irmão", p: "people", r: 0.3, angle: 22, linked: true },
+  { id: "carla", label: "Carla, do trabalho", p: "people", r: 0.58, angle: 118, linked: true },
+  { id: "diego", p: "people", r: 0.7, angle: 196, size: 4 },
+  { id: "selic", label: "Selic em 2026", p: "world", r: 0.86, angle: -12, size: 5 },
+  { id: "artemis", label: "Artemis III", p: "world", r: 0.92, angle: 70, size: 5 },
+  { id: "drex", label: "Drex ao público", p: "world", r: 0.84, angle: 160, size: 5 },
+  { id: "clima", p: "world", r: 0.95, angle: 238, size: 4 },
+  { id: "c1", p: "people", r: 0.5, angle: 262, size: 3.5 },
+  { id: "c2", p: "world", r: 0.78, angle: 300, size: 3.5 },
 ];
 
 export default function HomePage() {
   return (
     <>
-      <SiteHeader />
-      <main id="conteudo" className="home-page">
-        <section className="home-hero container" aria-labelledby="hero-title">
-          <div className="home-hero-copy">
-            <span className="eyebrow">Um espaço de perspectivas humanas</span>
-            <h1 id="hero-title" className="display">
-              Toda pessoa é um ponto
-              <br />
-              de vista. Toda conexão
-              <br />
-              revela alguma coisa.
-            </h1>
-            <p className="home-hero-description">
-              O ORVOK conecta perspectivas sobre você, sobre as pessoas e sobre
-              o mundo.
+      <SiteNav />
+      <main id="conteudo">
+        <section className="container hero" aria-labelledby="hero-title">
+          <div>
+            <h1 id="hero-title" className="display">Veja-se pelos olhos de quem te conhece.</h1>
+            <p className="lede">
+              Você responde sobre si. Pessoas próximas, com a sua permissão, tentam antecipar essas respostas.
+              O ORVOK mostra onde elas acertam, onde você surpreende e o que isso revela.
             </p>
-            <div className="home-hero-actions">
-              <Link href="/cadastro" className="button home-primary-button">
-                Começar minha jornada <span aria-hidden="true">→</span>
-              </Link>
-              <Link href="#sobre" className="text-link home-secondary-action">
-                Entender o ORVOK <span aria-hidden="true">→</span>
-              </Link>
+            <div className="hero-actions">
+              <Link href="/cadastro" className="button" data-p="self">Começar pelo meu gabarito</Link>
+              <Link href="#como-funciona" className="button button-secondary">Ver como funciona</Link>
+            </div>
+            <div className="hero-legend" aria-label="Legenda do radar">
+              <span data-p="self"><i className="dot" />Você</span>
+              <span data-p="people"><i className="dot" />Pessoas que te conhecem</span>
+              <span data-p="world"><i className="dot" />Acontecimentos do mundo</span>
             </div>
           </div>
-          <PerspectiveOrbit />
-        </section>
-
-        <section
-          className="home-universe-band"
-          aria-labelledby="perspective-title"
-        >
-          <div className="container home-perspective-inner">
-            <span id="perspective-title" className="eyebrow">
-              Escolha uma perspectiva
-            </span>
-            <div className="home-perspective-grid">
-              <Link
-                href="/radar"
-                className="home-perspective-card home-perspective-people"
-              >
-                <span className="home-perspective-icon" aria-hidden="true">
-                  ♧
-                </span>
-                <span className="home-perspective-copy">
-                  <span className="eyebrow">Pessoas</span>
-                  <strong>
-                    Descubra como pessoas que conhecem você antecipam suas
-                    escolhas.
-                  </strong>
-                  <span className="home-inline-action">
-                    Entrar no Radar Humano <span aria-hidden="true">→</span>
-                  </span>
-                </span>
-              </Link>
-              <Link
-                href="/eventos"
-                className="home-perspective-card home-perspective-world"
-              >
-                <span className="home-perspective-icon" aria-hidden="true">
-                  ▥
-                </span>
-                <span className="home-perspective-copy">
-                  <span className="eyebrow">Mundo</span>
-                  <strong>
-                    Faça previsões sobre eventos reais em Economia, Ciência e
-                    Tecnologia.
-                  </strong>
-                  <span className="home-inline-action">
-                    Explorar previsões do mundo{" "}
-                    <span aria-hidden="true">→</span>
-                  </span>
-                </span>
-              </Link>
-            </div>
+          <div className="hero-instrument">
+            <Instrument nodes={heroNodes} label="Radar com você no centro, pessoas próximas no meio e acontecimentos do mundo na borda" />
           </div>
         </section>
 
-        <section
-          id="como-funciona"
-          className="home-how container"
-          aria-labelledby="how-title"
-        >
-          <div className="home-section-heading">
-            <span id="how-title" className="eyebrow">
-              O que acontece aqui?
-            </span>
-          </div>
-          <div className="home-steps">
-            {steps.map((step, index) => (
-              <article
-                className={`home-step home-step-${step.tone}`}
-                key={step.number}
-              >
-                <div className="home-step-marker" aria-hidden="true">
-                  <span>{step.number}</span>
-                  {index < steps.length - 1 && <i />}
+        <section id="perspectivas" className="section" aria-labelledby="perspectivas-title">
+          <div className="container">
+            <div className="section-head">
+              <h2 id="perspectivas-title" className="display">Três distâncias, um mesmo instrumento.</h2>
+              <p className="lede">Do que só você sabe ao que ninguém sabe ainda. Cada perspectiva tem a sua cor, e ela nunca muda de significado.</p>
+            </div>
+            <div className="bento">
+              <article className="card lit bento-self" data-p="self">
+                <div>
+                  <span className="eyebrow">Você</span>
+                  <h3>O seu gabarito</h3>
                 </div>
-                <div className="home-step-body">
-                  <h2 className="display">{step.title}</h2>
-                  <p>{step.description}</p>
-                  <Link href={step.href} className="home-inline-action">
-                    {step.action} <span aria-hidden="true">→</span>
-                  </Link>
+                <div className="figure" aria-hidden="true">
+                  <svg viewBox="0 0 200 200" width="180">
+                    {[30, 55, 80].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="var(--line-strong)" />)}
+                    <circle cx="100" cy="100" r="26" fill="var(--self)" opacity="0.12" />
+                    <circle cx="100" cy="100" r="10" fill="var(--self)" />
+                  </svg>
+                </div>
+                <p>Doze perguntas sobre como você decide, reage e vive. Sem resposta certa. As respostas ficam guardadas em versões que não podem ser alteradas às escondidas.</p>
+              </article>
+              <article className="card lit bento-people" data-p="people">
+                <div>
+                  <span className="eyebrow">Pessoas</span>
+                  <h3>Quem acerta você?</h3>
+                </div>
+                <p>Amigos, família ou colegas pedem para prever você. Você aceita, escolhe se quer ver as previsões e pode revogar a qualquer momento. Depois, o encontro mostra pergunta por pergunta quem te leu bem.</p>
+                <div className="stack" aria-hidden="true" style={{ gap: 10 }}>
+                  {[["Bruno", 9], ["Ana", 7], ["Carla", 4]].map(([who, hits]) => (
+                    <div key={who} className="row" style={{ gap: 12 }}>
+                      <span className="faint" style={{ width: 52, fontSize: 13 }}>{who}</span>
+                      <div className="meter" style={{ flex: 1 }}><i style={{ width: `${(Number(hits) / 12) * 100}%` }} /></div>
+                      <span className="faint" style={{ fontSize: 13 }}>{hits} de 12</span>
+                    </div>
+                  ))}
                 </div>
               </article>
-            ))}
+              <article className="card lit bento-world" data-p="world">
+                <div>
+                  <span className="eyebrow">Mundo</span>
+                  <h3>O que vai acontecer?</h3>
+                </div>
+                <p>Eventos reais de economia, ciência e tecnologia, com critério de resolução publicado antes. Você escolhe um lado e diz o quanto confia.</p>
+              </article>
+              <article className="card lit bento-consent">
+                <div>
+                  <span className="eyebrow">Consentimento</span>
+                  <h3>Nada acontece sem o seu sim.</h3>
+                </div>
+                <p>Pedido, aceite e consentimento são etapas separadas. Cada uma fica registrada com a versão exata do aviso que você leu.</p>
+              </article>
+            </div>
           </div>
         </section>
 
-        <footer id="sobre" className="home-footer">
-          <div className="container home-footer-inner">
-            <div className="home-footer-brand">
-              <span className="brand-word">ORVOK</span>
-              <span>
-                Cada perspectiva só existe com aceite e consentimento ativos.
-              </span>
+        <section id="como-funciona" className="section" aria-labelledby="como-title">
+          <div className="container">
+            <div className="section-head">
+              <h2 id="como-title" className="display">Da primeira resposta ao encontro.</h2>
+              <p className="lede">Quatro etapas, sempre nesta ordem. Nenhuma previsão existe antes do seu consentimento, e quem prevê nunca vê as suas respostas.</p>
             </div>
-            <nav className="home-footer-nav" aria-label="Navegação do rodapé">
-              <div>
-                <span className="eyebrow">Produto</span>
-                <Link href="/radar">Radar Humano</Link>
-                <Link href="/eventos">Prever o mundo</Link>
-                <Link href="/grupos">Grupos</Link>
-              </div>
-              <div>
-                <span className="eyebrow">Sobre</span>
-                <Link href="#sobre">Sobre o ORVOK</Link>
-                <Link href="#como-funciona">Como funciona</Link>
-                <Link href="#manifesto">Manifesto</Link>
-              </div>
-              <div>
-                <span className="eyebrow">Suporte</span>
-                <Link href="#privacidade">Privacidade</Link>
-                <Link href="#termos">Termos de uso</Link>
-                <Link href="/entrar">Entrar</Link>
-                <Link href="/cadastro">Criar conta</Link>
-              </div>
-            </nav>
+            <ol className="steps">
+              <li className="step" data-p="self"><h3>Responda sobre você</h3><p>Monte o seu gabarito em poucos minutos.</p></li>
+              <li className="step" data-p="people"><h3>Receba pedidos</h3><p>Quem te conhece pede para te prever usando o seu e-mail.</p></li>
+              <li className="step" data-p="people"><h3>Consinta, ou não</h3><p>Você lê o aviso, aceita e decide se quer ver o resultado.</p></li>
+              <li className="step" data-p="people"><h3>Veja o encontro</h3><p>Compare, pergunta por pergunta, o que cada pessoa antecipou.</p></li>
+            </ol>
           </div>
-        </footer>
+        </section>
+
+        <section id="consentimento" className="section" aria-labelledby="consent-title">
+          <div className="container">
+            <div className="section-head">
+              <h2 id="consent-title" className="display">Privado por padrão, auditável sempre.</h2>
+              <div><Link href="/cadastro" className="button" data-p="self">Criar minha conta</Link></div>
+            </div>
+            <div className="promise">
+              <p><strong>Você controla quem prevê</strong>Cada pessoa precisa de um pedido aceito e de um consentimento seu. Revogar esconde as previsões na hora.</p>
+              <p><strong>Nada de ranking de pessoas</strong>O ORVOK não publica notas sobre ninguém. O encontro é visível só para você.</p>
+              <p><strong>Seus dados, suas escolhas</strong>Exporte tudo o que existe sobre você ou peça exclusão direto na sua conta.</p>
+            </div>
+          </div>
+        </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

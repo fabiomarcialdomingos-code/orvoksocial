@@ -56,10 +56,10 @@ export function AdminCatalogManager() {
     catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível publicar o item."); }
   }
 
-  return <main id="conteudo" className="social-main container">
+  return <div className="social-main" style={{padding:0}}>
     <div className="social-heading"><div><span className="eyebrow">Catálogo administrativo</span><h1 className="display">Pré-cadastros</h1><p className="muted">Revise perguntas, eventos e enquetes antes de disponibilizá-los aos usuários.</p></div><button className="button" type="button" onClick={() => void load()} disabled={loading} aria-busy={loading}>{loading ? "Atualizando…" : "Atualizar"}</button></div>
     {error && <p className="form-message" data-kind="error" role="alert">{error}</p>}{notice && <p className="form-message" role="status">{notice}</p>}
     <section className="social-card"><header className="social-section-title"><span className="eyebrow">Perguntas e enquetes</span><h2>{error ? "—" : questions.length} pré-cadastradas</h2></header><div className="table-wrap"><table><thead><tr><th>Texto</th><th>Status</th><th>Opções</th><th>Ações</th></tr></thead><tbody>{questions.map((question) => <tr key={question.id}><td>{question.text}<br /><code>{question.stableKey}</code></td><td><span className="status-pill">{question.catalogStatus}</span></td><td>{question.options?.length ?? 0}</td><td><button className="text-link" type="button" onClick={() => void edit(question)}>Editar</button>{question.catalogStatus !== "APPROVED" && <button className="text-link" type="button" onClick={() => void publish(`/api/v1/admin/questions/${question.id}/publish`, "Pergunta publicada no Radar.")}>Publicar</button>}</td></tr>)}</tbody></table></div></section>
     <section className="social-card"><header className="social-section-title"><span className="eyebrow">Eventos</span><h2>{error ? "—" : events.length} pré-cadastrados</h2></header><div className="table-wrap"><table><thead><tr><th>Evento</th><th>Categoria</th><th>Estado</th><th>Ações</th></tr></thead><tbody>{events.map((event) => <tr key={event.id}><td>{event.title}</td><td>{event.category}</td><td><span className="status-pill">{event.status}</span></td><td><button className="text-link" type="button" onClick={() => void publish(`/api/v1/admin/events/${event.id}/publish`, "Evento publicado.")}>Publicar</button></td></tr>)}</tbody></table></div></section>
-  </main>;
+  </div>;
 }

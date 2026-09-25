@@ -1,13 +1,11 @@
-import { FoundationPage } from "../../components/FoundationPage";
 import { AuthForm } from "../../components/AuthForm";
+import { AuthLayout, AuthSwitch } from "../../components/site/AuthLayout";
+export const metadata = { title: "Entrar" };
 export default function LoginPage() {
   return (
-    <FoundationPage
-      eyebrow="Bem-vindo de volta"
-      title="Sua perspectiva continua aqui."
-      description="Acesse sua conta para acompanhar convites e decisões de consentimento."
-    >
+    <AuthLayout title="Sua perspectiva continua aqui." text="Entre para ver pedidos, previsões e o que mudou no seu radar."
+      footer={<AuthSwitch question="Ainda não tem conta?" href="/cadastro" action="Criar conta" />}>
       <AuthForm mode="login" />
-    </FoundationPage>
+    </AuthLayout>
   );
 }

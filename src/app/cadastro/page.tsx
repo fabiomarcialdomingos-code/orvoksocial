@@ -1,13 +1,11 @@
-import { FoundationPage } from "../../components/FoundationPage";
 import { AuthForm } from "../../components/AuthForm";
+import { AuthLayout, AuthSwitch } from "../../components/site/AuthLayout";
+export const metadata = { title: "Criar conta" };
 export default function RegisterPage() {
   return (
-    <FoundationPage
-      eyebrow="Sua conta"
-      title="Comece uma nova perspectiva."
-      description="Crie sua conta para participar dos fluxos de teste do ORVOK."
-    >
+    <AuthLayout title="Comece pelo que só você sabe." text="Crie a conta e responda às doze perguntas do seu gabarito. Leva uns cinco minutos."
+      footer={<AuthSwitch question="Já tem conta?" href="/entrar" action="Entrar" />}>
       <AuthForm mode="register" />
-    </FoundationPage>
+    </AuthLayout>
   );
 }

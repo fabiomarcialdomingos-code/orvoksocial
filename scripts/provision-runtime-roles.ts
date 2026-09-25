@@ -138,6 +138,10 @@ try {
       orvok_social_is_member(uuid,uuid),orvok_social_notify(uuid,text,uuid),
       orvok_radar_resolve_target(text,text),
       orvok_current_actor(),orvok_social_member(uuid,uuid) TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "RadarShareLink" TO orvok_app_runtime`);
+    await owner.query(`GRANT SELECT ON "RadarShareRedemption" TO orvok_app_runtime`);
+    await owner.query(`GRANT EXECUTE ON FUNCTION orvok_share_link_redeem(text,text),orvok_share_link_preview(text) TO orvok_app_runtime`);
+    await owner.query(`GRANT EXECUTE ON FUNCTION orvok_share_link_preview(text) TO orvok_auth_runtime`);
     await owner.query(`REVOKE ALL ON FUNCTION orvok_radar_actor(text) FROM orvok_app_runtime,orvok_auth_runtime,PUBLIC`);
     await owner.query("COMMIT");
   } catch (error) {

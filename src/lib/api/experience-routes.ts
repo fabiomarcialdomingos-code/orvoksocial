@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import type { Pool } from "pg";
 import { apiJson, OperationalApiError } from "./response";
@@ -8,6 +9,8 @@ import { apiJson, OperationalApiError } from "./response";
  * handlers only shape data the actor could already read piecemeal.
  */
 export interface ExperienceContext {
+  sessionHash: string;
+  readBody: () => Promise<unknown>;
   method: "GET" | "POST";
   path: string[];
   route: string;
@@ -19,7 +22,7 @@ export interface ExperienceContext {
 const uuid = z.uuid();
 
 export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Response | null> {
-  const { method, path, route, request, pool, actorId } = ctx;
+  const { method, path, route, request, pool, actorId, sessionHash, readBody } = ctx;
 
   // Display names for people the actor interacts with. Profiles are public
   // inside the product (policy social_profile_select), ids are capped at 50.
@@ -66,6 +69,19 @@ export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Res
     return apiJson({ answers: answers.rows, received: received.rows, questions: questions.rows });
   }
 
+  // Latest prediction the actor made per (target, question), for progress and
+  // for superseding a previous prediction instead of duplicating it.
+  if (method === "GET" && route === "/radar/made") {
+    const result = await pool.query(
+      `SELECT DISTINCT ON (s."targetId",s."questionVersionId") s.id,s."targetId",s."questionVersionId",
+              s."probabilityVector",s."predictedAt"
+         FROM "SocialPredictionSnapshot" s WHERE s."predictorId"=$1
+         ORDER BY s."targetId",s."questionVersionId",s."predictedAt" DESC LIMIT 1000`,
+      [actorId],
+    );
+    return apiJson({ items: result.rows });
+  }
+
   // The actor's own World predictions, latest per event.
   if (method === "GET" && route === "/world/predictions") {
     const result = await pool.query(
@@ -105,6 +121,51 @@ export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Res
       [actorId],
     );
     return apiJson({ items: result.rows });
+  }
+
+  // Share links: invitations for people outside ORVOK.
+  if (method === "GET" && route === "/radar/share-links") {
+    const result = await pool.query(
+      `SELECT l.id,l.code,l.theme,l."teaserQuestionVersionId",l.message,l.uses,l."maxUses",l."createdAt",l."expiresAt",l."revokedAt",
+              (SELECT count(*)::int FROM "RadarShareRedemption" r WHERE r."linkId"=l.id) AS redemptions
+         FROM "RadarShareLink" l WHERE l."ownerId"=$1 ORDER BY l."createdAt" DESC LIMIT 20`,
+      [actorId],
+    );
+    return apiJson({ items: result.rows });
+  }
+  if (method === "POST" && route === "/radar/share-links") {
+    const body = z.strictObject({
+      theme: z.enum(["noite", "aurora", "mineral"]).default("noite"),
+      teaserQuestionVersionId: uuid.nullable().optional(),
+      message: z.string().trim().max(140).optional(),
+    }).parse(await readBody());
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    const bytes = randomBytes(10);
+    const code = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+    const result = await pool.query(
+      `INSERT INTO "RadarShareLink" (code,"ownerId",theme,"teaserQuestionVersionId",message)
+       VALUES ($1,$2,$3,$4,$5) RETURNING id,code,theme,"teaserQuestionVersionId",message,uses,"maxUses","createdAt","expiresAt"`,
+      [code, actorId, body.theme, body.teaserQuestionVersionId ?? null, body.message || null],
+    );
+    return apiJson({ link: result.rows[0] }, 201);
+  }
+  if (method === "POST" && path.length === 4 && path[0] === "radar" && path[1] === "share-links" && path[3] === "revoke") {
+    z.strictObject({}).parse(await readBody());
+    const id = uuid.parse(path[2]);
+    const result = await pool.query(
+      `UPDATE "RadarShareLink" SET "revokedAt"=clock_timestamp() WHERE id=$1 AND "ownerId"=$2 AND "revokedAt" IS NULL RETURNING id`,
+      [id, actorId],
+    );
+    if (!result.rowCount) throw new OperationalApiError(404, "NOT_FOUND");
+    return apiJson({ id });
+  }
+  if (method === "POST" && route === "/radar/share-links/redeem") {
+    const body = z.strictObject({ code: z.string().regex(/^[A-Za-z0-9]{8,16}$/) }).parse(await readBody());
+    const result = await pool.query<{ invitation_id: string; owner_id: string; created: boolean }>(
+      `SELECT * FROM orvok_share_link_redeem($1,$2)`, [sessionHash, body.code],
+    );
+    const row = result.rows[0]!;
+    return apiJson({ invitationId: row.invitation_id, ownerId: row.owner_id, created: row.created }, row.created ? 201 : 200);
   }
 
   return null;

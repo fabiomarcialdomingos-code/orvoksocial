@@ -16,7 +16,7 @@ const PASSWORD = "Perspectiva#2026";
 const run = process.env.SIM_RUN ?? Date.now().toString(36);
 
 type Json = Record<string, unknown>;
-const results: { name: string; ok: boolean; detail?: string }[] = [];
+const results: { name: string; ok: boolean; detail?: string | undefined }[] = [];
 
 class Client {
   cookie = "";

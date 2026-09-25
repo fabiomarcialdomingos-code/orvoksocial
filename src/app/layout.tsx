@@ -1,26 +1,25 @@
-import type { Metadata } from "next";
-import "@fontsource/inter/300.css";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/playfair-display/400.css";
+import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/bricolage-grotesque/opsz.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
 import "./globals.css";
+import { Spotlight } from "../components/ui/Spotlight";
 
 export const metadata: Metadata = {
-  title: "ORVOK Social",
-  description: "Pessoas conectam perspectivas.",
+  title: { default: "ORVOK", template: "%s · ORVOK" },
+  description: "Veja-se pelos olhos de quem te conhece, e preveja o mundo junto com eles.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export const viewport: Viewport = { themeColor: "#0a1120", colorScheme: "dark" };
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
       <body>
-        <a className="skip-link" href="#conteudo">
-          Ir para o conteúdo
-        </a>
+        <a className="skip-link" href="#conteudo">Ir para o conteúdo</a>
         {children}
+        <Spotlight />
       </body>
     </html>
   );

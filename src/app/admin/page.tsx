@@ -1,4 +1,6 @@
-import { SiteHeader } from "../../components/SiteHeader";
+import { AppShell } from "../../components/app/AppShell";
 import { CommandCenter } from "../../components/CommandCenter";
-import { CatalogStatusPanel } from "../../components/CatalogStatusPanel";
-export default function AdminPage() { return <><SiteHeader /><div className="container social-main"><CatalogStatusPanel /><p><a className="button button-secondary" href="/admin/catalogo">Abrir pré-cadastros</a></p></div><CommandCenter /></>; }
+export const metadata = { title: "Quartel general" };
+export default function AdminPage() {
+  return <AppShell title="Quartel general"><CommandCenter /><p><a className="button button-secondary" href="/admin/catalogo">Abrir pré-cadastros</a></p></AppShell>;
+}

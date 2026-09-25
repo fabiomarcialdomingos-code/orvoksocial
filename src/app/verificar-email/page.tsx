@@ -1,13 +1,10 @@
-import { FoundationPage } from "../../components/FoundationPage";
 import { AuthForm } from "../../components/AuthForm";
-export default function VerifyPage() {
+import { AuthLayout } from "../../components/site/AuthLayout";
+export const metadata = { title: "Verificar e-mail" };
+export default function VerifyEmailPage() {
   return (
-    <FoundationPage
-      eyebrow="Segurança da conta"
-      title="Confirme seu e-mail."
-      description="Digite o código recebido para concluir a verificação do endereço."
-    >
+    <AuthLayout title="Confirme o seu e-mail." text="Cole o código que enviamos. Depois disso, você já pode entrar.">
       <AuthForm mode="verify-email" />
-    </FoundationPage>
+    </AuthLayout>
   );
 }

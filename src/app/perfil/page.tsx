@@ -1,9 +1,8 @@
-import { SiteHeader } from "../../components/SiteHeader";
-import { SocialShell } from "../../components/SocialShell";
+import { AppShell } from "../../components/app/AppShell";
+import { ProfileView } from "../../components/app/Community";
 import { MathMetricsPanel } from "../../components/MathMetricsPanel";
 import { isInternalMathCalculationEnabled } from "../../lib/math-feature-flags";
-
-export default function PerfilPage() {
-  const enabled = isInternalMathCalculationEnabled();
-  return <><SiteHeader /><SocialShell section="perfil" mathPanel={<MathMetricsPanel enabled={enabled} />} /></>;
+export const metadata = { title: "Perfil" };
+export default function ProfilePage() {
+  return <AppShell title="Perfil"><ProfileView mathPanel={<MathMetricsPanel enabled={isInternalMathCalculationEnabled()} />} /></AppShell>;
 }

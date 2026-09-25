@@ -108,8 +108,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
       if (needsToken && tokenInputRef.current) tokenInputRef.current.value = "";
       if (mode === "login") {
         const requested = new URLSearchParams(window.location.search).get("returnTo");
-        const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/radar";
+        const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/painel";
         router.push(destination);
+      }
+      if (mode === "register") {
+        // New accounts are verified on creation: sign in and start the questionnaire.
+        const login = await fetch("/api/v1/auth/login", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: String(fields.get("email") ?? "").trim(), password: String(fields.get("password") ?? "") }),
+        });
+        if (login.ok) router.push("/onboarding?novo=1");
       }
     } catch {
       setMessage({
@@ -199,7 +209,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {(mode === "login" || mode === "register") && (
         <div className="auth-provider-actions">
           <span className="muted">ou</span>
-          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent((typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnTo")) || "/radar")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
+          <a className="button button-secondary" href={`/api/v1/auth/google/start?returnTo=${encodeURIComponent((typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnTo")) || "/painel")}`} aria-label={mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}>
             {mode === "login" ? "Continuar com Google" : "Cadastrar com Google"}
           </a>
         </div>

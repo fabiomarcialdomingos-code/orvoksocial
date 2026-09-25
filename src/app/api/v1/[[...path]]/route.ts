@@ -290,7 +290,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     requireAccess(canAccess({ role, actorId, resource: "CONSENT", action: "READ", ownerId: actorId }));
     const cursor = pageCursor(request);
     const result = await pool.query<{ id: string; purpose: string; scope: string; noticeVersion: string; consentVersion: number; grantedAt: Date; revokedAt: Date | null }>(
-      `SELECT g.id,g.purpose,g.scope,g."noticeVersion",g."consentVersion",g."grantedAt",r."revokedAt" FROM "ConsentGrant" g LEFT JOIN "ConsentRevocation" r ON r."grantId"=g.id WHERE g."subjectId"=$1 AND ($2::uuid IS NULL OR g.id>$2) ORDER BY g.id LIMIT 21`,
+      `SELECT g.id,g.purpose,g.scope,g."noticeVersion",g."consentVersion",g."grantedAt",g."invitationAcceptanceId",r."revokedAt" FROM "ConsentGrant" g LEFT JOIN "ConsentRevocation" r ON r."grantId"=g.id WHERE g."subjectId"=$1 AND ($2::uuid IS NULL OR g.id>$2) ORDER BY g.id LIMIT 21`,
       [actorId, cursor],
     );
     return apiJson(page(result.rows));
@@ -562,8 +562,9 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     return apiJson({ items: result.rows });
   }
   if (method === "POST" && path.length === 4 && path[0] === "social" && path[1] === "groups" && path[3] === "invites") {
-    const body = z.strictObject({ inviteeId: uuid }).parse(await readJsonBody(request));
-    return apiJson(await social.inviteGroup(actorId, path[2]!, body.inviteeId), 201);
+    const body = z.union([z.strictObject({ inviteeId: uuid }), z.strictObject({ email: z.email().max(320) })]).parse(await readJsonBody(request));
+    const inviteeId = "inviteeId" in body ? body.inviteeId : await resolveInviteTarget(pool, sessionHash, body);
+    return apiJson(await social.inviteGroup(actorId, uuid.parse(path[2]), inviteeId), 201);
   }
   if (method === "POST" && path.length === 4 && path[0] === "social" && path[1] === "group-invites" && path[3] === "accept") return apiJson(await social.acceptGroup(actorId, path[2]!));
   if (method === "POST" && path.length === 4 && path[0] === "social" && path[1] === "groups" && path[3] === "events") {
@@ -603,7 +604,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,$3,'User',$4,clock_timestamp())`, [randomUUID(), actorId, `ADMIN_${body.action}`, targetId]);
     return apiJson({ actionId });
   }
-  const experience = await handleExperienceRoute({ method, path, route, request, pool, actorId });
+  const experience = await handleExperienceRoute({ method, path, route, request, pool, actorId, sessionHash, readBody: () => readJsonBody(request) });
   if (experience) return experience;
   throw new OperationalApiError(404, "NOT_FOUND");
 }

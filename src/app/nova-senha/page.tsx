@@ -1,13 +1,10 @@
-import { FoundationPage } from "../../components/FoundationPage";
 import { AuthForm } from "../../components/AuthForm";
-export default function ResetPage() {
+import { AuthLayout } from "../../components/site/AuthLayout";
+export const metadata = { title: "Nova senha" };
+export default function NewPasswordPage() {
   return (
-    <FoundationPage
-      eyebrow="Acesso à conta"
-      title="Defina uma nova senha."
-      description="Use o código de recuperação recebido por e-mail."
-    >
+    <AuthLayout title="Defina uma nova senha." text="Use o código que chegou por e-mail. Ele vale por pouco tempo e só uma vez.">
       <AuthForm mode="reset-password" />
-    </FoundationPage>
+    </AuthLayout>
   );
 }
