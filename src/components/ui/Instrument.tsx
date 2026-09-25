@@ -23,7 +23,8 @@ const R = SIZE / 2 - 34;
 
 function polar(r: number, angle: number) {
   const a = (angle * Math.PI) / 180;
-  return { x: C + Math.cos(a) * r * R, y: C + Math.sin(a) * r * R };
+  // Rounded so server and client render identical attributes (no hydration drift).
+  return { x: Math.round((C + Math.cos(a) * r * R) * 100) / 100, y: Math.round((C + Math.sin(a) * r * R) * 100) / 100 };
 }
 
 /**

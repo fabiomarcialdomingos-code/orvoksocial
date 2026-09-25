@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { AppShell } from "../../components/app/AppShell";
 import { ProfileView } from "../../components/app/Community";
 import { MathMetricsPanel } from "../../components/MathMetricsPanel";

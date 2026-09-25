@@ -117,7 +117,7 @@ async function predictAll(predictor: Client, targetId: string, questions: Questi
     const question = questions.find((q) => q.questionVersionId === item.questionVersionId)!;
     const n = question.options.length;
     // Deterministic "knowledge": the predictor leans on a guessed option.
-    const guess = (index * 7 + skill) % n;
+    const guess = (index * 7 + skill + (index % 3 === 0 ? 1 : 0) + (skill > 1 && index % 4 === 1 ? 2 : 0)) % n;
     const vector = Array.from({ length: n }, (_, i) => (i === guess ? 0.55 : 0.45 / (n - 1)));
     const result = await predictor.post("/api/v1/radar/predictions", {
       targetId: item.targetId, questionVersionId: item.questionVersionId, selfAnswerVersionId: item.selfAnswerVersionId,
@@ -267,16 +267,51 @@ async function main() {
   const unsuspend = await admin.post(`/api/v1/admin/users/${dani.userId}/action`, { action: "UNSUSPEND", reason: "Fim do teste" });
   check("admin reativa conta", unsuspend.status === 200, unsuspend);
 
-  // Revocation last, so the demo keeps Bruno's predictions.
+  // Share links (convites para fora do ORVOK)
+  const link = await ana.post<{ link: { id: string; code: string } }>("/api/v1/radar/share-links", { theme: "aurora", teaserQuestionVersionId: questions[0]!.questionVersionId });
+  check("Ana cria link de convite com cartão", link.status === 201 && /^[A-Za-z0-9]{10}$/.test(link.data.link?.code ?? ""), link);
+  const code = link.data.link.code;
+  const landing = await fetch(`${BASE}/c/${code}`).then(async (r) => ({ status: r.status, html: await r.text() }));
+  check("página pública do convite abre sem login", landing.status === 200 && landing.html.includes("Quanto você conhece"), landing.status);
+  check("página tem metadados Open Graph para WhatsApp/Facebook", /property="og:image"/.test(landing.html) && /og:title/.test(landing.html), null);
+  for (const format of ["og", "square", "story"]) {
+    const img = await fetch(`${BASE}/api/share/${code}/card?format=${format}`);
+    const bytes = new Uint8Array(await img.arrayBuffer());
+    check(`cartão ${format} gerado como PNG`, img.status === 200 && img.headers.get("content-type") === "image/png" && bytes[1] === 0x50, { status: img.status, type: img.headers.get("content-type") });
+  }
+  const own = await ana.post("/api/v1/radar/share-links/redeem", { code });
+  check("Ana não pode resgatar o próprio link", own.status === 422, own);
+  const eva = await signUp("eva", "Eva Lima", "Chegou pelo WhatsApp.");
+  const redeemed = await eva.post<{ invitationId: string; ownerId: string; created: boolean }>("/api/v1/radar/share-links/redeem", { code });
+  check("Eva aceita o desafio pelo link", redeemed.status === 201 && redeemed.data.ownerId === ana.userId, redeemed);
+  const again = await eva.post<{ created: boolean }>("/api/v1/radar/share-links/redeem", { code });
+  check("resgatar de novo não duplica", again.status === 200 && again.data.created === false, again);
+  const anaInv = await ana.get<{ items: { predictorId: string; targetId: string }[] }>("/api/v1/radar/invitations");
+  check("pedido da Eva chega para a Ana aceitar", anaInv.data.items.some((i) => i.predictorId === eva.userId && i.targetId === ana.userId), anaInv.data);
+  const anaLinks = await ana.get<{ items: { uses: number }[] }>("/api/v1/radar/share-links");
+  check("contador de usos do link", anaLinks.data.items[0]?.uses === 1, anaLinks.data);
+  const revokeLink = await ana.post(`/api/v1/radar/share-links/${link.data.link.id}/revoke`, {});
+  check("Ana encerra o link", revokeLink.status === 200, revokeLink);
+  const late = await dani.post("/api/v1/radar/share-links/redeem", { code });
+  check("link encerrado não aceita mais ninguém", late.status === 422, late);
+  const gByEmail = await ana.post(`/api/v1/social/groups/${group.data.id}/invites`, { email: carla.email });
+  check("convite para grupo por e-mail", gByEmail.status === 201, gByEmail);
+
+  // Revocation last, so the demo keeps Bruno's predictions. SIM_KEEP=1 keeps
+  // every consent (useful to leave a rich demo database behind).
+  if (process.env.SIM_KEEP === "1") { summary(); return; }
   const revoke = await ana.post(`/api/v1/radar/consents/${carlaGrant}/revoke`, {});
   check("Ana revoga o consentimento dado à Carla", revoke.status === 201, revoke);
   const after = await ana.get<{ received: { predictorId: string }[] }>("/api/v1/radar/encounter");
   check("após revogar, previsões da Carla somem do encontro", after.data.received?.every((item) => item.predictorId !== carla.userId), after.data.received?.length);
 
-  const failed = results.filter((item) => !item.ok);
-  console.log(`\n${results.length - failed.length}/${results.length} verificações passaram.`);
-  console.log(`Contas criadas (senha ${PASSWORD}): ${[ana, bruno, carla, dani].map((c) => c.email).join(", ")}`);
-  if (failed.length) process.exitCode = 1;
+  summary();
+  function summary() {
+    const failed = results.filter((item) => !item.ok);
+    console.log(`\n${results.length - failed.length}/${results.length} verificações passaram.`);
+    console.log(`Contas criadas (senha ${PASSWORD}): ${[ana, bruno, carla, dani].map((c) => c.email).join(", ")}`);
+    if (failed.length) process.exitCode = 1;
+  }
 }
 
 await main();

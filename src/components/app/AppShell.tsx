@@ -67,7 +67,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
 
   useEffect(() => {
     let active = true;
-    fetch("/api/v1/auth/session", { credentials: "same-origin", cache: "no-store" })
+    fetch("/api/v1/auth/session?optional=1", { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? (r.json() as Promise<Session>) : { authenticated: false }))
       .then(async (data) => {
         if (!active) return;

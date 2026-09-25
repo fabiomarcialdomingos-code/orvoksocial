@@ -14,7 +14,7 @@ export function AcceptChallenge({ code, name }: { code: string; name: string }) 
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("/api/v1/auth/session", { credentials: "same-origin", cache: "no-store" })
+    fetch("/api/v1/auth/session?optional=1", { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { authenticated: false }))
       .then((d: { authenticated?: boolean }) => setSignedIn(Boolean(d.authenticated)))
       .catch(() => setSignedIn(false));

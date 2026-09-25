@@ -30,7 +30,7 @@ export default async function SharePage({ params }: { params: Promise<{ code: st
               <span className="eyebrow">{name} te convidou</span>
               <h1 className="display">Quanto você conhece {first}?</h1>
               <p className="lede">
-                {first} respondeu doze perguntas sobre si. O desafio é antecipar o que foi respondido. {first} só vê as suas previsões se consentir, e você nunca vê as respostas dele.
+                {first} respondeu doze perguntas sobre si. O desafio é antecipar o que foi respondido. {first} só vê as suas previsões se consentir, e você nunca vê as respostas de {first}.
               </p>
               {preview.teaser && (
                 <blockquote className="share-teaser" data-p="people">

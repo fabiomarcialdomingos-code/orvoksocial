@@ -81,7 +81,7 @@ export function InviteCard({ preview, format, host }: { preview: SharePreview; f
   const name = firstName(preview.displayName);
   const vertical = format !== "og";
   const pad = format === "story" ? 96 : format === "square" ? 80 : 72;
-  const ringSize = format === "story" ? 820 : format === "square" ? 520 : 470;
+  const ringSize = format === "story" ? 760 : format === "square" ? 520 : 470;
   const titleSize = format === "story" ? 118 : format === "square" ? 92 : 78;
 
   const brand = (
@@ -122,7 +122,7 @@ export function InviteCard({ preview, format, host }: { preview: SharePreview; f
   return (
     <div style={{ width, height, display: "flex", flexDirection: vertical ? "column" : "row", background: theme.bg, padding: pad, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", display: "flex",
-        right: vertical ? (width - ringSize) / 2 : -60, top: vertical ? (format === "story" ? 980 : 420) : (height - ringSize) / 2, opacity: 0.95 }}>
+        right: vertical ? (width - ringSize) / 2 : -60, top: vertical ? (format === "story" ? 880 : 420) : (height - ringSize) / 2, opacity: 0.95 }}>
         <Rings size={ringSize} theme={theme} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", width: "100%" }}>

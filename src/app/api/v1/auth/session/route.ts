@@ -11,6 +11,9 @@ export async function GET(request: Request) {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
-    return Response.json({ schemaVersion: "1", authenticated: false }, { status: 401, headers: { "Cache-Control": "no-store" } });
+    // Public pages probe the session with ?optional=1: a signed-out visitor is
+    // an expected state there, not an error, so answer 200 instead of 401.
+    const optional = new URL(request.url).searchParams.get("optional") === "1";
+    return Response.json({ schemaVersion: "1", authenticated: false }, { status: optional ? 200 : 401, headers: { "Cache-Control": "no-store" } });
   }
 }

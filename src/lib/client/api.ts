@@ -66,6 +66,7 @@ export type Dashboard = {
   received: { id: string; predictorId: string; questionVersionId: string; predictedAt: string }[];
   pendingInvitations: { id: string; predictorId: string; invitedAt: string }[];
   matches: { userId: string; mutualAt: string }[];
+  hasMore?: { made: boolean; received: boolean; pendingInvitations: boolean; matches: boolean };
 };
 export type WorldEvent = {
   id: string; title: string; description?: string | null; sourceUrl?: string | null; resolutionCriteria: string;

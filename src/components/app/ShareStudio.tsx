@@ -119,6 +119,7 @@ export function ShareStudio({ questions, answered }: { questions: Question[]; an
             <button role="tab" aria-selected={format === "og"} className={format === "og" ? "button button-small" : "button button-small button-secondary"} onClick={() => setFormat("og")}>Link (feed e conversas)</button>
             <button role="tab" aria-selected={format === "story"} className={format === "story" ? "button button-small" : "button button-small button-secondary"} onClick={() => setFormat("story")}>Stories</button>
           </div>
+          <div className={`invite-card-frame invite-card-frame-${format}`}>
           <div className={`invite-card invite-card-${format}`} style={{ ["--c-bg" as string]: t.bg, ["--c-ink" as string]: t.ink, ["--c-soft" as string]: t.soft, ["--c-accent" as string]: t.accent, ["--c-accent2" as string]: t.accent2, ["--c-line" as string]: t.line }}
             aria-label="Prévia do cartão de convite">
             <div className="invite-card-rings" aria-hidden="true"><i /><i /><i /><i /><b /><em /><em /><em /></div>
@@ -131,6 +132,7 @@ export function ShareStudio({ questions, answered }: { questions: Question[]; an
               )}
             </div>
             <div className="invite-card-cta"><span>Aceitar o desafio</span><small>{origin.replace(/^https?:\/\//, "")}</small></div>
+          </div>
           </div>
         </div>
 

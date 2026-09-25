@@ -228,7 +228,7 @@ input[type="range"] { accent-color: var(--p, var(--people)); width: 100%; }
 .brand-mark { color: var(--text); }
 
 .hero { display: grid; grid-template-columns: 5fr 7fr; gap: var(--s7); align-items: center; min-height: calc(100vh - 68px); padding-block: var(--s7); }
-.hero h1 { font-size: clamp(2.6rem, 5.4vw, 4.6rem); line-height: 1.02; letter-spacing: -0.045em; font-weight: 380; max-width: 12ch; }
+.hero h1 { font-size: clamp(2.6rem, 5.4vw, 4.6rem); line-height: 1.04; letter-spacing: -0.03em; font-weight: 380; max-width: 12ch; }
 .hero .lede { margin-top: var(--s5); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s6); }
 .hero-legend { display: flex; flex-wrap: wrap; gap: var(--s4); margin-top: var(--s7); color: var(--text-3); font-size: 0.875rem; }
@@ -317,14 +317,14 @@ input[type="range"] { accent-color: var(--p, var(--people)); width: 100%; }
 }
 .command-trigger kbd, kbd { margin-left: auto; font-family: var(--font-ui); font-size: 0.75rem; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); }
 .avatar {
-  --p: var(--self); display: inline-grid; place-items: center; flex: none;
+  --av: var(--self); display: inline-grid; place-items: center; flex: none;
   width: 36px; height: 36px; border-radius: 50%;
-  background: color-mix(in srgb, var(--p) 16%, var(--panel-2)); color: var(--p);
-  border: 1px solid color-mix(in srgb, var(--p) 35%, transparent);
+  background: color-mix(in srgb, var(--av) 16%, var(--panel-2)); color: var(--av);
+  border: 1px solid color-mix(in srgb, var(--av) 35%, transparent);
   font-weight: 600; font-size: 0.8rem; letter-spacing: 0.02em; text-decoration: none;
 }
 .avatar-lg { width: 64px; height: 64px; font-size: 1.1rem; }
-.avatar[data-p] { --p: var(--p); }
+.avatar[data-p] { --av: var(--p); }
 
 .page { padding: var(--s6) var(--s6) var(--s8); max-width: 1180px; }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s5); margin-bottom: var(--s6); }
@@ -332,9 +332,11 @@ input[type="range"] { accent-color: var(--p, var(--people)); width: 100%; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); }
 .grid-main { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: var(--s4); align-items: start; }
+.grid-predict { grid-template-columns: minmax(0, 3fr) minmax(0, 8fr); }
 .stack { display: grid; gap: var(--s4); }
 .row { display: flex; align-items: center; gap: var(--s3); }
-.row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.row-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); }
+.row-between > :first-child { min-width: min(100%, 260px); flex: 1 1 auto; }
 .divider { height: 1px; background: var(--line); margin: var(--s5) 0; border: 0; }
 
 /* Metric tile */
@@ -553,14 +555,16 @@ td .text-link + .text-link { margin-left: var(--s3); }
 .channel:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--ch) 50%, transparent); }
 
 /* HTML twin of the PNG invite card */
+.invite-card-frame { container-type: inline-size; }
+.invite-card-frame-story { max-width: 340px; margin-inline: auto; }
 .invite-card {
   position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
   background: var(--c-bg); color: var(--c-ink); border-radius: 18px; border: 1px solid var(--line-strong);
-  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.8); container-type: inline-size;
+  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.8);
   transition: background 300ms var(--ease), color 300ms var(--ease);
 }
 .invite-card-og { aspect-ratio: 1200 / 630; padding: 6cqw; }
-.invite-card-story { aspect-ratio: 1080 / 1920; max-width: 340px; margin-inline: auto; padding: 9cqw; }
+.invite-card-story { aspect-ratio: 1080 / 1920; padding: 9cqw; }
 .invite-card-rings { position: absolute; pointer-events: none; }
 .invite-card-og .invite-card-rings { width: 40cqw; aspect-ratio: 1; right: -5cqw; top: 50%; transform: translateY(-50%); }
 .invite-card-story .invite-card-rings { width: 76cqw; aspect-ratio: 1; left: 12cqw; bottom: 20cqw; }
@@ -603,3 +607,13 @@ td .text-link + .text-link { margin-left: var(--s3); }
 .share-message { margin-top: var(--s4); color: var(--text-2); font-style: italic; }
 
 @media (max-width: 1100px) { .studio-grid { grid-template-columns: 1fr; } }
+@media (max-width: 860px) {
+  .card, .social-card { padding: var(--s4); }
+  .channels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .list > li { flex-wrap: wrap; }
+  .hero { min-height: auto; padding-top: var(--s6); }
+  .hero-instrument { max-width: 420px; }
+}
+
+@media (max-width: 1100px) { .grid-predict { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .toast { left: 16px; right: 16px; bottom: 88px; max-width: none; } }

@@ -97,7 +97,7 @@ export function Predict() {
           <p>Escolha a resposta que você acha que {name} deu e diga o quanto confia. A sua previsão fica registrada com data e com a versão do consentimento dela.</p>
         </div>
       </div>
-      <div className="grid-main" style={{ gridTemplateColumns: "minmax(0,3fr) minmax(0,8fr)" }}>
+      <div className="grid-main grid-predict">
         <aside className="card" aria-label="Pessoas para prever">
           <ul className="list">
             {targets.map((id) => {

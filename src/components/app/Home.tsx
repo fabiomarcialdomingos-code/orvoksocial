@@ -123,7 +123,7 @@ export function Dashboard() {
         </Link>
         <Link href="/radar" className="card lit metric" data-p="people">
           <span className="eyebrow">Pessoas</span>
-          <span className="num">{radar.loading ? "–" : radar.dashboard?.received.length ?? 0}</span>
+          <span className="num">{radar.loading ? "–" : `${radar.dashboard?.received.length ?? 0}${radar.dashboard?.hasMore?.received ? "+" : ""}`}</span>
           <small>previsões sobre você visíveis{canPredict ? ` · ${canPredict} pessoa(s) para prever` : ""}</small>
         </Link>
         <Link href="/eventos" className="card lit metric" data-p="world">
