@@ -3,7 +3,11 @@ import { join } from "node:path";
 import { authPool } from "./auth/session";
 
 export type ShareTheme = "noite" | "aurora" | "mineral";
-export type SharePreview = { active: boolean; displayName: string; theme: ShareTheme; message: string | null; teaser: string | null };
+export type TeaserOption = { id: string; label: string; position: number };
+export type SharePreview = {
+  active: boolean; displayName: string; theme: ShareTheme; message: string | null;
+  teaser: string | null; teaserQuestionVersionId: string | null; teaserOptions: TeaserOption[];
+};
 
 /** Public, session-less preview of a share link (owner name, theme, teaser). */
 export async function getSharePreview(code: string): Promise<SharePreview | null> {

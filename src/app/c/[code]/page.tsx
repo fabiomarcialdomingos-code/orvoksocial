@@ -39,7 +39,7 @@ export default async function SharePage({ params }: { params: Promise<{ code: st
                 </blockquote>
               )}
               {preview.message && <p className="share-message">“{preview.message}”</p>}
-              <AcceptChallenge code={code} name={first} />
+              <AcceptChallenge code={code} name={first} teaserQuestionVersionId={preview.teaserQuestionVersionId} teaserOptions={preview.teaserOptions} />
             </>
           ) : (
             <>

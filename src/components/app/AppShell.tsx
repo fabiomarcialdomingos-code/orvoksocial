@@ -84,8 +84,12 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
         try { pending = localStorage.getItem("orvok:convite") ?? sessionStorage.getItem("orvok:convite"); } catch { /* storage off */ }
         if (pending) {
           try { localStorage.removeItem("orvok:convite"); sessionStorage.removeItem("orvok:convite"); } catch { /* ignore */ }
+          let hasGuess = false;
+          try { hasGuess = Boolean(localStorage.getItem(`orvok:convite-palpite:${pending}`)); } catch { /* storage off */ }
           apiPost<{ ownerId: string; created: boolean }>("/radar/share-links/redeem", { code: pending })
-            .then(() => toast("Desafio aceito. Seu pedido foi enviado; responda o seu gabarito enquanto a pessoa consente."))
+            .then(() => toast(hasGuess
+              ? "Desafio aceito. Seu palpite ficou guardado; responda o seu gabarito para poder confirmá-lo assim que a pessoa consentir."
+              : "Desafio aceito. Seu pedido foi enviado; responda o seu gabarito enquanto a pessoa consente."))
             .catch(() => undefined);
         }
       })
