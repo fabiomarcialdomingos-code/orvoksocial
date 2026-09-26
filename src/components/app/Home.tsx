@@ -14,7 +14,7 @@ function journey(radar: RadarState, me: string) {
   const consented = radar.consents.filter((c) => c.purpose === "BE_PREDICTED" && !c.revokedAt);
   const received = radar.dashboard?.received.length ?? 0;
   const steps = [
-    { key: "gabarito", title: "Seu gabarito", text: total ? `${answered} de ${total} respondidas` : "Catálogo indisponível", done: total > 0 && answered === total, href: "/onboarding", p: "self" as const },
+    { key: "gabarito", title: "Sua referência", text: total ? `${answered} de ${total} respondidas` : "Catálogo indisponível", done: total > 0 && answered === total, href: "/onboarding", p: "self" as const },
     { key: "pedidos", title: "Pedidos", text: incoming.length ? `${incoming.length} recebido(s)` : "Nenhum pedido ainda", done: incoming.some((i) => i.acceptanceId), href: "/convites", p: "people" as const },
     { key: "consentimento", title: "Consentimento", text: consented.length ? `${consented.length} ativo(s)` : "Nada autorizado", done: consented.length > 0, href: "/convites", p: "people" as const },
     { key: "encontro", title: "O encontro", text: received ? `${received} previsão(ões) visíveis` : "Aguardando previsões", done: received > 0, href: "/resultado", p: "people" as const },
@@ -44,7 +44,7 @@ export function RadarHub() {
           <h1 className="display">Radar</h1>
           <p>Quem te conhece, quem você conhece, e o quanto essas leituras batem. Cada ligação só existe com pedido aceito e consentimento ativo.</p>
         </div>
-        <Link className="button" data-p="people" href={steps[current]!.href}>{current === 0 ? "Responder gabarito" : current === 3 ? "Ver o encontro" : "Abrir pedidos"}</Link>
+        <Link className="button" data-p="people" href={steps[current]!.href}>{current === 0 ? "Responder à referência" : current === 3 ? "Ver o encontro" : "Abrir pedidos"}</Link>
       </div>
       <nav className="journey" aria-label="Etapas do Radar">
         {steps.map((step, i) => (
@@ -74,7 +74,7 @@ export function RadarHub() {
             <h3>Atalhos</h3>
             <ul className="list">
               <li><span className="grow">Prever quem já consentiu</span><Link className="text-link" href="/previsao">Prever</Link></li>
-              <li><span className="grow">Revisar minhas respostas</span><Link className="text-link" href="/onboarding">Gabarito</Link></li>
+              <li><span className="grow">Revisar minhas respostas</span><Link className="text-link" href="/onboarding">Referência</Link></li>
               <li><span className="grow">Revogar ou exportar dados</span><Link className="text-link" href="/meus-dados">Privacidade</Link></li>
             </ul>
           </article>
@@ -119,7 +119,7 @@ export function Dashboard() {
         <Link href="/onboarding" className="card lit metric" data-p="self">
           <span className="eyebrow">Você</span>
           <span className="num">{j ? `${j.answered}/${j.total}` : "–"}</span>
-          <small>respostas no gabarito</small>
+          <small>respostas na referência</small>
         </Link>
         <Link href="/radar" className="card lit metric" data-p="people">
           <span className="eyebrow">Pessoas</span>

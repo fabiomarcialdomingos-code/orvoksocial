@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createHash, randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { Pool } from "pg";
 import { hashPassword } from "../src/lib/auth/crypto";
 
@@ -32,10 +32,10 @@ const notices = {
   ].join("\n\n"),
 } as const;
 
-execFileSync("pnpm", ["exec", "tsx", "scripts/import-radar-catalog.ts", "prisma/fixtures/radar-demo-catalog.json"], {
-  stdio: "inherit",
-  env: { ...process.env, ORVOK_ALLOW_TEST_SEED: "1" },
-});
+execSync(
+  "corepack pnpm exec tsx scripts/import-radar-catalog.ts prisma/fixtures/radar-demo-catalog.json",
+  { stdio: "inherit", env: { ...process.env, ORVOK_ALLOW_TEST_SEED: "1" } },
+);
 
 const pool = new Pool({ connectionString: url });
 const client = await pool.connect();

@@ -20,7 +20,7 @@ export function Questionnaire() {
   useEffect(() => { if (!radar.loading && firstOpen > 0) setIndex(firstOpen); }, [radar.loading, firstOpen]);
 
   if (radar.loading) return <div className="skeleton" style={{ height: 320 }} aria-busy="true" />;
-  if (radar.error) return <div className="empty"><strong>O gabarito não carregou.</strong><span>{radar.error}</span></div>;
+  if (radar.error) return <div className="empty"><strong>A referência não carregou.</strong><span>{radar.error}</span></div>;
   if (!profile) return <NameStep onSaved={setProfile} />;
   if (!radar.selfGrant) return <SelfConsent onGranted={() => void radar.reload()} />;
   if (!radar.questions.length) return <div className="empty"><strong>Nenhuma pergunta publicada ainda.</strong><span>O catálogo do Radar precisa ser aprovado por um administrador.</span></div>;
@@ -131,7 +131,7 @@ function SelfConsent({ onGranted }: { onGranted: () => void }) {
       <section className="quiz-question">
         <span className="eyebrow">Etapa 1 de 2</span>
         <h1 className="display">Suas respostas, guardadas do seu jeito.</h1>
-        <p className="muted" style={{ marginTop: 16 }}>Para montar o gabarito precisamos do seu consentimento. Você pode revogá-lo depois em Privacidade e dados.</p>
+        <p className="muted" style={{ marginTop: 16 }}>Para montar a sua referência precisamos do seu consentimento. Você pode revogá-lo depois em Privacidade e dados.</p>
       </section>
       <div className="card form-stack">
         {failed && <p className="form-message" data-kind="error">{failed}</p>}
@@ -161,7 +161,7 @@ function Finished({ answered, total, onReview }: { answered: number; total: numb
   return (
     <div className="quiz">
       <section className="quiz-question">
-        <span className="eyebrow">Gabarito completo</span>
+        <span className="eyebrow">Referência completa</span>
         <h1 className="display">Pronto. Agora é a vez de quem te conhece.</h1>
         <p className="muted" style={{ marginTop: 16 }}>Você respondeu {answered} de {total} perguntas. Compartilhe seu e-mail com quem quiser te prever: a pessoa envia um pedido e você decide se aceita.</p>
         <div className="hero-actions">

@@ -1,0 +1,208 @@
+.page {
+  --ink: #0e0f12;
+  --bone: #efece4;
+  --bone-dim: rgb(239 236 228 / 0.6);
+  --bone-faint: rgb(239 236 228 / 0.32);
+  --amber: #cf8f3f;
+  --line: rgb(239 236 228 / 0.14);
+
+  --serif: "Bodoni Moda", "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--sans);
+  line-height: 1.55;
+}
+
+.page :global(*) { box-sizing: border-box; }
+.page :global(a) { color: inherit; }
+.page :global(h1),
+.page :global(h2),
+.page :global(h3),
+.page :global(h4) { margin: 0; text-wrap: balance; }
+.page :global(p) { margin: 0; }
+
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fieldGlow {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 40% at 82% 8%, rgb(207 143 63 / 0.16), transparent 60%);
+  opacity: 0.6;
+  transition: opacity 1.2s var(--ease);
+}
+.fieldGlow[data-bright="true"] { opacity: 1; }
+
+.content { position: relative; z-index: 2; }
+
+.topline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px clamp(20px, 5vw, 56px);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.toplineWord {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.toplineRight { display: flex; align-items: center; gap: 22px; color: var(--bone-dim); }
+.toplineRight a { text-decoration: none; }
+.toplineRight a:hover { color: var(--bone); }
+.clockText { font-variant-numeric: tabular-nums; color: var(--amber); }
+
+.gutter { padding-inline: clamp(20px, 8vw, 8vw); }
+
+/* ---------- Opening ---------- */
+.opening { min-height: 100vh; display: flex; align-items: center; padding-top: 90px; padding-bottom: 60px; }
+.openingInner { max-width: 720px; margin-left: clamp(0px, 6vw, 8vw); }
+.kicker { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); }
+.openingTitle {
+  margin-top: 20px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-style: italic;
+  font-size: clamp(2.4rem, 6vw, 4.6rem);
+  line-height: 1.04;
+}
+.openingLede { margin-top: 26px; max-width: 46ch; font-size: 1.06rem; color: var(--bone-dim); }
+.textCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 34px;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--bone);
+  border-bottom: 1px solid var(--amber);
+  padding-bottom: 6px;
+  transition: color 200ms var(--ease), gap 200ms var(--ease);
+}
+.textCta:hover { color: var(--amber); gap: 16px; }
+
+/* ---------- Asymmetric intro block ---------- */
+.intro { padding-block: clamp(80px, 14vw, 160px); display: flex; justify-content: flex-end; }
+.introInner { max-width: 560px; margin-right: clamp(0px, 6vw, 6vw); }
+.heading { font-family: var(--serif); font-weight: 500; font-size: clamp(1.7rem, 3.4vw, 2.6rem); margin-top: 16px; }
+.bodyText { margin-top: 18px; color: var(--bone-dim); max-width: 48ch; }
+
+/* ---------- Perspectives flow ---------- */
+.flow { padding-block: clamp(40px, 8vw, 90px); }
+.flowRow { padding-block: clamp(48px, 8vw, 88px); border-top: 1px solid var(--line); display: flex; }
+.flowRow:first-child { border-top: none; }
+.flowRowRight { justify-content: flex-end; }
+.flowInner { max-width: 620px; }
+.flowRowLead .flowInner { max-width: 680px; }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
+.flowInner h3 { font-family: var(--serif); font-weight: 500; font-size: clamp(1.5rem, 2.6vw, 2.1rem); margin-top: 10px; }
+.flowRowLead .flowInner h3 { font-size: clamp(1.9rem, 3.4vw, 2.7rem); }
+.flowInner p { margin-top: 14px; color: var(--bone-dim); max-width: 52ch; }
+
+.tally { margin-top: 20px; display: grid; gap: 10px; max-width: 320px; }
+.tallyRow { display: grid; grid-template-columns: 52px 1fr 44px; align-items: center; gap: 12px; font-family: var(--mono); font-size: 0.76rem; color: var(--bone-dim); }
+.tallyBar { position: relative; height: 1px; background: var(--line); }
+.tallyBar i { position: absolute; left: 0; top: -1.5px; height: 4px; background: var(--amber); display: block; width: 0; transition: width 1.1s var(--ease); }
+.tallyRow span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Pull quote ---------- */
+.quote { padding-block: clamp(90px, 14vw, 160px); text-align: center; }
+.quoteText {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  line-height: 1.3;
+  max-width: 24ch;
+  margin-inline: auto;
+}
+
+/* ---------- Steps ---------- */
+.steps { padding-block: clamp(60px, 10vw, 120px); max-width: 620px; }
+.stepsHead { margin-bottom: 40px; }
+.stepsHead h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(1.6rem, 2.8vw, 2.2rem); margin-top: 10px; }
+.stepList { position: relative; padding-left: 28px; }
+.stepList::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; width: 1px; background: var(--line); }
+.fillLine { position: absolute; left: 0; top: 4px; width: 1px; background: var(--amber); height: 0; transition: height 0.2s linear; }
+.step { position: relative; padding-bottom: 44px; }
+.step:last-child { padding-bottom: 0; }
+.stepNum { font-family: var(--mono); font-size: 0.7rem; color: var(--bone-faint); }
+.step h4 { margin: 6px 0 0; font-family: var(--serif); font-weight: 500; font-size: 1.15rem; }
+.step p { margin-top: 6px; color: var(--bone-dim); font-size: 0.94rem; max-width: 48ch; }
+
+/* ---------- Closing ---------- */
+.closing { padding-block: clamp(90px, 14vw, 170px); }
+.closingInner { max-width: 620px; }
+.closing h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(2rem, 4vw, 3rem); margin-top: 16px; }
+.promises { margin-top: 40px; display: grid; gap: 22px; }
+.promise { border-top: 1px solid var(--line); padding-top: 18px; }
+.promise strong { display: block; font-family: var(--sans); font-weight: 500; font-size: 1rem; margin-bottom: 6px; }
+.promise span { color: var(--bone-dim); font-size: 0.92rem; }
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 40px;
+  height: 52px;
+  padding: 0 28px;
+  border-radius: 999px;
+  border: 1px solid var(--amber);
+  color: var(--bone);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 220ms var(--ease), color 220ms var(--ease);
+}
+.ctaButton:hover { background: var(--amber); color: var(--ink); }
+
+.footer {
+  padding-block: 28px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--bone-faint);
+  letter-spacing: 0.04em;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+.reveal[data-in="true"] { opacity: 1; transform: none; }
+
+@media (max-width: 720px) {
+  .intro { justify-content: flex-start; }
+  .introInner { margin-right: 0; }
+  .flowRowRight { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page :global(*) { transition-duration: 0.001ms !important; }
+}

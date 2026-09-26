@@ -1,32 +1,33 @@
 @import "tailwindcss";
 
-/* ORVOK 2 — "instrumento de observação"
-   Canvas azul-noite mineral; cada perspectiva tem uma cor fixa:
-   Você = pêssego, Pessoas = teal mineral, Mundo = lavanda.
-   A cor sempre carrega significado; nunca é decoração. */
+/* ORVOK 2 — "instrumento vivo"
+   Canvas grafite; um único sinal de precisão, âmbar, marca Você.
+   Pessoas e Mundo mantêm cores próprias, discretas, nunca decorativas —
+   a cor identifica a perspectiva, e só ela. */
 :root {
   color-scheme: dark;
-  --night: #0a1120;
-  --deep: #0d1628;
-  --panel: #111b30;
-  --panel-2: #16223b;
-  --panel-3: #1c2a47;
-  --line: rgb(150 172 212 / 0.13);
-  --line-strong: rgb(150 172 212 / 0.26);
-  --text: #e8edf3;
-  --text-2: #aab6c8;
-  --text-3: #75839b;
-  --self: #f4b89a;
-  --self-ink: #2a160c;
-  --people: #6fd6c5;
-  --people-ink: #062521;
-  --world: #a9b3ff;
-  --world-ink: #121640;
-  --danger: #ff9a95;
-  --focus: #f4f1e6;
+  --night: #0e0f12;
+  --deep: #14151a;
+  --panel: #191a20;
+  --panel-2: #202128;
+  --panel-3: #282a33;
+  --line: rgb(239 236 228 / 0.12);
+  --line-strong: rgb(239 236 228 / 0.24);
+  --text: #efece4;
+  --text-2: rgb(239 236 228 / 0.62);
+  --text-3: rgb(239 236 228 / 0.4);
+  --self: #cf8f3f;
+  --self-ink: #1c1305;
+  --people: #7fb3a3;
+  --people-ink: #06201a;
+  --world: #9aa3d6;
+  --world-ink: #14173a;
+  --danger: #e0776f;
+  --focus: #efece4;
 
-  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bodoni Moda", "Times New Roman", serif;
   --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --r-xs: 6px;
   --r-sm: 10px;
@@ -51,8 +52,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 700px at 78% -10%, rgb(111 214 197 / 0.07), transparent 60%),
-    radial-gradient(900px 600px at -10% 30%, rgb(169 179 255 / 0.05), transparent 60%),
+    radial-gradient(1200px 700px at 78% -10%, rgb(207 143 63 / 0.08), transparent 60%),
+    radial-gradient(900px 600px at -10% 30%, rgb(239 236 228 / 0.03), transparent 60%),
     var(--night);
   color: var(--text);
   font-family: var(--font-ui);
@@ -80,7 +81,7 @@ a:hover { text-decoration-color: currentColor; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 img, svg { max-width: 100%; }
-::selection { background: rgb(111 214 197 / 0.3); }
+::selection { background: rgb(207 143 63 / 0.3); }
 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
 
@@ -134,7 +135,7 @@ code { font-size: 0.85em; color: var(--text-2); background: var(--panel-2); padd
 }
 .button-secondary:hover, .button-ghost:hover { background: rgb(255 255 255 / 0.04); }
 .button-small { min-height: 34px; padding: 0 var(--s4); font-size: 0.875rem; }
-.button-danger { --b-bg: transparent; --b-fg: var(--danger); border-color: rgb(255 154 149 / 0.35); }
+.button-danger { --b-bg: transparent; --b-fg: var(--danger); border-color: rgb(224 119 111 / 0.35); }
 
 .text-link {
   display: inline-flex; align-items: center; gap: 6px;
@@ -185,7 +186,7 @@ a.lit { text-decoration: none; }
 .field textarea, textarea.input { min-height: 96px; resize: vertical; }
 .field input::placeholder, .field textarea::placeholder, .input::placeholder { color: var(--text-3); }
 .field input:focus, .field select:focus, .field textarea:focus, .input:focus {
-  outline: none; border-color: var(--people); box-shadow: 0 0 0 3px rgb(111 214 197 / 0.18);
+  outline: none; border-color: var(--people); box-shadow: 0 0 0 3px rgb(127 179 163 / 0.18);
 }
 .field-hint { font-size: 0.8125rem; color: var(--text-3); }
 .form-stack { display: grid; gap: var(--s4); }
@@ -194,10 +195,10 @@ a.lit { text-decoration: none; }
 .checkbox-row input { margin-top: 4px; accent-color: var(--people); }
 .form-message {
   margin: var(--s3) 0 0; padding: 10px 14px; border-radius: var(--r-sm);
-  background: rgb(111 214 197 / 0.08); border: 1px solid rgb(111 214 197 / 0.25); color: var(--text);
+  background: rgb(127 179 163 / 0.08); border: 1px solid rgb(127 179 163 / 0.25); color: var(--text);
   font-size: 0.925rem;
 }
-.form-message[data-kind="error"] { background: rgb(255 154 149 / 0.08); border-color: rgb(255 154 149 / 0.3); }
+.form-message[data-kind="error"] { background: rgb(224 119 111 / 0.08); border-color: rgb(224 119 111 / 0.3); }
 input[type="range"] { accent-color: var(--p, var(--people)); width: 100%; }
 
 /* ---------- Pills / tags ---------- */
@@ -404,7 +405,7 @@ ul.list, ol.list { margin: 0; padding: 0; }
 .align-row.head { color: var(--text-3); font-size: 0.8125rem; padding-top: 0; }
 .cell-hit, .cell-miss { display: inline-flex; align-items: center; gap: 8px; }
 .cell-hit::before, .cell-miss::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex: none; }
-.cell-hit::before { background: var(--people); box-shadow: 0 0 0 4px rgb(111 214 197 / 0.14); }
+.cell-hit::before { background: var(--people); box-shadow: 0 0 0 4px rgb(127 179 163 / 0.14); }
 .cell-miss::before { border: 1px solid var(--text-3); }
 
 /* Feed */
@@ -440,7 +441,7 @@ ul.list, ol.list { margin: 0; padding: 0; }
 
 /* Toast */
 .toast { position: fixed; right: 24px; bottom: 24px; z-index: 120; max-width: 380px; padding: 12px 16px; border-radius: var(--r-md); background: var(--panel-3); border: 1px solid var(--line-strong); box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.7); animation: toast-in 260ms var(--ease); }
-.toast[data-kind="error"] { border-color: rgb(255 154 149 / 0.4); }
+.toast[data-kind="error"] { border-color: rgb(224 119 111 / 0.4); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 
 /* Skeleton */
@@ -543,7 +544,7 @@ td .text-link + .text-link { margin-left: var(--s3); }
 .studio-qr div { width: 180px; margin-top: var(--s3); padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--deep); }
 .swatch { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: transparent; color: var(--text-2); font-size: 0.875rem; }
 .swatch span { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-strong); }
-.swatch[aria-pressed="true"] { color: var(--text); border-color: var(--people); box-shadow: 0 0 0 3px rgb(111 214 197 / 0.15); }
+.swatch[aria-pressed="true"] { color: var(--text); border-color: var(--people); box-shadow: 0 0 0 3px rgb(127 179 163 / 0.15); }
 .channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s2); }
 .channel {
   --p: var(--ch); position: relative; display: flex; align-items: center; gap: 10px;

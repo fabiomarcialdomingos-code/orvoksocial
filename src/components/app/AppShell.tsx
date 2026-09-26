@@ -30,7 +30,7 @@ const primary: NavItem[] = [
   { href: "/feed", label: "Feed", keywords: "comunidade posts" },
 ];
 const groups: { label: string; items: NavItem[] }[] = [
-  { label: "Você", items: [{ href: "/onboarding", label: "Meu gabarito", p: "self", keywords: "respostas questionário" }] },
+  { label: "Você", items: [{ href: "/onboarding", label: "Minha referência", p: "self", keywords: "respostas questionário gabarito" }] },
   {
     label: "Pessoas",
     items: [
@@ -88,8 +88,8 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
           try { hasGuess = Boolean(localStorage.getItem(`orvok:convite-palpite:${pending}`)); } catch { /* storage off */ }
           apiPost<{ ownerId: string; created: boolean }>("/radar/share-links/redeem", { code: pending })
             .then(() => toast(hasGuess
-              ? "Desafio aceito. Seu palpite ficou guardado; responda o seu gabarito para poder confirmá-lo assim que a pessoa consentir."
-              : "Desafio aceito. Seu pedido foi enviado; responda o seu gabarito enquanto a pessoa consente."))
+              ? "Desafio aceito. Seu palpite ficou guardado; responda a sua referência para poder confirmá-lo assim que a pessoa consentir."
+              : "Desafio aceito. Seu pedido foi enviado; responda a sua referência enquanto a pessoa consente."))
             .catch(() => undefined);
         }
       })

@@ -79,7 +79,7 @@ export function Requests() {
         <section className="card" data-p="people" aria-labelledby="in-title">
           <div className="row-between"><h2 id="in-title">Pedidos para prever você</h2><span className="tag" data-p="people">{incoming.length}</span></div>
           {!answeredAll && (
-            <p className="form-message" style={{ marginTop: 16 }}>Complete o seu gabarito para que os pedidos aceitos possam virar previsões. <Link className="text-link" href="/onboarding">Responder agora</Link></p>
+            <p className="form-message" style={{ marginTop: 16 }}>Complete a sua referência para que os pedidos aceitos possam virar previsões. <Link className="text-link" href="/onboarding">Responder agora</Link></p>
           )}
           {incoming.length === 0 ? (
             <div className="empty" style={{ marginTop: 16 }}>
@@ -114,7 +114,7 @@ export function Requests() {
         <div className="stack">
           <section className="card lit" data-p="people" aria-labelledby="send-title">
             <h2 id="send-title">Pedir para prever alguém</h2>
-            <p className="muted" style={{ marginTop: 8 }}>Use o e-mail com que a pessoa entra no ORVOK. Você precisa ter respondido o seu próprio gabarito para prever.</p>
+            <p className="muted" style={{ marginTop: 8 }}>Use o e-mail com que a pessoa entra no ORVOK. Você precisa ter respondido a sua própria referência para prever.</p>
             <form className="form-stack" style={{ marginTop: 16 }} onSubmit={(event) => { event.preventDefault(); void send(); }}>
               <label className="field"><span>E-mail da pessoa</span>
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nome@exemplo.com" autoComplete="off" />
@@ -135,7 +135,7 @@ export function Requests() {
                       <span className="avatar" data-p="people">{initials(name)}</span>
                       <div className="grow">
                         <strong>{name}</strong>
-                        <div className="faint" style={{ fontSize: 14 }}>{ready ? "Pronta para ser prevista" : inv.acceptanceId ? "Aceitou; aguardando consentimento ou gabarito" : "Aguardando aceite"}</div>
+                        <div className="faint" style={{ fontSize: 14 }}>{ready ? "Pronta para ser prevista" : inv.acceptanceId ? "Aceitou; aguardando consentimento ou referência" : "Aguardando aceite"}</div>
                       </div>
                       {ready && <Link className="button button-small" data-p="people" href={`/previsao?pessoa=${inv.targetId}`}>Prever</Link>}
                     </li>
@@ -173,7 +173,7 @@ function ConsentPanel({ invitation, name, hasAnswers, onClose, onDone }: {
         noticeVersion: notice.version, noticeHash: notice.contentHash, scope,
       });
       if (hasAnswers) await apiPost("/radar/answers/reconfirm", {});
-      toast(hasAnswers ? `${name} já pode te prever. Seu gabarito foi reconfirmado para esta previsão.` : `Consentimento registrado. Responda o gabarito para ${name} poder te prever.`);
+      toast(hasAnswers ? `${name} já pode te prever. Sua referência foi reconfirmada para esta previsão.` : `Consentimento registrado. Responda a sua referência para ${name} poder te prever.`);
       await onDone();
     } catch (error) { toast(describeError(error), "error"); } finally { setPending(false); }
   };

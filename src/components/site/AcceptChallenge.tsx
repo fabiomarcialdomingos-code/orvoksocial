@@ -72,7 +72,7 @@ export function AcceptChallenge({
           </button>
         </div>
         {state === "error" && <p className="form-message" data-kind="error" role="alert">{message}</p>}
-        <p className="faint" style={{ marginTop: 20, fontSize: 14 }}>Ao aceitar, um pedido é enviado para {name}. Você poderá prever assim que {name} consentir e você responder o seu próprio gabarito.</p>
+        <p className="faint" style={{ marginTop: 20, fontSize: 14 }}>Ao aceitar, um pedido é enviado para {name}. Você poderá prever assim que {name} consentir e você responder a sua própria referência.</p>
       </>
     );
   }

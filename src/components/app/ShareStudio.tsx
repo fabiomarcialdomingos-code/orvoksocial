@@ -161,7 +161,7 @@ export function ShareStudio({ questions, answered }: { questions: Question[]; an
               <button className="button" data-p="people" disabled={creating} onClick={() => void create()}>
                 {creating ? "Gerando…" : active ? "Atualizar cartão" : "Gerar meu convite"}
               </button>
-              {answered === 0 && <span className="field-hint">Dica: responda seu gabarito antes. Quem aceitar só consegue prever depois disso.</span>}
+              {answered === 0 && <span className="field-hint">Dica: responda à sua referência antes. Quem aceitar só consegue prever depois disso.</span>}
             </div>
           ) : (
             <>
