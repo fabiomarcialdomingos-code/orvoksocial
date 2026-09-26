@@ -23,7 +23,7 @@ export type RadarState = {
 
 /** Everything the Radar screens need, loaded in parallel from the real API. */
 export function useRadar(userId: string | undefined): RadarState {
-  const [state, setState] = useState<Omit<RadarState, "reload">>({
+  const [state, setState] = useState<Omit<RadarState, "reload" | "setAnswer">>({
     loading: true, error: null, questions: [], answers: new Map(), consents: [], selfGrant: null,
     invitations: [], opportunities: [], dashboard: null, people: new Map(),
   });
