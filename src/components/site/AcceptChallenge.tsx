@@ -6,30 +6,33 @@ import { useEffect, useState } from "react";
 
 export const PENDING_KEY = "orvok:convite";
 const GUESS_KEY_PREFIX = "orvok:convite-palpite:";
+const KEYS = ["A", "B", "C", "D", "E", "F"];
 
 type TeaserOption = { id: string; label: string; position: number };
-type Guess = { code: string; questionVersionId: string; optionId: string };
+type CatalogQuestion = { questionVersionId: string; text: string; options: TeaserOption[] };
+type GuessMap = Record<string, string>; // questionVersionId -> optionId
 
-function readGuess(code: string): Guess | null {
+function readGuesses(code: string): GuessMap {
   try {
     const raw = localStorage.getItem(GUESS_KEY_PREFIX + code) ?? sessionStorage.getItem(GUESS_KEY_PREFIX + code);
-    return raw ? (JSON.parse(raw) as Guess) : null;
-  } catch { return null; }
+    return raw ? (JSON.parse(raw) as GuessMap) : {};
+  } catch { return {}; }
 }
 
-/** Signed out: guess first (no account needed), then sign up to see if you were right.
- *  Signed in: redeem immediately. */
+/** Signed out: guess every question about the inviter first, no account needed.
+ *  Only after the last question do we offer to create an account.
+ *  Signed in: redeem immediately (they already went through this once). */
 export function AcceptChallenge({
-  code, name, teaserQuestionVersionId, teaserOptions,
-}: { code: string; name: string; teaserQuestionVersionId: string | null; teaserOptions: TeaserOption[] }) {
+  code, name, catalog,
+}: { code: string; name: string; catalog: CatalogQuestion[] }) {
   const router = useRouter();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [state, setState] = useState<"idle" | "pending" | "error">("idle");
   const [message, setMessage] = useState("");
-  const [guess, setGuess] = useState<Guess | null>(null);
+  const [guesses, setGuesses] = useState<GuessMap>({});
 
   useEffect(() => {
-    setGuess(readGuess(code));
+    setGuesses(readGuesses(code));
     fetch("/api/v1/auth/session?optional=1", { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { authenticated: false }))
       .then((d: { authenticated?: boolean }) => setSignedIn(Boolean(d.authenticated)))
@@ -40,11 +43,10 @@ export function AcceptChallenge({
     try { sessionStorage.setItem(PENDING_KEY, code); localStorage.setItem(PENDING_KEY, code); } catch { /* storage off */ }
   };
 
-  const pickOption = (optionId: string) => {
-    if (!teaserQuestionVersionId) return;
-    const next = { code, questionVersionId: teaserQuestionVersionId, optionId };
+  const pickOption = (questionVersionId: string, optionId: string) => {
+    const next = { ...guesses, [questionVersionId]: optionId };
     try { localStorage.setItem(GUESS_KEY_PREFIX + code, JSON.stringify(next)); } catch { /* storage off */ }
-    setGuess(next);
+    setGuesses(next);
   };
 
   const redeem = async () => {
@@ -75,29 +77,41 @@ export function AcceptChallenge({
     );
   }
 
-  // Signed out and no guess yet: let them guess before asking for an account.
-  if (!guess && teaserQuestionVersionId && teaserOptions.length > 0) {
+  const pendingIndex = catalog.findIndex((q) => !guesses[q.questionVersionId]);
+  const allAnswered = catalog.length > 0 && pendingIndex === -1;
+
+  // Signed out, still has questions left to guess: show one at a time.
+  if (catalog.length > 0 && !allAnswered) {
+    const question = catalog[pendingIndex]!;
     return (
-      <div className="options" role="radiogroup" aria-label="Sua previsão">
-        {teaserOptions.map((option) => (
-          <button key={option.id} type="button" role="radio" className="option lit" data-p="people"
-            onClick={() => pickOption(option.id)}>
-            <span>{option.label}</span>
-          </button>
-        ))}
-        <p className="faint" style={{ marginTop: 16, fontSize: 14 }}>Escolha o que você acha que {name} respondeu. Depois disso você cria uma conta pra ver se acertou.</p>
+      <div className="card form-stack">
+        <div className="quiz-progress" aria-label={`Pergunta ${pendingIndex + 1} de ${catalog.length}`}>
+          {catalog.map((q, i) => <i key={q.questionVersionId} data-on={Boolean(guesses[q.questionVersionId]) || i === pendingIndex} />)}
+        </div>
+        <span className="eyebrow">Pergunta {pendingIndex + 1} de {catalog.length} — seu palpite sobre {name}</span>
+        <h3 style={{ marginTop: 8 }}>{question.text}</h3>
+        <div className="options" role="radiogroup" aria-label="Sua previsão">
+          {question.options.map((option, i) => (
+            <button key={option.id} type="button" role="radio" className="option lit" data-p="people"
+              onClick={() => pickOption(question.questionVersionId, option.id)}>
+              <span className="key">{KEYS[i]}</span>
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
+        <p className="faint" style={{ fontSize: 14 }}>Responda todas as perguntas sobre {name}. No final, criamos sua conta pra você ver se acertou.</p>
       </div>
     );
   }
 
-  // Guessed (or no teaser available): ask for an account to save the guess and continue.
+  // All guessed (or no catalog available): ask for an account to save the guesses and continue.
   return (
     <>
       <div className="hero-actions">
         <Link className="button" data-p="people" href={`/cadastro?returnTo=/c/${code}`} onClick={remember}>Criar conta e ver se acertei</Link>
         <Link className="button button-secondary" href={`/entrar?returnTo=/c/${code}`} onClick={remember}>Já tenho conta</Link>
       </div>
-      <p className="faint" style={{ marginTop: 20, fontSize: 14 }}>Seu palpite fica guardado neste navegador. Ao criar a conta, um pedido é enviado para {name}; você vê o resultado assim que {name} consentir e você responder o seu próprio gabarito.</p>
+      <p className="faint" style={{ marginTop: 20, fontSize: 14 }}>Seus palpites ficam guardados neste navegador. Ao criar a conta, um pedido é enviado para {name}; você vê o resultado assim que {name} consentir.</p>
     </>
   );
 }

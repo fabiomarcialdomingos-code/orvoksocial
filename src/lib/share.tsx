@@ -16,6 +16,16 @@ export async function getSharePreview(code: string): Promise<SharePreview | null
   return result.rows[0] ?? null;
 }
 
+export type CatalogQuestion = { questionVersionId: string; text: string; options: TeaserOption[] };
+
+/** Public, session-less read of the full published Radar catalog. Content
+ *  only (no per-user data) — used so an invited visitor can guess every
+ *  question about the inviter before creating an account. */
+export async function getRadarCatalogPublic(): Promise<CatalogQuestion[]> {
+  const result = await authPool().query<CatalogQuestion>(`SELECT * FROM orvok_radar_catalog_public()`);
+  return result.rows;
+}
+
 export const THEMES: Record<ShareTheme, { bg: string; ink: string; soft: string; line: string; accent: string; accent2: string; name: string }> = {
   noite: { bg: "#0a1120", ink: "#e8edf3", soft: "#aab6c8", line: "rgba(150,172,212,0.22)", accent: "#6fd6c5", accent2: "#f4b89a", name: "Noite" },
   aurora: { bg: "#1a1230", ink: "#f6ecef", soft: "#c9b8c8", line: "rgba(244,184,154,0.25)", accent: "#f4b89a", accent2: "#a9b3ff", name: "Aurora" },

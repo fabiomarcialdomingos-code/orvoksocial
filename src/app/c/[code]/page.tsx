@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteNav } from "../../../components/site/SiteNav";
 import { AcceptChallenge } from "../../../components/site/AcceptChallenge";
 import { Instrument } from "../../../components/ui/Instrument";
-import { getSharePreview } from "../../../lib/share";
+import { getSharePreview, getRadarCatalogPublic } from "../../../lib/share";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 export default async function SharePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const preview = await getSharePreview(code).catch(() => null);
+  const catalog = preview?.active ? await getRadarCatalogPublic().catch(() => []) : [];
   const name = preview?.displayName ?? "";
   const first = name.split(" ")[0] ?? name;
   return (
@@ -39,7 +40,7 @@ export default async function SharePage({ params }: { params: Promise<{ code: st
                 </blockquote>
               )}
               {preview.message && <p className="share-message">“{preview.message}”</p>}
-              <AcceptChallenge code={code} name={first} teaserQuestionVersionId={preview.teaserQuestionVersionId} teaserOptions={preview.teaserOptions} />
+              <AcceptChallenge code={code} name={first} catalog={catalog} />
             </>
           ) : (
             <>
