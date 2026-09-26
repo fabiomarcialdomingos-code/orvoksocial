@@ -127,14 +127,16 @@ async def main() -> None:
         check("João vê a página pública do convite", True)
         await shot(joao, "ui-03-landing-convite-celular")
         await joao.get_by_role("link", name="Criar conta e aceitar").click()
+        # The confirmation toast shows while the questionnaire opens; the
+        # request itself is verified on Maria's side in the next step.
         await register(joao, f"joao.{RUN}@orvok.test", "João Pedro")
-        await expect(joao.get_by_text("Desafio aceito.")).to_be_visible(timeout=30000)
-        check("pedido enviado automaticamente após o cadastro pelo link", True)
 
         # 4. Maria accepts and consents
         await maria.goto(BASE + "/convites")
         await settle(maria)
         row = maria.locator(".list > li", has_text="João Pedro")
+        await expect(row.get_by_role("button", name="Aceitar pedido")).to_be_visible(timeout=30000)
+        check("pedido do João chegou para Maria após o cadastro pelo link", True)
         await row.get_by_role("button", name="Aceitar pedido").click()
         await row.get_by_role("button", name="Ler aviso e consentir").click()
         await expect(maria.get_by_role("heading", name="Consentir que João Pedro preveja você")).to_be_visible()
