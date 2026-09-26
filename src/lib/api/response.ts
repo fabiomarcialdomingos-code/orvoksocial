@@ -67,7 +67,11 @@ export function apiError(error: unknown): Response {
     }
   }
   if (status >= 500) {
-    console.error(JSON.stringify({ level: "error", event: "api_failure", requestId }));
+    const detail = error as { name?: unknown; code?: unknown; table?: unknown; constraint?: unknown; stack?: unknown } | null;
+    const pick = (value: unknown) => (typeof value === "string" ? value.slice(0, 300) : undefined);
+    console.error(JSON.stringify({ level: "error", event: "api_failure", requestId,
+      errorName: pick(detail?.name), pgCode: pick(detail?.code), table: pick(detail?.table), constraint: pick(detail?.constraint),
+      stack: pick(detail?.stack) }));
   }
   // Local diagnostics only: database codes and messages never leave the server
   // and are never logged outside development/test.

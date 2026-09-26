@@ -475,7 +475,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   }
   if (method === "GET" && route === "/admin/questions") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const result = await pool.query(`SELECT q.id,q."stableKey",q.domain,q."createdAt",qv.id AS "versionId",qv.version,qv.text,qv."familyKey",qv."catalogStatus",COALESCE(jsonb_agg(jsonb_build_object('id',ao.id,'code',ao.code,'label',ao.label,'position',ao.position) ORDER BY ao.position) FILTER (WHERE ao.id IS NOT NULL),'[]') AS options FROM "Question" q JOIN LATERAL (SELECT * FROM "QuestionVersion" v WHERE v."questionId"=q.id ORDER BY v.version DESC LIMIT 1) qv ON true LEFT JOIN "AnswerOption" ao ON ao."questionVersionId"=qv.id GROUP BY q.id,qv.id ORDER BY q."createdAt" DESC LIMIT 100`);
+    const result = await pool.query(`SELECT q.id,q."stableKey",q.domain,q."createdAt",qv.id AS "versionId",qv.version,qv.text,qv."familyKey",qv."catalogStatus",COALESCE(jsonb_agg(jsonb_build_object('id',ao.id,'code',ao.code,'label',ao.label,'position',ao.position) ORDER BY ao.position) FILTER (WHERE ao.id IS NOT NULL),'[]') AS options FROM "Question" q JOIN LATERAL (SELECT * FROM "QuestionVersion" v WHERE v."questionId"=q.id ORDER BY v.version DESC LIMIT 1) qv ON true LEFT JOIN "AnswerOption" ao ON ao."questionVersionId"=qv.id GROUP BY q.id,qv.id,qv.version,qv.text,qv."familyKey",qv."catalogStatus" ORDER BY q."createdAt" DESC LIMIT 100`);
     return apiJson({ items: result.rows });
   }
   if (method === "POST" && route === "/admin/questions") {
