@@ -37,11 +37,11 @@ export function Questionnaire() {
     if (current?.optionId === optionId) { next(); return; }
     setSaving(true);
     try {
-      await apiPost("/radar/answers", {
+      const result = await apiPost<{ answerVersionId: string; version: number }>("/radar/answers", {
         questionVersionId: question.questionVersionId, optionId, consentGrantId: radar.selfGrant!.id,
         ...(current ? { supersedesId: current.id } : {}),
       });
-      await radar.reload();
+      radar.setAnswer({ id: result.answerVersionId, questionVersionId: question.questionVersionId, optionId, version: result.version, answeredAt: new Date().toISOString() });
       next();
     } catch (error) {
       toast(describeError(error), "error");

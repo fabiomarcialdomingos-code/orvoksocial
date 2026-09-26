@@ -18,6 +18,7 @@ export type RadarState = {
   dashboard: Dashboard | null;
   people: Map<string, Profile>;
   reload: () => Promise<void>;
+  setAnswer: (answer: Answer) => void;
 };
 
 /** Everything the Radar screens need, loaded in parallel from the real API. */
@@ -59,7 +60,19 @@ export function useRadar(userId: string | undefined): RadarState {
   }, [userId]);
 
   useEffect(() => { void reload(); }, [reload]);
-  return { ...state, reload };
+
+  // Applies a just-saved answer locally instead of refetching every Radar
+  // list (questions, consents, invitations, opportunities, dashboard) after
+  // every single click, which made answering feel slow.
+  const setAnswer = useCallback((answer: Answer) => {
+    setState((s) => {
+      const next = new Map(s.answers);
+      next.set(answer.questionVersionId, answer);
+      return { ...s, answers: next };
+    });
+  }, []);
+
+  return { ...state, reload, setAnswer };
 }
 
 /** Stable pseudo-angle for a person, so they keep their place on the instrument. */

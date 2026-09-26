@@ -40,11 +40,13 @@ export function Requests() {
     } finally { setSending(false); }
   };
 
-  const accept = async (inv: Invitation) => {
+  // One click: accept the request, then go straight into reading the notice
+  // and consenting — no separate step, and no waiting on a full reload to
+  // see the invitation move forward.
+  const acceptAndConsent = async (inv: Invitation) => {
     try {
-      await apiPost(`/radar/invitations/${inv.id}/accept`, {});
-      await radar.reload();
-      toast("Pedido aceito. Falta o seu consentimento.");
+      const result = await apiPost<{ acceptanceId: string }>(`/radar/invitations/${inv.id}/accept`, {});
+      setConsenting({ ...inv, acceptanceId: result.acceptanceId, acceptedAt: new Date().toISOString() });
     } catch (error) { toast(describeError(error), "error"); }
   };
 
@@ -61,7 +63,7 @@ export function Requests() {
       <div className="page-head">
         <div>
           <h1 className="display">Pedidos</h1>
-          <p>Quem quer prever você envia um pedido. Você aceita, lê o aviso e consente. Três passos separados, e você pode voltar atrás quando quiser.</p>
+          <p>Quem quer prever você envia um pedido. Você aceita e lê o aviso de uma vez; pode revogar quando quiser depois.</p>
         </div>
       </div>
 
@@ -99,7 +101,7 @@ export function Requests() {
                           : inv.acceptanceId ? "Aceito, aguardando seu consentimento" : `Pediu ${relativeTime(inv.invitedAt)}`}
                       </div>
                     </div>
-                    {!inv.acceptanceId && <button className="button button-small" data-p="people" onClick={() => void accept(inv)}>Aceitar pedido</button>}
+                    {!inv.acceptanceId && <button className="button button-small" data-p="people" onClick={() => void acceptAndConsent(inv)}>Aceitar e consentir</button>}
                     {inv.acceptanceId && !grant && <button className="button button-small" data-p="people" onClick={() => setConsenting(inv)}>Ler aviso e consentir</button>}
                     {grant && <button className="button button-small button-danger" onClick={() => void revoke(grant.id)}>Revogar</button>}
                   </li>
