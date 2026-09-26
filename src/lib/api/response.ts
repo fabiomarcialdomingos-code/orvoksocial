@@ -66,10 +66,10 @@ export function apiError(error: unknown): Response {
       code = "RULE_VIOLATION";
     }
   }
-  if (status >= 500) {
+  if (status >= 403) {
     const detail = error as { name?: unknown; code?: unknown; table?: unknown; constraint?: unknown; stack?: unknown } | null;
     const pick = (value: unknown) => (typeof value === "string" ? value.slice(0, 300) : undefined);
-    console.error(JSON.stringify({ level: "error", event: "api_failure", requestId,
+    console.error(JSON.stringify({ level: "error", event: "api_failure", requestId, status, code,
       errorName: pick(detail?.name), pgCode: pick(detail?.code), table: pick(detail?.table), constraint: pick(detail?.constraint),
       stack: pick(detail?.stack) }));
   }
