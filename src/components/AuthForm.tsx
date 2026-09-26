@@ -4,6 +4,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const PASSWORD_RULE = "A senha precisa ter pelo menos 8 caracteres, com uma letra minúscula, uma maiúscula e um caractere especial (por exemplo: ! @ # $).";
+function passwordOk(value: string): boolean {
+  return value.length >= 8 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /[^A-Za-z0-9]/.test(value);
+}
+
 type Mode =
   "register" | "login" | "request-reset" | "reset-password" | "verify-email";
 const config: Record<
@@ -75,6 +80,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
     if (needsEmail) body.email = String(fields.get("email") ?? "").trim();
     if (needsPassword) body.password = String(fields.get("password") ?? "");
     if (needsToken) body.token = String(fields.get("token") ?? "").trim();
+    if ((mode === "register" || mode === "reset-password") && !passwordOk(body.password ?? "")) {
+      setMessage({ kind: "error", text: PASSWORD_RULE });
+      setPending(false);
+      return;
+    }
     try {
       const response = await fetch(`/api/v1/auth${config[mode].path}`, {
         method: "POST",
@@ -95,13 +105,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
           RATE_LIMITED: "Muitas tentativas. Aguarde e tente novamente.",
           ORIGIN_REJECTED: "A sessão expirou. Atualize a página e tente novamente.",
         };
-        setMessage({
-          kind: "error",
-          text:
-            response.status === 429
-              ? errorText[payload?.code ?? ""] ?? "Muitas tentativas. Aguarde e tente novamente."
-              : "Não foi possível concluir esta ação. Confira os dados e tente novamente.",
-        });
+        const code = payload?.code ?? "";
+        const requestId = (payload as { requestId?: string } | null)?.requestId;
+        const byStatus =
+          response.status === 429 ? errorText.RATE_LIMITED
+          : code === "INVALID_INPUT" && (mode === "register" || mode === "reset-password") ? PASSWORD_RULE
+          : code === "ORIGIN_REJECTED" ? "O servidor recusou a origem desta página. Se você é o administrador, confira se APP_ORIGIN é exatamente o endereço do site (com https e sem barra no final)."
+          : response.status >= 500 ? `O servidor não conseguiu concluir o cadastro agora. Tente de novo em instantes.${requestId ? ` Código para suporte: ${requestId.slice(0, 8)}.` : ""}`
+          : errorText[code];
+        setMessage({ kind: "error", text: byStatus ?? "Não foi possível concluir esta ação. Confira os dados e tente novamente." });
         return;
       }
       setMessage({ kind: "success", text: config[mode].success });

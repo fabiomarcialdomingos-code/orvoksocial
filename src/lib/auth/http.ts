@@ -37,8 +37,14 @@ export async function authEndpoint(
     const status = error instanceof AuthError ? error.status : error instanceof ZodError || error instanceof SyntaxError ? 400 : 500;
     const code = error instanceof AuthError ? error.code : error instanceof ZodError || error instanceof SyntaxError ? "INVALID_INPUT" : "INTERNAL_ERROR";
     const requestId = randomUUID();
-    if (status >= 500)
-      console.error(JSON.stringify({ level: "error", event: "auth_failure", requestId }));
+    if (status >= 500) {
+      // Only non-personal diagnostics: error class, PostgreSQL code, table and
+      // constraint names. Never the message (it can carry the e-mail address).
+      const detail = error as { name?: unknown; code?: unknown; table?: unknown; constraint?: unknown } | null;
+      const pick = (value: unknown) => (typeof value === "string" ? value.slice(0, 80) : undefined);
+      console.error(JSON.stringify({ level: "error", event: "auth_failure", requestId, path: new URL(request.url).pathname,
+        errorName: pick(detail?.name), pgCode: pick(detail?.code), table: pick(detail?.table), constraint: pick(detail?.constraint) }));
+    }
     return Response.json({ code, message: code, requestId, schemaVersion: "1" }, { status, headers: { "Cache-Control": "no-store" } });
   }
 }
