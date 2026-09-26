@@ -43,7 +43,9 @@ export async function authEndpoint(
       const detail = error as { name?: unknown; code?: unknown; table?: unknown; constraint?: unknown } | null;
       const pick = (value: unknown) => (typeof value === "string" ? value.slice(0, 80) : undefined);
       console.error(JSON.stringify({ level: "error", event: "auth_failure", requestId, path: new URL(request.url).pathname,
-        errorName: pick(detail?.name), pgCode: pick(detail?.code), table: pick(detail?.table), constraint: pick(detail?.constraint) }));
+        errorName: pick(detail?.name), pgCode: pick(detail?.code), table: pick(detail?.table), constraint: pick(detail?.constraint),
+        // Configuration errors use constant codes such as RUNTIME_DATABASE_CREDENTIALS_REQUIRED.
+        configError: error instanceof Error && /^[A-Z_]{6,80}$/.test(error.message) ? error.message : undefined }));
     }
     return Response.json({ code, message: code, requestId, schemaVersion: "1" }, { status, headers: { "Cache-Control": "no-store" } });
   }
