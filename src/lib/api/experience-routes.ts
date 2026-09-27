@@ -93,6 +93,9 @@ export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Res
     return apiJson({ items: result.rows });
   }
 
+  if(method==="GET" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="resolution") {
+    const r=await pool.query(`SELECT state,"outcomeOpportunityId",rationale FROM "WorldResolution" WHERE "eventId"=$1`,[uuid.parse(path[2])]);return apiJson({resolution:r.rows[0]??null});
+  }
   // Comments of a World event, newest last.
   if (method === "GET" && path.length === 4 && path[0] === "world" && path[1] === "events" && path[3] === "comments") {
     const eventId = uuid.parse(path[2]);

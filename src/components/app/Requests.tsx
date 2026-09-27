@@ -79,7 +79,7 @@ export function Requests() {
         <section className="card" data-p="people" aria-labelledby="in-title">
           <div className="row-between"><h2 id="in-title">Pedidos para prever você</h2><span className="tag" data-p="people">{incoming.length}</span></div>
           {!answeredAll && (
-            <p className="form-message" style={{ marginTop: 16 }}>Complete a sua referência para que os pedidos aceitos possam virar previsões. <Link className="text-link" href="/onboarding">Responder agora</Link></p>
+            <p className="form-message" style={{ marginTop: 16 }}>Complete a sua referência para que os pedidos aceitos possam virar previsões. <Link className="text-link" href="/historico/referencia">Responder agora</Link></p>
           )}
           {incoming.length === 0 ? (
             <div className="empty" style={{ marginTop: 16 }}>

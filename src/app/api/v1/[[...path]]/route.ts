@@ -1,3 +1,4 @@
+import { handlePerspectiveRoute } from "@/lib/api/perspective-routes";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { canAccess } from "@/lib/access-control";
@@ -604,6 +605,8 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,$3,'User',$4,clock_timestamp())`, [randomUUID(), actorId, `ADMIN_${body.action}`, targetId]);
     return apiJson({ actionId });
   }
+  const perspectives = await handlePerspectiveRoute({ method, path, route, request, pool, actorId, sessionHash, readBody: () => readJsonBody(request) });
+  if (perspectives) return perspectives;
   const experience = await handleExperienceRoute({ method, path, route, request, pool, actorId, sessionHash, readBody: () => readJsonBody(request) });
   if (experience) return experience;
   throw new OperationalApiError(404, "NOT_FOUND");

@@ -120,7 +120,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       if (needsToken && tokenInputRef.current) tokenInputRef.current.value = "";
       if (mode === "login") {
         const requested = new URLSearchParams(window.location.search).get("returnTo");
-        const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/painel";
+        const destination = requested && requested.startsWith("/") && !requested.startsWith("//") && !requested.includes("\\") ? requested : "/painel";
         router.push(destination);
       }
       if (mode === "register") {
@@ -131,7 +131,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: String(fields.get("email") ?? "").trim(), password: String(fields.get("password") ?? "") }),
         });
-        if (login.ok) router.push("/onboarding?novo=1");
+        if (login.ok) { const requested = new URLSearchParams(window.location.search).get("returnTo"); router.push(requested?.startsWith("/") && !requested.startsWith("//") && !requested.includes("\\") ? requested : "/sobre-mim?novo=1"); }
       }
     } catch {
       setMessage({

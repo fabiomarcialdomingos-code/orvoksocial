@@ -143,6 +143,8 @@ try {
     await owner.query(`GRANT EXECUTE ON FUNCTION orvok_share_link_redeem(text,text),orvok_share_link_preview(text) TO orvok_app_runtime`);
     await owner.query(`GRANT EXECUTE ON FUNCTION orvok_share_link_preview(text) TO orvok_auth_runtime`);
     await owner.query(`REVOKE ALL ON FUNCTION orvok_radar_actor(text) FROM orvok_app_runtime,orvok_auth_runtime,PUBLIC`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "PerspectivePreferences","PerspectiveRound" TO orvok_app_runtime`);
+    await owner.query(`GRANT EXECUTE ON FUNCTION orvok_perspective_connections(text,jsonb),orvok_perspective_profile(uuid) TO orvok_app_runtime`);
     await owner.query("COMMIT");
   } catch (error) {
     await owner.query("ROLLBACK");
