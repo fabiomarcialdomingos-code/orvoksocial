@@ -190,7 +190,7 @@ const labels: Record<string, [string, string]> = {
   RADAR_INVITATION_ACCEPTED: ["Seu pedido foi aceito", "/convites"],
   RADAR_CONSENT_GRANTED: ["Alguém consentiu ser prevista por você", "/previsao"],
   RADAR_CONSENT_REVOKED: ["Um consentimento foi revogado", "/convites"],
-  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/resultado"],
+  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/historico"],
   RADAR_SHARE_LINK_REDEEMED: ["Alguém aceitou o seu convite", "/convites"],
   GROUP_INVITATION: ["Convite para um grupo", "/grupos"],
 };

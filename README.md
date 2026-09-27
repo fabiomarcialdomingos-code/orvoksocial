@@ -1,5 +1,7 @@
 # ORVOK Social
 
+> **Perspectivas:** nova experiência visual, 100 perguntas, conexões privadas e “Prever juntos”. Instalação, testes e limites em [`docs/ORVOK-PERSPECTIVAS.md`](docs/ORVOK-PERSPECTIVAS.md).
+
 > **ORVOK 2:** redesenho, correções de banco e testes ponta a ponta estão descritos em [`docs/ORVOK-2.md`](docs/ORVOK-2.md). Capturas de tela em `docs/screenshots/`.
 
 Aplicação Next.js com PostgreSQL e Prisma. O Radar usa dados de teste em desenvolvimento; conteúdo e avisos oficiais ainda precisam de aprovação antes do uso com pessoas reais.

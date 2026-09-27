@@ -1,25 +1,285 @@
-'use client';
-import Link from 'next/link';
-import {usePathname,useRouter} from 'next/navigation';
-import {createContext,useCallback,useContext,useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
-import {apiGet,apiPost,initials,type Profile,type Session} from '../../lib/client/api';
-import {Brand} from '../ui/Brand';
-import {Icon} from '../perspectives/Shared';
-type Ctx={session:Session;profile:Profile|null;setProfile:(p:Profile)=>void;toast:(text:string,kind?:'ok'|'error')=>void;unread:number;refreshUnread:()=>void};
-const Context=createContext<Ctx|null>(null);
-export function useShell(){const c=useContext(Context);if(!c)throw new Error('useShell outside AppShell');return c;}
-const nav=[{href:'/painel',label:'Início',icon:'home'},{href:'/sobre-mim',label:'Sobre mim',icon:'profile'},{href:'/conexoes',label:'Conexões',icon:'people'},{href:'/descobertas',label:'Descobertas',icon:'spark'},{href:'/mundo',label:'Mundo',icon:'world'}];
-export function AppShell({title,children}:{title:string;children:ReactNode}){
- const router=useRouter(),path=usePathname(),dialog=useRef<HTMLDialogElement>(null);
- const [session,setSession]=useState<Session|null>(null),[profile,setProfile]=useState<Profile|null>(null),[error,setError]=useState(false),[unread,setUnread]=useState(0),[menu,setMenu]=useState(false),[query,setQuery]=useState<string|null>(null),[notice,setNotice]=useState<{text:string;kind:string}|null>(null);
- const toast=useCallback((text:string,kind:'ok'|'error'='ok')=>setNotice({text,kind}),[]);
- const refreshUnread=useCallback(()=>{void apiGet<{items:{state:string}[]}>('/notifications').then(r=>setUnread(r.items.filter(x=>x.state==='UNREAD').length)).catch(()=>undefined);},[]);
- useEffect(()=>{let active=true;void apiGet<Session>('/auth/session?optional=1').then(async s=>{if(!active)return;if(!s.authenticated){router.replace(`/entrar?returnTo=${encodeURIComponent(path)}`);return;}const p=await apiGet<{profile:Profile|null}>('/social/profile');if(!active)return;setSession(s);setProfile(p.profile);refreshUnread();let pending:string|null=null;try{pending=localStorage.getItem('orvok:convite')??sessionStorage.getItem('orvok:convite');}catch{/* storage off */}if(pending)void apiPost('/radar/share-links/redeem',{code:pending}).then(()=>{try{localStorage.removeItem('orvok:convite');sessionStorage.removeItem('orvok:convite');}catch{/* storage off */}toast('Convite anterior aceito. Acompanhe em Histórico anterior → Ver pedidos.');}).catch(()=>undefined);}).catch(()=>{if(active)setError(true);});return()=>{active=false;};},[path,router,refreshUnread,toast]);
- useEffect(()=>{const t=setInterval(()=>{if(document.visibilityState==='visible')refreshUnread();},60000);return()=>clearInterval(t);},[refreshUnread]);
- useEffect(()=>{if(!notice)return;const t=setTimeout(()=>setNotice(null),5000);return()=>clearTimeout(t);},[notice]);
- useEffect(()=>{const key=(e:KeyboardEvent)=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setQuery('');}if(e.key==='Escape'){setMenu(false);setQuery(null);}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[]);
- useEffect(()=>{if(query!==null&&!dialog.current?.open)dialog.current?.showModal();if(query===null&&dialog.current?.open)dialog.current.close();},[query]);
- const context=useMemo(()=>session?{session,profile,setProfile,toast,unread,refreshUnread}:null,[session,profile,toast,unread,refreshUnread]);
- const extras=[{href:'/perfil',label:'Meu perfil'},{href:'/feed',label:'Conversas'},{href:'/grupos',label:'Grupos'},{href:'/notificacoes',label:'Notificações'},{href:'/meus-dados',label:'Privacidade e dados'},{href:'/historico',label:'Histórico anterior'},...(['ADMIN','MODERATOR'].includes(session?.role??'')?[{href:'/admin',label:'Administração'}]:[])];
- return <div className="app-root"><header className="app-header"><Brand href="/painel"/><nav className="main-navigation" aria-label="Navegação principal">{nav.map(n=><Link key={n.href} href={n.href} aria-current={path===n.href?'page':undefined}><Icon name={n.icon}/><span>{n.label}</span></Link>)}</nav><div className="header-tools"><button className="command-button" onClick={()=>setQuery('')}>Buscar <kbd>⌘ K</kbd></button><Link href="/notificacoes" className="notification-button" aria-label={`Notificações: ${unread} não lidas`}><Icon name="bell"/>{unread>0&&<b>{unread}</b>}</Link><button className="avatar" aria-label="Menu da conta" aria-expanded={menu} onClick={()=>setMenu(!menu)}>{initials(profile?.displayName)}</button></div>{menu&&<div className="account-menu"><strong>{profile?.displayName??'Sua conta'}</strong>{extras.map(n=><Link href={n.href} key={n.href} onClick={()=>setMenu(false)}>{n.label} ↗</Link>)}<button onClick={async()=>{try{await apiPost('/auth/logout');router.replace('/entrar');}catch{toast('Não foi possível sair. Tente novamente.','error');}}}>Sair da conta</button></div>}</header><main id="conteudo" className="app-main" aria-label={title}>{context?<Context.Provider value={context}>{children}</Context.Provider>:error?<div className="empty" role="alert"><h1>Não conseguimos abrir sua conta.</h1><button className="button" onClick={()=>location.reload()}>Tentar novamente</button></div>:<div className="loading-block" role="status"><div className="skeleton"/><p>Abrindo seu espaço…</p></div>}</main><footer className="app-footer"><span>orvok. Uma pessoa, muitas perspectivas.</span><Link href="/meus-dados">Suas escolhas. Seus dados.</Link></footer><dialog ref={dialog} className="command-dialog" onClose={()=>setQuery(null)}><div className="row-between"><label htmlFor="page-search">Para onde vamos?</label><button className="text-link" onClick={()=>setQuery(null)}>Fechar</button></div><input autoFocus id="page-search" placeholder="Busque uma página…" value={query??''} onChange={e=>setQuery(e.target.value)}/>{[...nav,...extras].filter(n=>n.label.toLocaleLowerCase('pt-BR').includes((query??'').toLocaleLowerCase('pt-BR'))).map(n=><Link key={n.href} href={n.href} onClick={()=>setQuery(null)}>{n.label} ↗</Link>)}</dialog>{notice&&<div className="toast" data-kind={notice.kind} role={notice.kind==='error'?'alert':'status'}>{notice.text}</div>}</div>;
+"use client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  apiGet,
+  apiPost,
+  initials,
+  type Profile,
+  type Session,
+} from "../../lib/client/api";
+import { Brand } from "../ui/Brand";
+import { Icon } from "../perspectives/Shared";
+type Ctx = {
+  session: Session;
+  profile: Profile | null;
+  setProfile: (p: Profile) => void;
+  toast: (text: string, kind?: "ok" | "error") => void;
+  unread: number;
+  refreshUnread: () => void;
+};
+const Context = createContext<Ctx | null>(null);
+export function useShell() {
+  const c = useContext(Context);
+  if (!c) throw new Error("useShell outside AppShell");
+  return c;
+}
+const nav = [
+  { href: "/painel", label: "Início", icon: "home" },
+  { href: "/sobre-mim", label: "Sobre mim", icon: "profile" },
+  { href: "/conexoes", label: "Conexões", icon: "people" },
+  { href: "/descobertas", label: "Descobertas", icon: "spark" },
+  { href: "/mundo", label: "Mundo", icon: "world" },
+];
+export function AppShell({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  const router = useRouter(),
+    path = usePathname(),
+    dialog = useRef<HTMLDialogElement>(null);
+  const [session, setSession] = useState<Session | null>(null),
+    [profile, setProfile] = useState<Profile | null>(null),
+    [error, setError] = useState(false),
+    [unread, setUnread] = useState(0),
+    [menu, setMenu] = useState(false),
+    [query, setQuery] = useState<string | null>(null),
+    [notice, setNotice] = useState<{ text: string; kind: string } | null>(null);
+  const toast = useCallback(
+    (text: string, kind: "ok" | "error" = "ok") => setNotice({ text, kind }),
+    [],
+  );
+  const refreshUnread = useCallback(() => {
+    void apiGet<{ items: { state: string }[] }>("/notifications")
+      .then((r) =>
+        setUnread(r.items.filter((x) => x.state === "UNREAD").length),
+      )
+      .catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    let active = true;
+    void apiGet<Session>("/auth/session?optional=1")
+      .then(async (s) => {
+        if (!active) return;
+        if (!s.authenticated) {
+          router.replace(`/entrar?returnTo=${encodeURIComponent(path)}`);
+          return;
+        }
+        const p = await apiGet<{ profile: Profile | null }>("/social/profile");
+        if (!active) return;
+        setSession(s);
+        setProfile(p.profile);
+        refreshUnread();
+        let pending: string | null = null;
+        try {
+          pending =
+            localStorage.getItem("orvok:convite") ??
+            sessionStorage.getItem("orvok:convite");
+        } catch {
+          /* storage off */
+        }
+        if (pending)
+          void apiPost("/radar/share-links/redeem", { code: pending })
+            .then(() => {
+              try {
+                localStorage.removeItem("orvok:convite");
+                sessionStorage.removeItem("orvok:convite");
+              } catch {
+                /* storage off */
+              }
+              toast(
+                "Convite anterior aceito. Acompanhe em Histórico anterior → Ver pedidos.",
+              );
+            })
+            .catch(() => undefined);
+      })
+      .catch(() => {
+        if (active) setError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [path, router, refreshUnread, toast]);
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") refreshUnread();
+    }, 60000);
+    return () => clearInterval(t);
+  }, [refreshUnread]);
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(t);
+  }, [notice]);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setQuery("");
+      }
+      if (e.key === "Escape") {
+        setMenu(false);
+        setQuery(null);
+      }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
+  useEffect(() => {
+    if (query !== null && !dialog.current?.open) dialog.current?.showModal();
+    if (query === null && dialog.current?.open) dialog.current.close();
+  }, [query]);
+  const context = useMemo(
+    () =>
+      session
+        ? { session, profile, setProfile, toast, unread, refreshUnread }
+        : null,
+    [session, profile, toast, unread, refreshUnread],
+  );
+  const extras = [
+    { href: "/perfil", label: "Meu perfil" },
+    { href: "/feed", label: "Conversas" },
+    { href: "/grupos", label: "Grupos" },
+    { href: "/notificacoes", label: "Notificações" },
+    { href: "/meus-dados", label: "Privacidade e dados" },
+    { href: "/historico", label: "Histórico anterior" },
+    ...(["ADMIN", "MODERATOR"].includes(session?.role ?? "")
+      ? [{ href: "/admin", label: "Administração" }]
+      : []),
+  ];
+  return (
+    <div className="app-root">
+      <header className="app-header">
+        <Brand href="/painel" />
+        <nav className="main-navigation" aria-label="Navegação principal">
+          {nav.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              aria-current={path === n.href ? "page" : undefined}
+            >
+              <Icon name={n.icon} />
+              <span>{n.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="header-tools">
+          <button className="command-button" onClick={() => setQuery("")}>
+            Buscar <kbd>⌘ K</kbd>
+          </button>
+          <Link
+            href="/notificacoes"
+            className="notification-button"
+            aria-label={`Notificações: ${unread} não lidas`}
+          >
+            <Icon name="bell" />
+            {unread > 0 && <b>{unread}</b>}
+          </Link>
+          <button
+            className="avatar"
+            aria-label="Menu da conta"
+            aria-expanded={menu}
+            onClick={() => setMenu(!menu)}
+          >
+            {initials(profile?.displayName)}
+          </button>
+        </div>
+        {menu && (
+          <div className="account-menu">
+            <strong>{profile?.displayName ?? "Sua conta"}</strong>
+            {extras.map((n) => (
+              <Link href={n.href} key={n.href} onClick={() => setMenu(false)}>
+                {n.label} ↗
+              </Link>
+            ))}
+            <button
+              onClick={async () => {
+                try {
+                  await apiPost("/auth/logout");
+                  router.replace("/entrar");
+                } catch {
+                  toast("Não foi possível sair. Tente novamente.", "error");
+                }
+              }}
+            >
+              Sair da conta
+            </button>
+          </div>
+        )}
+      </header>
+      <main id="conteudo" className="app-main" aria-label={title}>
+        {context ? (
+          <Context.Provider value={context}>{children}</Context.Provider>
+        ) : error ? (
+          <div className="empty" role="alert">
+            <h1>Não conseguimos abrir sua conta.</h1>
+            <button className="button" onClick={() => location.reload()}>
+              Tentar novamente
+            </button>
+          </div>
+        ) : (
+          <div className="loading-block" role="status">
+            <div className="skeleton" />
+            <p>Abrindo seu espaço…</p>
+          </div>
+        )}
+      </main>
+      <footer className="app-footer">
+        <span>orvok. Uma pessoa, muitas perspectivas.</span>
+        <Link href="/meus-dados">Suas escolhas. Seus dados.</Link>
+      </footer>
+      <dialog
+        ref={dialog}
+        className="command-dialog"
+        onClose={() => setQuery(null)}
+      >
+        <div className="row-between">
+          <label htmlFor="page-search">Para onde vamos?</label>
+          <button className="text-link" onClick={() => setQuery(null)}>
+            Fechar
+          </button>
+        </div>
+        <input
+          autoFocus
+          id="page-search"
+          placeholder="Busque uma página…"
+          value={query ?? ""}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {[...nav, ...extras]
+          .filter((n) =>
+            n.label
+              .toLocaleLowerCase("pt-BR")
+              .includes((query ?? "").toLocaleLowerCase("pt-BR")),
+          )
+          .map((n) => (
+            <Link key={n.href} href={n.href} onClick={() => setQuery(null)}>
+              {n.label} ↗
+            </Link>
+          ))}
+      </dialog>
+      {notice && (
+        <div
+          className="toast"
+          data-kind={notice.kind}
+          role={notice.kind === "error" ? "alert" : "status"}
+        >
+          {notice.text}
+        </div>
+      )}
+    </div>
+  );
 }

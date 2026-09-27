@@ -25,7 +25,8 @@
     "db:provision:reapply": "tsx scripts/provision-runtime-roles.ts --reapply-local",
     "auth:mail-worker": "tsx scripts/auth-mail-worker.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
-    "test:e2e": "tsx scripts/simulate-users.ts"
+    "test:e2e": "tsx scripts/simulate-users.ts",
+    "test:perspectives": "node --import tsx scripts/tests/perspectives.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

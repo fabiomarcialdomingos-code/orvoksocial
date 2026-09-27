@@ -1,4 +1,236 @@
-import Link from 'next/link';
-import {Brand} from '../components/ui/Brand';
-import {SiteNav} from '../components/site/SiteNav';
-export default function Page(){return <div className="landing"><SiteNav/><main id="conteudo"><section className="landing-hero"><div className="landing-hero-copy"><span className="eyebrow"><i/> Uma rede de perspectivas</span><h1>Você é mais<br/>do que <em>parece.</em></h1><p>Descubra como as pessoas veem você.<br/>E como vocês veem o mundo.</p><div className="row wrap"><Link className="button" href="/cadastro">Descobrir meu outro lado ↗</Link><a href="#como-funciona" className="text-link">Me conta mais ↓</a></div><div className="hero-caption"><span>01 — EXPRESSE</span><span>02 — CONECTE</span><span>03 — DESCUBRA</span></div></div><div className="perspective-collage" aria-label="Exemplo ilustrativo de uma descoberta"><span className="collage-label">MESMA PESSOA. OUTROS OLHARES.</span><article className="collage-self"><span>VOCÊ DIZ</span><h2>“Eu gosto<br/>de mudar<br/>os planos.”</h2><div className="collage-avatar">EU <b>↗</b></div></article><article className="collage-other"><span>QUEM TE CONHECE PENSA</span><h3>“Achei que você<br/>preferia ter<br/>tudo planejado.”</h3><div className="row"><b>AL</b><small>Outro olhar sobre você</small></div></article><div className="collage-note"><b>↔</b><p>É nessa diferença<br/><strong>que a conversa começa.</strong></p></div><small className="collage-disclaimer">Prévia ilustrativa. Suas descobertas vêm de pessoas reais.</small></div></section><section className="manifesto-strip"><span>SEU JEITO DE SER.</span><b>↗</b><span>OUTROS JEITOS DE VER.</span><b>↗</b><span>UM MUNDO EM COMUM.</span></section><section id="pessoas" className="landing-people"><div><span className="eyebrow">01 / Pessoas</span><h2>Quem conhece<br/>o seu <em>outro lado?</em></h2><p>Seu melhor amigo. Sua mãe. A pessoa em quem você está pensando agora. Cada relação descobre uma versão diferente de você.</p><Link href="/cadastro" className="text-link">Começar uma descoberta ↗</Link></div><div className="people-editorial"><div className="relationship-types"><span>Família</span><span>Amigos</span><span className="selected">Crush ↗</span><span>Colegas</span></div><article><span className="eyebrow">O que alguém perceberia em você?</span><h3>Um convite inesperado.<br/>Você topa ou quer<br/>saber o plano?</h3><div className="sample-options"><span>Quero os detalhes.</span><span>Me conta no caminho. ↗</span></div><small>Exemplo de pergunta · respostas privadas por padrão</small></article></div></section><section id="mundo" className="landing-world"><div><span className="eyebrow">02 / Mundo + pessoas</span><h2>Vocês veem<br/>o mesmo futuro?</h2><p>Faça previsões sobre economia, esporte, tecnologia e outros acontecimentos. Convide alguém para adivinhar o que você pensa — e descubram juntos quem entendeu quem.</p><Link href="/cadastro" className="button button-light">Quero prever junto ↗</Link></div><div className="world-editorial"><span>TECNOLOGIA / ESPORTE / ECONOMIA</span><div><strong>O que vai<br/>acontecer?</strong><b>↗</b></div><hr/><div><strong>O que você<br/>acha que eu acho?</strong><b>↔</b></div><p>Pensar igual e entender alguém são descobertas diferentes.</p></div></section><section id="como-funciona" className="landing-how"><div className="section-title"><h2>Uma pergunta leva à outra.</h2><span>Seu primeiro encontro com o ORVOK</span></div><div className="how-grid"><article><span>01</span><h3>Conte um pouco<br/>de você.</h3><p>Perguntas escolhidas pelos seus interesses. Uma de cada vez, no seu ritmo.</p></article><article><span>02</span><h3>Convide outro<br/>ponto de vista.</h3><p>Escolha a relação e compartilhe um convite individual. Você controla cada conexão.</p></article><article><span>03</span><h3>Descubra.<br/>Converse. Repita.</h3><p>Compare as perspectivas, troque ideias e continue se descobrindo.</p></article></div></section><section id="consentimento" className="landing-closing"><span className="eyebrow">Sua história está sempre em construção.</span><h2>Deixe alguém<br/>te surpreender.</h2><Link href="/cadastro" className="button">Criar minha conta ↗</Link><p>Respostas privadas. Convites com consentimento.<br/>Você escolhe o que compartilhar e pode encerrar uma conexão.</p></section></main><footer className="landing-footer"><Brand/><p>Prever. Compreender. Conectar.</p><span>© {new Date().getFullYear()} ORVOK</span></footer></div>;}
+import Link from "next/link";
+import { Brand } from "../components/ui/Brand";
+import { SiteNav } from "../components/site/SiteNav";
+export default function Page() {
+  return (
+    <div className="landing">
+      <SiteNav />
+      <main id="conteudo">
+        <section className="landing-hero">
+          <div className="landing-hero-copy">
+            <span className="eyebrow">
+              <i /> Uma rede de perspectivas
+            </span>
+            <h1>
+              Você é mais
+              <br />
+              do que <em>parece.</em>
+            </h1>
+            <p>
+              Descubra como as pessoas veem você.
+              <br />E como vocês veem o mundo.
+            </p>
+            <div className="row wrap">
+              <Link className="button" href="/cadastro">
+                Descobrir meu outro lado ↗
+              </Link>
+              <a href="#como-funciona" className="text-link">
+                Me conta mais ↓
+              </a>
+            </div>
+            <div className="hero-caption">
+              <span>01 — EXPRESSE</span>
+              <span>02 — CONECTE</span>
+              <span>03 — DESCUBRA</span>
+            </div>
+          </div>
+          <div
+            className="perspective-collage"
+            aria-label="Exemplo ilustrativo de uma descoberta"
+          >
+            <span className="collage-label">MESMA PESSOA. OUTROS OLHARES.</span>
+            <article className="collage-self">
+              <span>VOCÊ DIZ</span>
+              <h2>
+                “Eu gosto
+                <br />
+                de mudar
+                <br />
+                os planos.”
+              </h2>
+              <div className="collage-avatar">
+                EU <b>↗</b>
+              </div>
+            </article>
+            <article className="collage-other">
+              <span>QUEM TE CONHECE PENSA</span>
+              <h3>
+                “Achei que você
+                <br />
+                preferia ter
+                <br />
+                tudo planejado.”
+              </h3>
+              <div className="row">
+                <b>AL</b>
+                <small>Outro olhar sobre você</small>
+              </div>
+            </article>
+            <div className="collage-note">
+              <b>↔</b>
+              <p>
+                É nessa diferença
+                <br />
+                <strong>que a conversa começa.</strong>
+              </p>
+            </div>
+            <small className="collage-disclaimer">
+              Prévia ilustrativa. Suas descobertas vêm de pessoas reais.
+            </small>
+          </div>
+        </section>
+        <section className="manifesto-strip">
+          <span>SEU JEITO DE SER.</span>
+          <b>↗</b>
+          <span>OUTROS JEITOS DE VER.</span>
+          <b>↗</b>
+          <span>UM MUNDO EM COMUM.</span>
+        </section>
+        <section id="pessoas" className="landing-people">
+          <div>
+            <span className="eyebrow">01 / Pessoas</span>
+            <h2>
+              Quem conhece
+              <br />o seu <em>outro lado?</em>
+            </h2>
+            <p>
+              Seu melhor amigo. Sua mãe. A pessoa em quem você está pensando
+              agora. Cada relação descobre uma versão diferente de você.
+            </p>
+            <Link href="/cadastro" className="text-link">
+              Começar uma descoberta ↗
+            </Link>
+          </div>
+          <div className="people-editorial">
+            <div className="relationship-types">
+              <span>Família</span>
+              <span>Amigos</span>
+              <span className="selected">Crush ↗</span>
+              <span>Colegas</span>
+            </div>
+            <article>
+              <span className="eyebrow">O que alguém perceberia em você?</span>
+              <h3>
+                Um convite inesperado.
+                <br />
+                Você topa ou quer
+                <br />
+                saber o plano?
+              </h3>
+              <div className="sample-options">
+                <span>Quero os detalhes.</span>
+                <span>Me conta no caminho. ↗</span>
+              </div>
+              <small>Exemplo de pergunta · respostas privadas por padrão</small>
+            </article>
+          </div>
+        </section>
+        <section id="mundo" className="landing-world">
+          <div>
+            <span className="eyebrow">02 / Mundo + pessoas</span>
+            <h2>
+              Vocês veem
+              <br />o mesmo futuro?
+            </h2>
+            <p>
+              Faça previsões sobre economia, esporte, tecnologia e outros
+              acontecimentos. Convide alguém para adivinhar o que você pensa — e
+              descubram juntos quem entendeu quem.
+            </p>
+            <Link href="/cadastro" className="button button-light">
+              Quero prever junto ↗
+            </Link>
+          </div>
+          <div className="world-editorial">
+            <span>TECNOLOGIA / ESPORTE / ECONOMIA</span>
+            <div>
+              <strong>
+                O que vai
+                <br />
+                acontecer?
+              </strong>
+              <b>↗</b>
+            </div>
+            <hr />
+            <div>
+              <strong>
+                O que você
+                <br />
+                acha que eu acho?
+              </strong>
+              <b>↔</b>
+            </div>
+            <p>Pensar igual e entender alguém são descobertas diferentes.</p>
+          </div>
+        </section>
+        <section id="como-funciona" className="landing-how">
+          <div className="section-title">
+            <h2>Uma pergunta leva à outra.</h2>
+            <span>Seu primeiro encontro com o ORVOK</span>
+          </div>
+          <div className="how-grid">
+            <article>
+              <span>01</span>
+              <h3>
+                Conte um pouco
+                <br />
+                de você.
+              </h3>
+              <p>
+                Perguntas escolhidas pelos seus interesses. Uma de cada vez, no
+                seu ritmo.
+              </p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>
+                Convide outro
+                <br />
+                ponto de vista.
+              </h3>
+              <p>
+                Escolha a relação e compartilhe um convite individual. Você
+                controla cada conexão.
+              </p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>
+                Descubra.
+                <br />
+                Converse. Repita.
+              </h3>
+              <p>
+                Compare as perspectivas, troque ideias e continue se
+                descobrindo.
+              </p>
+            </article>
+          </div>
+        </section>
+        <section id="consentimento" className="landing-closing">
+          <span className="eyebrow">
+            Sua história está sempre em construção.
+          </span>
+          <h2>
+            Deixe alguém
+            <br />
+            te surpreender.
+          </h2>
+          <Link href="/cadastro" className="button">
+            Criar minha conta ↗
+          </Link>
+          <p>
+            Respostas privadas. Convites com consentimento.
+            <br />
+            Você escolhe o que compartilhar e pode encerrar uma conexão.
+          </p>
+        </section>
+      </main>
+      <footer className="landing-footer">
+        <Brand />
+        <p>Prever. Compreender. Conectar.</p>
+        <span>© {new Date().getFullYear()} ORVOK</span>
+      </footer>
+    </div>
+  );
+}
