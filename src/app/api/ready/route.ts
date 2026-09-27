@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { allowedMutationOrigins } from "@/lib/auth/origin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,8 +18,8 @@ export async function GET(request: Request) {
 
   checks.appEnv = { ok: Boolean(env.APP_ENV), hint: "Defina APP_ENV (production em produção)." };
   checks.appOrigin = {
-    ok: !deployed || env.APP_ORIGIN === origin || env.APP_ORIGIN === request.headers.get("x-forwarded-proto") + "://" + request.headers.get("host"),
-    hint: "APP_ORIGIN precisa ser exatamente o endereço público do site, com https e sem barra no final.",
+    ok: allowedMutationOrigins(request.url).has(origin),
+    hint: "Configure APP_ORIGIN com o endereço público. Prévias Vercel também aceitam os domínios exatos de VERCEL_URL e VERCEL_BRANCH_URL.",
   };
   checks.noOwnerCredential = {
     ok: !deployed || (!env.DATABASE_URL && !env.DB_OWNER_URL),

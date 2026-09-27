@@ -65,6 +65,14 @@ corepack pnpm dev
 
 Localmente usar `APP_ENV=development`. Fora de desenvolvimento/teste, a jornada respeita as travas existentes `OFFICIAL_RADAR_CATALOG_ENABLED` e `REAL_USER_HOMOLOGATION_ENABLED`. Esta branch não altera essas variáveis nem aprova o catálogo para uso real. Revisar perguntas e avisos e homologar em staging antes de habilitar a experiência publicada.
 
+### Origem dos formulários nas prévias Vercel
+
+Em produção, as operações continuam restritas a `APP_ORIGIN`. Em deployments com `VERCEL=1` e `VERCEL_ENV=preview`, a proteção também aceita os dois domínios exatos informados pelo servidor em `VERCEL_URL` e `VERCEL_BRANCH_URL`, sempre com HTTPS. Assim o login/cadastro funciona na URL da branch mesmo quando `APP_ORIGIN` aponta para o domínio principal. Não há liberação genérica de `*.vercel.app` nem confiança nos cabeçalhos `Host` ou `X-Forwarded-Host`. As verificações de JSON e `Sec-Fetch-Site` permanecem ativas. O diagnóstico `/api/ready` usa a mesma lista de origens.
+
+Manter a exposição das variáveis de sistema habilitada no projeto Vercel ([documentação oficial](https://vercel.com/docs/environment-variables/system-environment-variables)). Para um domínio personalizado de prévia, definir `APP_ORIGIN` explicitamente nesse ambiente. Isso não altera os endereços de e-mail ou a configuração do callback Google.
+
+Regressão: `node --import tsx --test scripts/tests/auth-origin.test.ts` cobre as origens da prévia, produção, desenvolvimento, configuração inválida e bloqueios contra origens/cabeçalhos forjados.
+
 ## Verificação realizada
 
 | Verificação              | Resultado                                                                                                                                                                                                              |
