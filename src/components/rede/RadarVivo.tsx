@@ -18,6 +18,7 @@ export function RadarVivo() {
   const { dados } = useDesafios();
   const [filtro, setFiltro] = useState<Relacao | "todos">("todos");
   const [foco, setFoco] = useState<number | null>(null);
+  const [todos, setTodos] = useState(false);
 
   const pessoas = useMemo(() => {
     const melhor = new Map<string, { nome: string; relacao: Relacao; acertos: number; total: number }>();
@@ -68,12 +69,12 @@ export function RadarVivo() {
       </div>
 
       {dados && nos.length === 0 ? (
-        <div className={s.vazio}><strong>Seu radar ainda está vazio.</strong><span>Cada pessoa que responder um desafio seu aparece aqui, mais perto quanto mais ela acertar.</span><Link className={s.btnP} href="/comecar">Desafiar alguém</Link></div>
+        <div className={`${s.vazio} ${s.radarVazio}`}><strong>Seu radar ainda está vazio.</strong><span>Cada pessoa que responder um desafio seu aparece aqui, mais perto quanto mais ela acertar.</span><Link className={s.btnP} href="/comecar">Desafiar alguém</Link></div>
       ) : (
         <section aria-labelledby="t-ranking">
-          <h2 id="t-ranking" style={{ fontSize: 18, fontWeight: 800, margin: "0 0 6px" }}>Quem mais te conhece</h2>
+          <h2 id="t-ranking" style={{ fontSize: 17, fontWeight: 800, margin: "0 0 2px" }}>Quem mais te conhece</h2>
           <div className={s.ranking}>
-            {nos.map((n, i) => (
+            {nos.slice(0, todos ? nos.length : 3).map((n, i) => (
               <div key={n.nome + n.relacao} className={s.linha} onMouseEnter={() => setFoco(i)} onMouseLeave={() => setFoco(null)}>
                 <span className={s.posicao}>{i + 1}</span>
                 <Avatar nome={n.nome} tamanho={36} />
@@ -82,6 +83,7 @@ export function RadarVivo() {
               </div>
             ))}
           </div>
+          {nos.length > 3 ? <button type="button" className={s.linkSutil} onClick={() => setTodos(!todos)}>{todos ? "Mostrar só os 3 primeiros" : `Ver todos (${nos.length})`}</button> : null}
         </section>
       )}
     </>
