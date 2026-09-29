@@ -1,0 +1,17 @@
+# Diagnóstico somente leitura do catálogo de perguntas (contagens, sem dados pessoais).
+name: Diagnóstico do catálogo
+on: workflow_dispatch
+jobs:
+  contar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Contar perguntas
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -At -F ' | ' -c "
+            SELECT q.domain::text, v.\"catalogStatus\"::text, count(DISTINCT q.id), count(DISTINCT v.\"familyKey\"), string_agg(DISTINCT v.sensitivity, ',')
+              FROM \"Question\" q JOIN \"QuestionVersion\" v ON v.\"questionId\"=q.id
+             GROUP BY 1,2 ORDER BY 1,2" | while read -r linha; do echo "::notice title=catalogo::$linha"; done
+          psql "$DATABASE_URL" -At -c "SELECT string_agg(DISTINCT v.\"familyKey\", ', ') FROM \"QuestionVersion\" v JOIN \"Question\" q ON q.id=v.\"questionId\" WHERE q.domain='RADAR'" | while read -r linha; do echo "::notice title=familias::$linha"; done
