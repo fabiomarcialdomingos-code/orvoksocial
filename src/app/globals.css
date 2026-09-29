@@ -6,28 +6,30 @@
    a cor identifica a perspectiva, e só ela. */
 :root {
   color-scheme: dark;
-  --night: #0e0f12;
-  --deep: #14151a;
-  --panel: #191a20;
-  --panel-2: #202128;
-  --panel-3: #282a33;
-  --line: rgb(239 236 228 / 0.12);
-  --line-strong: rgb(239 236 228 / 0.24);
-  --text: #efece4;
-  --text-2: rgb(239 236 228 / 0.62);
-  --text-3: rgb(239 236 228 / 0.4);
-  --self: #cf8f3f;
-  --self-ink: #1c1305;
-  --people: #7fb3a3;
-  --people-ink: #06201a;
-  --world: #9aa3d6;
-  --world-ink: #14173a;
-  --danger: #e0776f;
-  --focus: #efece4;
+  /* orvok — identidade nova: espaço profundo, azul elétrico nas conexões,
+     âmbar nas pessoas. Você = âmbar, Pessoas = azul, Mundo = azul claro. */
+  --night: #040811;
+  --deep: #070d1a;
+  --panel: #0a1120;
+  --panel-2: #111a2b;
+  --panel-3: #19233a;
+  --line: rgb(127 178 255 / 0.14);
+  --line-strong: rgb(127 178 255 / 0.3);
+  --text: #eaf0fa;
+  --text-2: rgb(234 240 250 / 0.66);
+  --text-3: rgb(234 240 250 / 0.42);
+  --self: #ffa834;
+  --self-ink: #231400;
+  --people: #4c8dff;
+  --people-ink: #ffffff;
+  --world: #9cc2ff;
+  --world-ink: #06142e;
+  --danger: #ff8a8a;
+  --focus: #7fb2ff;
 
-  --font-display: "Bodoni Moda", "Times New Roman", serif;
-  --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-ui: "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   --r-xs: 6px;
   --r-sm: 10px;
@@ -52,8 +54,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 700px at 78% -10%, rgb(207 143 63 / 0.08), transparent 60%),
-    radial-gradient(900px 600px at -10% 30%, rgb(239 236 228 / 0.03), transparent 60%),
+    radial-gradient(1200px 700px at 78% -10%, rgb(76 141 255 / 0.12), transparent 60%),
+    radial-gradient(900px 600px at -10% 30%, rgb(255 168 52 / 0.04), transparent 60%),
     var(--night);
   color: var(--text);
   font-family: var(--font-ui);
@@ -98,8 +100,8 @@ img, svg { max-width: 100%; }
 
 /* ---------- Type ---------- */
 h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; }
-.display, h1 { font-family: var(--font-display); font-variation-settings: "opsz" 96; }
-h1 { font-size: clamp(2rem, 3.6vw, 2.9rem); font-weight: 420; letter-spacing: -0.035em; }
+.display, h1 { font-family: var(--font-display); }
+h1 { font-size: clamp(2rem, 3.6vw, 2.9rem); font-weight: 300; letter-spacing: -0.035em; }
 h2 { font-family: var(--font-display); font-size: clamp(1.4rem, 2.2vw, 1.75rem); font-weight: 450; }
 h3 { font-size: 1.05rem; font-weight: 500; letter-spacing: -0.01em; }
 p { margin: 0; }
@@ -225,7 +227,7 @@ input[type="range"] { accent-color: var(--p, var(--people)); width: 100%; }
 .container { width: min(1200px, calc(100% - 40px)); margin-inline: auto; }
 
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
-.brand-word, .brand-name { font-family: var(--font-display); font-weight: 500; letter-spacing: 0.14em; font-size: 0.95rem; }
+.brand-word, .brand-name { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.04em; font-size: 1.3rem; }
 .brand-mark { color: var(--text); }
 
 .hero { display: grid; grid-template-columns: 5fr 7fr; gap: var(--s7); align-items: center; min-height: calc(100vh - 68px); padding-block: var(--s7); }

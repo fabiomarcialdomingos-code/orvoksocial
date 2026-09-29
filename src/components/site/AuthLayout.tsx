@@ -1,30 +1,26 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Instrument } from "../ui/Instrument";
+import { Globo } from "../desafio/Globo";
 import { SiteNav } from "./SiteNav";
+import s from "./auth.module.css";
 
-const nodes = [
-  { id: "you", p: "self" as const, r: 0, angle: 0, size: 8 },
-  { id: "a", p: "people" as const, r: 0.45, angle: -50, linked: true },
-  { id: "b", p: "people" as const, r: 0.32, angle: 40, linked: true },
-  { id: "c", p: "world" as const, r: 0.88, angle: 140, size: 5 },
-  { id: "d", p: "world" as const, r: 0.9, angle: 220, size: 4 },
-  { id: "e", p: "people" as const, r: 0.62, angle: 280, size: 4 },
-];
-
+/** Entrar, cadastro e recuperação: globo vivo de um lado, formulário do outro. */
 export function AuthLayout({ title, text, children, footer }: { title: string; text: string; children: ReactNode; footer?: ReactNode }) {
   return (
     <>
       <SiteNav />
-      <main id="conteudo" className="auth-layout">
-        <section className="auth-aside" aria-labelledby="auth-title">
-          <div className="auth-instrument" aria-hidden="true">
-            <Instrument nodes={nodes} label="" interactive={false} />
+      <main id="conteudo" className={s.layout}>
+        <section className={s.aside} aria-labelledby="auth-title">
+          <div className={s.globo} aria-hidden="true">
+            <Globo opcoes={{ pontos: 1500, pessoas: 24, arcos: 12, escala: 0.34, velocidade: 0.0025, montagem: 1.4, malha: true }} />
           </div>
-          <h1 id="auth-title" className="display">{title}</h1>
-          <p>{text}</p>
+          <div className={s.texto}>
+            <h1 id="auth-title">{title}</h1>
+            <p>{text}</p>
+            <Link className={s.atalho} href="/comecar">Ainda sem conta? Comece sem cadastro, respondendo sobre você.</Link>
+          </div>
         </section>
-        <section className="auth-panel">
+        <section className={s.painel}>
           {children}
           {footer && <p className="auth-switch">{footer}</p>}
         </section>

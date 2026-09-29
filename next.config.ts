@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Accept the loopback host used when accessing the local development server.
   allowedDevOrigins: ["127.0.0.1"],
+  // A página inicial é a rede em HTML estático (public/inicio.html).
+  async rewrites() {
+    return { beforeFiles: [{ source: "/", destination: "/inicio.html" }], afterFiles: [], fallback: [] };
+  },
   async headers() {
     const common = [
       { key: "X-Content-Type-Options", value: "nosniff" },

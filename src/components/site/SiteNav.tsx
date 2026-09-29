@@ -17,9 +17,8 @@ export function SiteNav() {
       <div className="container site-nav-inner">
         <Brand />
         <nav aria-label="Navegação principal">
-          <Link href="/#como-funciona">Como funciona</Link>
-          <Link href="/#perspectivas">Perspectivas</Link>
-          <Link href="/#consentimento">Consentimento</Link>
+          <Link href="/">Início</Link>
+          <Link href="/comecar">Desafiar alguém</Link>
         </nav>
         <div className="site-nav-actions">
           {signedIn ? (
@@ -27,7 +26,7 @@ export function SiteNav() {
           ) : (
             <>
               <Link href="/entrar" className="text-link">Entrar</Link>
-              <Link href="/cadastro" className="button button-small">Criar conta</Link>
+              <Link href="/comecar" className="button button-small">Começar sem cadastro</Link>
             </>
           )}
         </div>

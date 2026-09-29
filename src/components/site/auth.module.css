@@ -1,0 +1,16 @@
+.layout { display: grid; grid-template-columns: 1fr minmax(360px, 460px); min-height: calc(100vh - 68px); }
+.aside { position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 48px; border-right: 1px solid var(--line); overflow: hidden; isolation: isolate; }
+.globo { position: absolute; inset: 0 0 18% 0; z-index: -1; }
+.globo canvas { width: 100%; height: 100%; display: block; }
+.texto { position: relative; max-width: 30rem; }
+.texto h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; margin: 0; }
+.texto p { margin: 16px 0 0; color: var(--text-2); }
+.atalho { display: inline-block; margin-top: 18px; color: var(--self); font-weight: 600; text-decoration: none; }
+.atalho:hover { text-decoration: underline; }
+.painel { padding: 64px 48px; display: flex; flex-direction: column; justify-content: center; background: color-mix(in srgb, var(--panel) 70%, transparent); }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .aside { min-height: 360px; border-right: 0; border-bottom: 1px solid var(--line); padding: 28px 22px; }
+  .globo { inset: 0 0 30% 0; }
+  .painel { padding: 32px 22px 48px; }
+}
