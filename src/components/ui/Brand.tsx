@@ -1,21 +1,45 @@
 import Link from "next/link";
-
-/** Two overlapping orbits: one perspective meeting another. */
-export function BrandMark({ size = 26 }: { size?: number }) {
+export function Brand({
+  href = "/",
+  className = "",
+}: {
+  href?: string;
+  className?: string;
+}) {
   return (
-    <svg className="brand-mark" width={size} height={size * 0.7} viewBox="0 0 40 28" fill="none" aria-hidden="true">
-      <circle cx="14" cy="14" r="11" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="26" cy="14" r="11" stroke="currentColor" strokeWidth="1.4" opacity="0.55" />
-      <circle cx="20" cy="14" r="2.2" fill="var(--self)" />
-    </svg>
+    <Link
+      href={href}
+      className={`brand ${className}`}
+      aria-label="ORVOK — início"
+    >
+      <svg
+        viewBox="0 0 28 28"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        aria-hidden="true"
+      >
+        <path d="M4 22V5h17M9 5l12 12M11 12h10v10M9 22 24 7M17 7h7v8" />
+      </svg>
+      <span>
+        orvok<span className="brand-dot">.</span>
+      </span>
+    </Link>
   );
 }
 
-export function Brand({ href = "/" }: { href?: string }) {
+export function BrandMark({ size = 24 }: { size?: number }) {
   return (
-    <Link href={href} className="brand" aria-label="ORVOK, página inicial">
-      <BrandMark />
-      <span className="brand-name">ORVOK</span>
-    </Link>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 28 28"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      aria-hidden="true"
+    >
+      <path d="M4 22V5h17M9 5l12 12M11 12h10v10M9 22 24 7M17 7h7v8" />
+    </svg>
   );
 }

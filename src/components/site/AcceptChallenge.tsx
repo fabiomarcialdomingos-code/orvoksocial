@@ -32,7 +32,7 @@ export function AcceptChallenge({
   const [guesses, setGuesses] = useState<GuessMap>({});
 
   useEffect(() => {
-    setGuesses(readGuesses(code));
+    queueMicrotask(() => setGuesses(readGuesses(code)));
     fetch("/api/v1/auth/session?optional=1", { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { authenticated: false }))
       .then((d: { authenticated?: boolean }) => setSignedIn(Boolean(d.authenticated)))
@@ -92,7 +92,7 @@ export function AcceptChallenge({
         <h3 style={{ marginTop: 8 }}>{question.text}</h3>
         <div className="options" role="radiogroup" aria-label="Sua previsão">
           {question.options.map((option, i) => (
-            <button key={option.id} type="button" role="radio" className="option lit" data-p="people"
+            <button key={option.id} type="button" role="radio" aria-checked={false} className="option lit" data-p="people"
               onClick={() => pickOption(question.questionVersionId, option.id)}>
               <span className="key">{KEYS[i]}</span>
               <span>{option.label}</span>

@@ -64,7 +64,7 @@ export function Predict() {
         <div className="empty">
           <strong>Ninguém disponível para prever ainda.</strong>
           <span>Envie um pedido pelo e-mail da pessoa. Quando ela aceitar e consentir, as perguntas aparecem aqui. Lembre-se: você também precisa ter respondido a sua referência.</span>
-          <div className="row"><Link className="button" data-p="people" href="/convites">Enviar pedido</Link><Link className="button button-secondary" href="/onboarding">Minha referência</Link></div>
+          <div className="row"><Link className="button" data-p="people" href="/convites">Enviar pedido</Link><Link className="button button-secondary" href="/historico/referencia">Minha referência</Link></div>
         </div>
       </>
     );

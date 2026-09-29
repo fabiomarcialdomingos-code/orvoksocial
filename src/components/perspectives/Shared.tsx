@@ -1,0 +1,152 @@
+"use client";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import {
+  apiGet,
+  describeError,
+  initials,
+  relativeTime,
+} from "../../lib/client/api";
+import type { Connection } from "../../lib/perspectives/model";
+export function useResource<T>(path: string) {
+  const [data, setData] = useState<T | null>(null),
+    [error, setError] = useState<string | null>(null);
+  const reload = useCallback(async () => {
+    try {
+      const value = await apiGet<T>(path);
+      setData(value);
+      setError(null);
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }, [path]);
+  useEffect(() => {
+    void Promise.resolve().then(reload);
+    if (!path.startsWith("/perspectives/connections")) return;
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") void reload();
+    }, 30000);
+    return () => clearInterval(t);
+  }, [path, reload]);
+  return { data, error, reload, setData };
+}
+export function Loading() {
+  return (
+    <div className="loading-block" role="status">
+      <div className="skeleton" />
+      <div className="skeleton" />
+      <p>Preparando suas perspectivas…</p>
+    </div>
+  );
+}
+export function ErrorState({
+  message,
+  retry,
+}: {
+  message: string;
+  retry?: () => void;
+}) {
+  return (
+    <div className="empty" role="alert">
+      <h2>Não foi possível carregar.</h2>
+      <p>{message}</p>
+      {retry && (
+        <button className="button" onClick={retry}>
+          Tentar novamente
+        </button>
+      )}
+    </div>
+  );
+}
+export function PageHead({
+  kicker,
+  title,
+  text,
+  action,
+}: {
+  kicker: string;
+  title: string;
+  text: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <header className="perspective-head">
+      <div>
+        <span className="eyebrow">{kicker}</span>
+        <h1>{title}</h1>
+        <p>{text}</p>
+      </div>
+      {action}
+    </header>
+  );
+}
+export function Avatar({
+  name,
+  large = false,
+}: {
+  name?: string | null;
+  large?: boolean;
+}) {
+  return (
+    <span className={`avatar${large ? " avatar-lg" : ""}`}>
+      {initials(name)}
+    </span>
+  );
+}
+export const STATE_LABELS = {
+  pending: "Aguardando aceite",
+  accepted: "Convite aceito",
+  completed: "Descoberta disponível",
+  revoked: "Conexão encerrada",
+  expired: "Indisponível",
+};
+export function ConnectionCard({ connection: c }: { connection: Connection }) {
+  return (
+    <Link href={`/juntos/${c.code}`} className="connection-card">
+      <div className="row-between">
+        <span className="eyebrow">
+          {c.kind === "people" ? "Como me veem" : "Prever juntos"}
+        </span>
+        <span>↗</span>
+      </div>
+      <div className="row">
+        <Avatar name={c.isOwner ? c.guestName : c.ownerName} />
+        <div>
+          <h3>
+            {c.isOwner ? (c.guestName ?? "Seu próximo encontro") : c.ownerName}
+          </h3>
+          <span className={`status ${c.state}`}>{STATE_LABELS[c.state]}</span>
+        </div>
+      </div>
+      <p>{c.title}</p>
+      <small>{relativeTime(c.createdAt)}</small>
+    </Link>
+  );
+}
+export function Icon({ name }: { name: string }) {
+  const paths: Record<string, string> = {
+    home: "m3 10 9-7 9 7v11h-6v-7H9v7H3Z",
+    people:
+      "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+    profile: "M20 21v-2a7 7 0 0 0-14 0v2M17 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+    spark: "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z",
+    world:
+      "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18",
+    bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
+  };
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={paths[name] ?? paths.spark} />
+    </svg>
+  );
+}

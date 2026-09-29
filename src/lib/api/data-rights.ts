@@ -20,6 +20,9 @@ export class DataRightsService {
         [actorId],
       );
       const sections = [
+        ["perspectivePreferences", `SELECT "userId" AS id,interests,age,profession,"showAge","showProfession" FROM "PerspectivePreferences" WHERE "userId"=$1 AND "userId">$2::uuid ORDER BY "userId" LIMIT 100`],
+        ["perspectiveRounds", `SELECT * FROM "PerspectiveRound" WHERE "ownerId"=$1 AND id>$2::uuid ORDER BY id LIMIT 100`],
+        ["perspectiveConnections", `SELECT (v->>'id')::uuid AS id,v AS connection FROM jsonb_array_elements(orvok_perspective_connections('export',jsonb_build_object('cursor',$2::uuid))->'items') v WHERE orvok_read_actor()=$1 ORDER BY id`],
         ["consentGrants", `SELECT id,purpose,scope,"noticeVersion","noticeHash","consentVersion","grantedAt" FROM "ConsentGrant" WHERE "subjectId"=$1 AND id>$2::uuid ORDER BY id LIMIT 100`],
         ["consentRevocations", `SELECT id,"grantId","revokedAt" FROM "ConsentRevocation" WHERE "subjectId"=$1 AND id>$2::uuid ORDER BY id LIMIT 100`],
         ["answers", `SELECT id,"questionVersionId","optionId",version,"answeredAt","consentGrantId" FROM "AnswerVersion" WHERE "subjectId"=$1 AND id>$2::uuid ORDER BY id LIMIT 100`],

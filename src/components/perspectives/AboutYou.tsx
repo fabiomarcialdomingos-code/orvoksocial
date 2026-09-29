@@ -1,0 +1,483 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { apiPost, describeError, type Profile } from "../../lib/client/api";
+import {
+  TOPICS,
+  RELATIONS,
+  SELF_NOTICE,
+  SHARE_NOTICE,
+  type Round,
+  type Relationship,
+  type Preferences,
+} from "../../lib/perspectives/model";
+import { useShell } from "../app/AppShell";
+import { PageHead, Loading, ErrorState, useResource } from "./Shared";
+export function AboutYou() {
+  const { profile, toast } = useShell(),
+    rounds = useResource<{ items: Round[] }>("/perspectives/rounds"),
+    prefs = useResource<{ preferences: Preferences }>(
+      "/perspectives/preferences",
+    );
+  const [selected, setSelected] = useState<string | null>(null),
+    [creating, setCreating] = useState(false),
+    [relation, setRelation] = useState<Relationship>("geral"),
+    [kind, setKind] = useState<"relationship" | "daily">("relationship"),
+    [agreed, setAgreed] = useState(false),
+    [busy, setBusy] = useState(false);
+  if (!profile) return <ChooseName />;
+  if (rounds.error || prefs.error)
+    return (
+      <ErrorState
+        message={rounds.error ?? prefs.error!}
+        retry={() => {
+          void rounds.reload();
+          void prefs.reload();
+        }}
+      />
+    );
+  if (!rounds.data || !prefs.data) return <Loading />;
+  const active =
+    rounds.data.items.find((r) => r.id === selected) ??
+    (!creating
+      ? rounds.data.items.find(
+          (r) =>
+            !r.sealedAt && Object.keys(r.answers).length < r.questions.length,
+        )
+      : undefined);
+  return (
+    <>
+      <PageHead
+        kicker="01 / Sobre mim"
+        title="Você, em suas próprias palavras."
+        text="Suas escolhas são o começo. As descobertas vêm quando alguém tenta entendê-las."
+      />
+      {active && !creating ? (
+        <RoundEditor
+          key={active.id}
+          round={active}
+          onChange={(r) =>
+            rounds.setData({
+              items: rounds.data!.items.map((x) => (x.id === r.id ? r : x)),
+            })
+          }
+          onBack={() => {
+            setCreating(true);
+            setSelected(null);
+          }}
+        />
+      ) : (
+        <div className="about-layout">
+          <section className="question-intro">
+            <span className="big-index">
+              {rounds.data.items.length ? "+" : "01"}
+            </span>
+            <h2>Comece pelo que faz você ser você.</h2>
+            <p>
+              Uma pergunta por vez, sem resposta certa. Escolhemos entre 100
+              perguntas pelos assuntos que você gosta e pelo tipo de relação.
+            </p>
+            <div className="topic-picker" aria-label="Seus interesses">
+              {Object.entries(TOPICS).map(([id, label]) => (
+                <button
+                  className="chip"
+                  key={id}
+                  disabled={busy}
+                  aria-pressed={prefs.data!.preferences.interests.includes(
+                    id as keyof typeof TOPICS,
+                  )}
+                  onClick={async () => {
+                    setBusy(true);
+                    const p = prefs.data!.preferences;
+                    const interests = p.interests.includes(
+                      id as keyof typeof TOPICS,
+                    )
+                      ? p.interests.filter((x) => x !== id)
+                      : [...p.interests, id as keyof typeof TOPICS];
+                    try {
+                      const r = await apiPost<{ preferences: Preferences }>(
+                        "/perspectives/preferences",
+                        { ...p, interests },
+                      );
+                      prefs.setData(r);
+                    } catch (e) {
+                      toast(describeError(e), "error");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="field-hint">
+              Seus interesses são privados. Você pode mudar depois.
+            </p>
+          </section>
+          <section className="paper-panel">
+            <span className="eyebrow">Sua próxima rodada</span>
+            <h2>
+              {rounds.data.items.length
+                ? "Há outro lado seu para descobrir."
+                : "12 perguntas. Muitas perspectivas."}
+            </h2>
+            {!!rounds.data.items.length && (
+              <label className="field">
+                <span>Tipo de rodada</span>
+                <select
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as typeof kind)}
+                >
+                  <option value="relationship">
+                    Para alguém especial — 12 perguntas
+                  </option>
+                  <option value="daily">
+                    Mais sobre mim — até 3 perguntas novas
+                  </option>
+                </select>
+              </label>
+            )}
+            <fieldset className="relation-picker">
+              <legend>Quem você gostaria de convidar?</legend>
+              {Object.entries(RELATIONS).map(([id, label]) => (
+                <button
+                  className="chip"
+                  key={id}
+                  aria-pressed={relation === id}
+                  onClick={() => setRelation(id as Relationship)}
+                >
+                  {label}
+                </button>
+              ))}
+            </fieldset>
+            <p className="field-hint">
+              Essa escolha fica só com você, inclusive “crush”.
+            </p>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+              />
+              <span>{SELF_NOTICE}</span>
+            </label>
+            <button
+              className="button"
+              disabled={!agreed || busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const r = await apiPost<{ round: Round }>(
+                    "/perspectives/rounds",
+                    {
+                      kind: rounds.data!.items.length ? kind : "initial",
+                      relationship: relation,
+                      accepted: true,
+                    },
+                  );
+                  await rounds.reload();
+                  setSelected(r.round.id);
+                  setCreating(false);
+                  setAgreed(false);
+                } catch (e) {
+                  toast(describeError(e), "error");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {busy ? "Preparando…" : "Começar minha rodada"} ↗
+            </button>
+          </section>
+        </div>
+      )}
+      {!!rounds.data.items.length && (
+        <section className="section-space">
+          <div className="section-title">
+            <h2>Seus capítulos</h2>
+            <span>{rounds.data.items.length} rodada(s)</span>
+          </div>
+          {rounds.data.items.map((r, i) => (
+            <button
+              className="round-row"
+              key={r.id}
+              onClick={() => {
+                setSelected(r.id);
+                setCreating(false);
+              }}
+            >
+              <span className="round-number">
+                {String(rounds.data!.items.length - i).padStart(2, "0")}
+              </span>
+              <span className="grow">
+                <strong>
+                  {r.kind === "daily"
+                    ? "Mais sobre mim"
+                    : RELATIONS[r.relationship]}
+                </strong>
+                <small>
+                  {Object.keys(r.answers).length} de {r.questions.length}{" "}
+                  respostas · {r.sealedAt ? "Compartilhada" : "Só sua"}
+                </small>
+              </span>
+              <span>↗</span>
+            </button>
+          ))}
+        </section>
+      )}
+    </>
+  );
+}
+function RoundEditor({
+  round: r,
+  onChange,
+  onBack,
+}: {
+  round: Round;
+  onChange: (r: Round) => void;
+  onBack: () => void;
+}) {
+  const { toast } = useShell();
+  const [busy, setBusy] = useState(false),
+    [agree, setAgree] = useState(false),
+    [url, setUrl] = useState(""),
+    [relation, setRelation] = useState<Relationship>(r.relationship);
+  const index = r.questions.findIndex((q) => !r.answers[q.id]),
+    q = r.questions[index];
+  async function answer(optionId?: string) {
+    if (!q) return;
+    setBusy(true);
+    try {
+      const out = await apiPost<{ round: Round }>(
+        `/perspectives/rounds/${r.id}/${optionId ? "answer" : "skip"}`,
+        { questionId: q.id, ...(optionId ? { optionId } : {}) },
+      );
+      onChange(out.round);
+    } catch (e) {
+      toast(describeError(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (index < 0)
+    return (
+      <div className="completion-layout">
+        <div className="completion-art">
+          <span>VOCÊ</span>
+          <h2>
+            Agora, o olhar
+            <br />
+            de alguém.
+          </h2>
+          <b>↗</b>
+        </div>
+        <section className="paper-panel">
+          <span className="eyebrow">{r.questions.length} escolhas suas</span>
+          <h2>Quem acertaria suas respostas?</h2>
+          <p>
+            Cada link pode ser aceito por uma pessoa. Você escolhe como
+            descrever essa relação, sem mostrar o rótulo a ela.
+          </p>
+          <label className="field">
+            <span>Para quem é este convite?</span>
+            <select
+              value={relation}
+              onChange={(e) => setRelation(e.target.value as Relationship)}
+            >
+              {Object.entries(RELATIONS).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+            />
+            <span>{SHARE_NOTICE}</span>
+          </label>
+          <button
+            className="button"
+            disabled={!agree || busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const out = await apiPost<{ connection: { code: string } }>(
+                  "/perspectives/connections",
+                  {
+                    kind: "people",
+                    roundId: r.id,
+                    relationship: relation,
+                    accepted: true,
+                  },
+                );
+                setUrl(`${location.origin}/juntos/${out.connection.code}`);
+                onChange({
+                  ...r,
+                  sealedAt: r.sealedAt ?? new Date().toISOString(),
+                });
+                toast("Convite individual criado.");
+              } catch (e) {
+                toast(describeError(e), "error");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy
+              ? "Criando…"
+              : url
+                ? "Criar outro convite individual"
+                : "Preparar meu convite"}{" "}
+            ↗
+          </button>
+          {url && (
+            <div className="share-result">
+              <p>
+                “Respondi algumas perguntas sobre mim. Quanto você acha que
+                consegue acertar?”
+              </p>
+              <label className="field">
+                <span>Seu link</span>
+                <input
+                  readOnly
+                  value={url}
+                  onFocus={(e) => e.target.select()}
+                />
+              </label>
+              <div className="row wrap">
+                <button
+                  className="button button-secondary"
+                  onClick={() =>
+                    void navigator.clipboard
+                      .writeText(url)
+                      .then(() => toast("Convite copiado."))
+                      .catch(() => toast("Selecione o link e copie.", "error"))
+                  }
+                >
+                  Copiar convite
+                </button>
+                <a
+                  className="button"
+                  href={`https://wa.me/?text=${encodeURIComponent(`Quanto você me conhece? ${url}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Abrir WhatsApp ↗
+                </a>
+              </div>
+            </div>
+          )}
+          <div className="row wrap">
+            <button className="text-link" onClick={onBack}>
+              Nova rodada
+            </button>
+            <Link className="text-link" href="/conexoes">
+              Acompanhar convites →
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  return (
+    <div className="question-layout">
+      <aside>
+        <span className="eyebrow">
+          {RELATIONS[r.relationship]} · só você vê
+        </span>
+        <div className="question-count">
+          {String(index + 1).padStart(2, "0")}
+          <span>/{r.questions.length}</span>
+        </div>
+        <progress
+          value={index}
+          max={r.questions.length}
+          aria-label="Progresso da rodada"
+        />
+        <p>
+          Responda pelo que faz sentido hoje. Pode pular o que não quiser
+          responder.
+        </p>
+      </aside>
+      <section className="question-main">
+        <span className="topic-label">
+          {TOPICS[q!.topic as keyof typeof TOPICS]}
+        </span>
+        <h2>{q!.text}</h2>
+        <div className="answer-options">
+          {q!.options.map((o, i) => (
+            <button
+              key={o.id}
+              disabled={busy}
+              onClick={() => void answer(o.id)}
+            >
+              <span>{String(i + 1).padStart(2, "0")}</span>
+              {o.label}
+              <b>↗</b>
+            </button>
+          ))}
+        </div>
+        <button
+          className="text-link"
+          disabled={busy}
+          onClick={() => void answer()}
+        >
+          Prefiro outra pergunta →
+        </button>
+        <p className="field-hint" role="status">
+          {busy ? "Salvando…" : "Sua resposta fica guardada antes de avançar."}
+        </p>
+      </section>
+    </div>
+  );
+}
+function ChooseName() {
+  const { setProfile, toast } = useShell();
+  const [name, setName] = useState(""),
+    [busy, setBusy] = useState(false);
+  return (
+    <>
+      <PageHead
+        kicker="Seu primeiro passo"
+        title="Como podemos chamar você?"
+        text="Pode ser seu nome ou um apelido. É assim que você aparece nos convites e conversas."
+      />
+      <form
+        className="paper-panel narrow"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          try {
+            const r = await apiPost<{ profile: Profile }>("/social/profile", {
+              displayName: name.trim(),
+            });
+            setProfile(r.profile);
+          } catch (e) {
+            toast(describeError(e), "error");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <label className="field">
+          <span>Nome de exibição</span>
+          <input
+            autoFocus
+            value={name}
+            maxLength={120}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Como seus amigos te chamam?"
+          />
+        </label>
+        <button className="button" disabled={busy || !name.trim()}>
+          Continuar →
+        </button>
+      </form>
+    </>
+  );
+}

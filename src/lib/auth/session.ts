@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { tokenHash } from "./crypto";
 import { assertRuntimeDatabaseBoundary } from "../runtime-boundary";
+import { allowedMutationOrigins } from "./origin";
 
 export type AuthPrincipal = {
   userId: string;
@@ -62,10 +63,9 @@ export function assertMutationRequest(request: Request): void {
   const contentType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
   if (contentType !== "application/json") throw new AuthError("JSON_REQUIRED", 415);
   const origin = request.headers.get("origin");
-  if (process.env.APP_ENV === "production" && !process.env.APP_ORIGIN)
-    throw new AuthError("ORIGIN_NOT_CONFIGURED", 500);
-  const expected = process.env.APP_ORIGIN ?? new URL(request.url).origin;
-  if (!origin || origin !== expected) throw new AuthError("ORIGIN_REJECTED", 403);
+  const allowed = allowedMutationOrigins(request.url);
+  if (allowed.size === 0) throw new AuthError("ORIGIN_NOT_CONFIGURED", 500);
+  if (!origin || !allowed.has(origin)) throw new AuthError("ORIGIN_REJECTED", 403);
   const site = request.headers.get("sec-fetch-site");
   if (site && site !== "same-origin" && site !== "none")
     throw new AuthError("CROSS_SITE_REJECTED", 403);

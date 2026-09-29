@@ -1,0 +1,344 @@
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import {
+  apiGet,
+  apiPost,
+  getAll,
+  describeError,
+  relativeTime,
+  loadPeople,
+  personName,
+  type Profile,
+  type WorldEvent,
+} from "../../lib/client/api";
+import { useShell } from "../app/AppShell";
+import { PageHead, Loading, ErrorState, useResource } from "./Shared";
+import { TogetherInvite } from "./Connections";
+type Mine = { eventId: string; opportunityId: string; confidence: number };
+export function WorldExperience() {
+  const [events, setEvents] = useState<WorldEvent[] | null>(null),
+    [mine, setMine] = useState<Mine[]>([]),
+    [error, setError] = useState<string | null>(null),
+    [category, setCategory] = useState("all"),
+    [selected, setSelected] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    try {
+      const [es, ms] = await Promise.all([
+        getAll<WorldEvent>("/world/events"),
+        apiGet<{ items: Mine[] }>("/world/predictions"),
+      ]);
+      setEvents(es);
+      setMine(ms.items);
+      setError(null);
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }, []);
+  useEffect(() => {
+    void Promise.resolve().then(load);
+  }, [load]);
+  const list = (events ?? [])
+    .filter((e) => category === "all" || e.category === category)
+    .sort(
+      (a, b) =>
+        Number(b.status === "PUBLISHED") - Number(a.status === "PUBLISHED") ||
+        a.closesAt.localeCompare(b.closesAt),
+    );
+  const chosen = list.find((e) => e.id === selected) ?? list[0];
+  return (
+    <>
+      <PageHead
+        kicker="04 / Prever o mundo"
+        title="O futuro rende uma boa conversa."
+        text="Economia, esporte, tecnologia e outras mudanças. Qual é a sua perspectiva?"
+      />
+      <div className="filter-bar">
+        <button
+          className="chip"
+          aria-pressed={category === "all"}
+          onClick={() => setCategory("all")}
+        >
+          Todos os assuntos
+        </button>
+        {[...new Set(events?.map((e) => e.category))].map((c) => (
+          <button
+            className="chip"
+            key={c}
+            aria-pressed={category === c}
+            onClick={() => setCategory(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+      {error ? (
+        <ErrorState message={error} retry={() => void load()} />
+      ) : !events ? (
+        <Loading />
+      ) : !chosen ? (
+        <div className="empty">
+          <h2>O próximo acontecimento está a caminho.</h2>
+          <p>
+            Eventos aparecem depois de publicados pela equipe, com fonte e
+            critério de resolução.
+          </p>
+        </div>
+      ) : (
+        <div className="world-layout">
+          <nav className="event-index" aria-label="Acontecimentos">
+            {list.map((e, i) => (
+              <button
+                key={e.id}
+                aria-current={chosen.id === e.id ? "true" : undefined}
+                onClick={() => setSelected(e.id)}
+              >
+                <span>{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <small>{e.category}</small>
+                  <strong>{e.title}</strong>
+                  <small>
+                    {mine.some((m) => m.eventId === e.id)
+                      ? "Sua previsão registrada"
+                      : e.status === "PUBLISHED"
+                        ? "Publicado"
+                        : "Encerrado"}
+                  </small>
+                </div>
+                <b>↗</b>
+              </button>
+            ))}
+          </nav>
+          <WorldQuestion
+            key={chosen.id}
+            event={chosen}
+            mine={mine.find((m) => m.eventId === chosen.id)}
+            reload={load}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+function WorldQuestion({
+  event: e,
+  mine,
+  reload,
+}: {
+  event: WorldEvent;
+  mine: Mine | undefined;
+  reload: () => Promise<void>;
+}) {
+  const { toast } = useShell();
+  const [choice, setChoice] = useState(mine?.opportunityId ?? ""),
+    [confidence, setConfidence] = useState(Number(mine?.confidence ?? 0.65)),
+    [busy, setBusy] = useState(false),
+    [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(t);
+  }, []);
+  const early = now < new Date(e.opensAt).getTime(),
+    locked =
+      e.status !== "PUBLISHED" ||
+      early ||
+      now >= new Date(e.closesAt).getTime() - 600000;
+  return (
+    <section className="world-question">
+      <div className="world-question-body">
+        <div className="row-between">
+          <span className="topic-label">{e.category}</span>
+          <small>
+            {early
+              ? "Abre " + relativeTime(e.opensAt)
+              : locked
+                ? "Previsões encerradas"
+                : "Encerra " +
+                  relativeTime(
+                    new Date(new Date(e.closesAt).getTime() - 600000),
+                  )}
+          </small>
+        </div>
+        <h2>{e.title}</h2>
+        {e.description && <p>{e.description}</p>}
+        <div className="answer-options">
+          {e.opportunities.map((o, i) => (
+            <button
+              key={o.id}
+              disabled={locked || busy}
+              aria-pressed={choice === o.id}
+              onClick={() => setChoice(o.id)}
+            >
+              <span>{String(i + 1).padStart(2, "0")}</span>
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <label className="field">
+          <span>Minha confiança: {Math.round(confidence * 100)}%</span>
+          <input
+            type="range"
+            min=".5"
+            max=".99"
+            step=".01"
+            value={confidence}
+            disabled={locked || busy}
+            onChange={(e) => setConfidence(Number(e.target.value))}
+          />
+        </label>
+        <button
+          className="button"
+          disabled={locked || busy || !choice}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await apiPost(`/world/events/${e.id}`, {
+                opportunityId: choice,
+                confidence,
+              });
+              await reload();
+              toast("Sua previsão está registrada.");
+            } catch (e) {
+              toast(describeError(e), "error");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy
+            ? "Registrando…"
+            : mine
+              ? "Atualizar minha previsão"
+              : "Confirmar minha previsão"}{" "}
+          ↗
+        </button>
+        {mine && (
+          <p className="field-hint">
+            Você registrou:{" "}
+            {e.opportunities.find((o) => o.id === mine.opportunityId)?.label},
+            com {Math.round(Number(mine.confidence) * 100)}% de confiança.
+          </p>
+        )}
+        <details className="event-criteria">
+          <summary>Como este acontecimento será resolvido?</summary>
+          <p>{e.resolutionCriteria}</p>
+          {e.sourceUrl && (
+            <a href={e.sourceUrl} target="_blank" rel="noopener noreferrer">
+              Consultar a fonte ↗
+            </a>
+          )}
+        </details>
+      </div>
+      {mine && !locked && <TogetherInvite eventId={e.id} />}
+      <WorldResolution event={e} />
+      {mine && <WorldConversation eventId={e.id} />}
+      <p className="evidence-note">
+        Primeiro a sua previsão. As perspectivas da conexão são reveladas depois
+        da confirmação. Após uma revelação em dupla, sua previsão sobre este
+        evento fica preservada.
+      </p>
+    </section>
+  );
+}
+function WorldResolution({ event }: { event: WorldEvent }) {
+  const r = useResource<{
+    resolution: {
+      state: string;
+      outcomeOpportunityId: string | null;
+      rationale: string;
+    } | null;
+  }>(`/world/events/${event.id}/resolution`);
+  if (r.error) return <p role="alert">{r.error}</p>;
+  const result = r.data?.resolution;
+  if (!result) return null;
+  return (
+    <section className="paper-panel">
+      <span className="eyebrow">O que aconteceu</span>
+      <h3>
+        {result.state === "OFFICIAL"
+          ? `Resultado oficial: ${event.opportunities.find((o) => o.id === result.outcomeOpportunityId)?.label ?? "—"}`
+          : result.state === "TEST"
+            ? "Resultado de teste, sem validade oficial"
+            : result.state === "CANCELLED"
+              ? "Evento cancelado"
+              : "Evento invalidado"}
+      </h3>
+      <p>{result.rationale}</p>
+    </section>
+  );
+}
+function WorldConversation({ eventId }: { eventId: string }) {
+  const { toast } = useShell(),
+    r = useResource<{
+      items: {
+        id: string;
+        authorId: string;
+        body: string;
+        createdAt: string;
+      }[];
+    }>(`/world/events/${eventId}/comments`);
+  const [body, setBody] = useState(""),
+    [busy, setBusy] = useState(false),
+    [people, setPeople] = useState<Map<string, Profile>>(new Map());
+  useEffect(() => {
+    if (!r.data) return;
+    let active = true;
+    void loadPeople(r.data.items.map((c) => c.authorId))
+      .then((p) => {
+        if (active) setPeople(new Map(p));
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [r.data]);
+  return (
+    <section className="paper-panel">
+      <span className="eyebrow">Conversa pública sobre o evento</span>
+      <h3>Como você chegou nessa previsão?</h3>
+      {r.error ? (
+        <ErrorState message={r.error} retry={() => void r.reload()} />
+      ) : (
+        r.data?.items.map((c) => (
+          <article key={c.id}>
+            <strong>{personName(people, c.authorId)}</strong>
+            <small> · {relativeTime(c.createdAt)}</small>
+            <p>{c.body}</p>
+          </article>
+        ))
+      )}
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          try {
+            await apiPost(`/world/events/${eventId}/comments`, {
+              body: body.trim(),
+            });
+            setBody("");
+            await r.reload();
+          } catch (e) {
+            toast(describeError(e), "error");
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <label className="field">
+          <span>Seu comentário</span>
+          <textarea
+            value={body}
+            maxLength={2000}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Compartilhe seu raciocínio…"
+          />
+        </label>
+        <button
+          className="button button-secondary"
+          disabled={busy || !body.trim()}
+        >
+          Comentar
+        </button>
+      </form>
+    </section>
+  );
+}

@@ -1,0 +1,2502 @@
+[
+  {
+    "id": "decisoes.01",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": true,
+    "text": "Quando um plano muda em cima da hora, eu prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Improvisar e seguir."
+      },
+      {
+        "id": "B",
+        "label": "Entender o motivo primeiro."
+      },
+      {
+        "id": "C",
+        "label": "Organizar um novo plano."
+      },
+      {
+        "id": "D",
+        "label": "Combinar outra ocasião."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.02",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Diante de duas boas opções, eu costumo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Comparar vantagens."
+      },
+      {
+        "id": "B",
+        "label": "Ouvir alguém próximo."
+      },
+      {
+        "id": "C",
+        "label": "Seguir minha primeira impressão."
+      },
+      {
+        "id": "D",
+        "label": "Experimentar antes de decidir."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.03",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Se percebo que fiz uma escolha ruim, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Mudo de direção rapidamente."
+      },
+      {
+        "id": "B",
+        "label": "Reviso o que aconteceu."
+      },
+      {
+        "id": "C",
+        "label": "Peço outra opinião."
+      },
+      {
+        "id": "D",
+        "label": "Dou mais tempo à escolha."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.04",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Para começar algo que nunca fiz, eu preciso mais de…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um primeiro passo simples."
+      },
+      {
+        "id": "B",
+        "label": "Informações confiáveis."
+      },
+      {
+        "id": "C",
+        "label": "Alguém para fazer junto."
+      },
+      {
+        "id": "D",
+        "label": "Tempo para me preparar."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.05",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Se tenho pouco tempo para decidir, eu priorizo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "O que é mais importante agora."
+      },
+      {
+        "id": "B",
+        "label": "O que tem menos risco."
+      },
+      {
+        "id": "C",
+        "label": "O que abre possibilidades."
+      },
+      {
+        "id": "D",
+        "label": "O que consigo executar bem."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.06",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Quando recebo um conselho inesperado, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Escuto e reflito sozinho."
+      },
+      {
+        "id": "B",
+        "label": "Faço perguntas."
+      },
+      {
+        "id": "C",
+        "label": "Comparo com minha experiência."
+      },
+      {
+        "id": "D",
+        "label": "Converso com outras pessoas."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.07",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Uma oportunidade aparece sem planejamento. Eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Investigo logo."
+      },
+      {
+        "id": "B",
+        "label": "Vejo o que teria de adiar."
+      },
+      {
+        "id": "C",
+        "label": "Peço detalhes por escrito."
+      },
+      {
+        "id": "D",
+        "label": "Espero uma ocasião melhor."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.08",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Para avaliar se uma decisão funcionou, eu olho mais para…",
+    "options": [
+      {
+        "id": "A",
+        "label": "O resultado concreto."
+      },
+      {
+        "id": "B",
+        "label": "O que aprendi."
+      },
+      {
+        "id": "C",
+        "label": "Como me senti durante o processo."
+      },
+      {
+        "id": "D",
+        "label": "O efeito nas outras pessoas."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.09",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "Se um grupo não chega a uma decisão, eu tendo a…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Propor uma votação."
+      },
+      {
+        "id": "B",
+        "label": "Resumir os pontos em comum."
+      },
+      {
+        "id": "C",
+        "label": "Sugerir um teste pequeno."
+      },
+      {
+        "id": "D",
+        "label": "Pedir mais tempo para conversar."
+      }
+    ]
+  },
+  {
+    "id": "decisoes.10",
+    "version": 1,
+    "topic": "decisoes",
+    "anchor": false,
+    "text": "O que mais me ajuda a dizer não é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ter clareza das prioridades."
+      },
+      {
+        "id": "B",
+        "label": "Poder explicar meu motivo."
+      },
+      {
+        "id": "C",
+        "label": "Ter uma alternativa para oferecer."
+      },
+      {
+        "id": "D",
+        "label": "Pensar antes de responder."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.01",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": true,
+    "text": "Quando preciso falar sobre algo importante, eu prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Uma conversa pessoalmente."
+      },
+      {
+        "id": "B",
+        "label": "Uma ligação."
+      },
+      {
+        "id": "C",
+        "label": "Uma mensagem bem pensada."
+      },
+      {
+        "id": "D",
+        "label": "Combinar um momento com calma."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.02",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Quando alguém demora a responder, eu costumo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Esperar sem insistir."
+      },
+      {
+        "id": "B",
+        "label": "Retomar depois com outra mensagem."
+      },
+      {
+        "id": "C",
+        "label": "Telefonar se for importante."
+      },
+      {
+        "id": "D",
+        "label": "Continuar meu dia e esquecer o assunto."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.03",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Em uma conversa animada, eu geralmente…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Conto histórias."
+      },
+      {
+        "id": "B",
+        "label": "Faço perguntas."
+      },
+      {
+        "id": "C",
+        "label": "Faço brincadeiras."
+      },
+      {
+        "id": "D",
+        "label": "Escuto mais do que falo."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.04",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Quando discordo de alguém próximo, prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Explicar meu ponto na hora."
+      },
+      {
+        "id": "B",
+        "label": "Entender melhor o outro lado."
+      },
+      {
+        "id": "C",
+        "label": "Pensar e conversar depois."
+      },
+      {
+        "id": "D",
+        "label": "Procurar uma solução prática."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.05",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Se preciso receber uma crítica, ajuda mais quando ela vem…",
+    "options": [
+      {
+        "id": "A",
+        "label": "De forma direta e específica."
+      },
+      {
+        "id": "B",
+        "label": "Com exemplos do que melhorar."
+      },
+      {
+        "id": "C",
+        "label": "Em uma conversa reservada."
+      },
+      {
+        "id": "D",
+        "label": "Junto de sugestões possíveis."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.06",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Para compartilhar uma boa notícia, eu primeiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Mando mensagem para alguém."
+      },
+      {
+        "id": "B",
+        "label": "Ligo para uma pessoa próxima."
+      },
+      {
+        "id": "C",
+        "label": "Conto quando encontro as pessoas."
+      },
+      {
+        "id": "D",
+        "label": "Guardo um pouco só para mim."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.07",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Quando uma conversa fica confusa, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Peço um exemplo."
+      },
+      {
+        "id": "B",
+        "label": "Resumo o que entendi."
+      },
+      {
+        "id": "C",
+        "label": "Pergunto o que é prioridade."
+      },
+      {
+        "id": "D",
+        "label": "Proponho retomar depois."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.08",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Um assunto delicado por mensagem me faz preferir…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Responder por escrito com cuidado."
+      },
+      {
+        "id": "B",
+        "label": "Pedir para conversar por voz."
+      },
+      {
+        "id": "C",
+        "label": "Marcar uma conversa presencial."
+      },
+      {
+        "id": "D",
+        "label": "Esperar até ter mais clareza."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.09",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Se alguém me interrompe, eu geralmente…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Retomo a frase depois."
+      },
+      {
+        "id": "B",
+        "label": "Peço para concluir."
+      },
+      {
+        "id": "C",
+        "label": "Escuto e mudo o rumo."
+      },
+      {
+        "id": "D",
+        "label": "Deixo para falar em outro momento."
+      }
+    ]
+  },
+  {
+    "id": "comunicacao.10",
+    "version": 1,
+    "topic": "comunicacao",
+    "anchor": false,
+    "text": "Ao conhecer alguém, o assunto que mais me ajuda é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Algo que estamos vivendo ali."
+      },
+      {
+        "id": "B",
+        "label": "Interesses em comum."
+      },
+      {
+        "id": "C",
+        "label": "Uma história engraçada."
+      },
+      {
+        "id": "D",
+        "label": "Planos e ideias para o futuro."
+      }
+    ]
+  },
+  {
+    "id": "rotina.01",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": true,
+    "text": "Uma manhã livre combina mais comigo quando eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Saio sem um roteiro fixo."
+      },
+      {
+        "id": "B",
+        "label": "Resolvo pequenas pendências."
+      },
+      {
+        "id": "C",
+        "label": "Descanso sem compromisso."
+      },
+      {
+        "id": "D",
+        "label": "Faço algo com alguém próximo."
+      }
+    ]
+  },
+  {
+    "id": "rotina.02",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "O que torna meu dia mais agradável é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ter tempo sem pressa."
+      },
+      {
+        "id": "B",
+        "label": "Concluir algo importante."
+      },
+      {
+        "id": "C",
+        "label": "Uma conversa boa."
+      },
+      {
+        "id": "D",
+        "label": "Encontrar uma novidade."
+      }
+    ]
+  },
+  {
+    "id": "rotina.03",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "Quando a semana fica cheia, a primeira coisa que tento é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Reorganizar os horários."
+      },
+      {
+        "id": "B",
+        "label": "Reduzir compromissos."
+      },
+      {
+        "id": "C",
+        "label": "Pedir ajuda."
+      },
+      {
+        "id": "D",
+        "label": "Focar em uma coisa por vez."
+      }
+    ]
+  },
+  {
+    "id": "rotina.04",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "No intervalo entre tarefas, eu prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ficar um pouco em silêncio."
+      },
+      {
+        "id": "B",
+        "label": "Conversar com alguém."
+      },
+      {
+        "id": "C",
+        "label": "Me movimentar."
+      },
+      {
+        "id": "D",
+        "label": "Ver algo leve no celular."
+      }
+    ]
+  },
+  {
+    "id": "rotina.05",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "Minha forma preferida de organizar compromissos é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Agenda ou calendário."
+      },
+      {
+        "id": "B",
+        "label": "Uma lista simples."
+      },
+      {
+        "id": "C",
+        "label": "Lembretes no celular."
+      },
+      {
+        "id": "D",
+        "label": "Combinar conforme a semana acontece."
+      }
+    ]
+  },
+  {
+    "id": "rotina.06",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "No fim de um dia cansativo, eu procuro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um lugar tranquilo."
+      },
+      {
+        "id": "B",
+        "label": "Companhia sem muita programação."
+      },
+      {
+        "id": "C",
+        "label": "Uma atividade que mude meu foco."
+      },
+      {
+        "id": "D",
+        "label": "Dormir mais cedo."
+      }
+    ]
+  },
+  {
+    "id": "rotina.07",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "Se aparece uma hora livre, é provável que eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Adiante algo pendente."
+      },
+      {
+        "id": "B",
+        "label": "Faça algo que gosto."
+      },
+      {
+        "id": "C",
+        "label": "Procure alguém para conversar."
+      },
+      {
+        "id": "D",
+        "label": "Descanse sem fazer planos."
+      }
+    ]
+  },
+  {
+    "id": "rotina.08",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "Para manter um hábito novo, funciona melhor para mim…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um horário fixo."
+      },
+      {
+        "id": "B",
+        "label": "Uma meta pequena."
+      },
+      {
+        "id": "C",
+        "label": "Fazer com outra pessoa."
+      },
+      {
+        "id": "D",
+        "label": "Variar para não enjoar."
+      }
+    ]
+  },
+  {
+    "id": "rotina.09",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "Ao preparar uma viagem curta, eu priorizo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "O roteiro."
+      },
+      {
+        "id": "B",
+        "label": "A hospedagem e o conforto."
+      },
+      {
+        "id": "C",
+        "label": "A companhia."
+      },
+      {
+        "id": "D",
+        "label": "A liberdade para decidir lá."
+      }
+    ]
+  },
+  {
+    "id": "rotina.10",
+    "version": 1,
+    "topic": "rotina",
+    "anchor": false,
+    "text": "Um domingo ideal termina com…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Tudo preparado para segunda."
+      },
+      {
+        "id": "B",
+        "label": "Uma refeição com pessoas próximas."
+      },
+      {
+        "id": "C",
+        "label": "Algumas horas de descanso."
+      },
+      {
+        "id": "D",
+        "label": "Algo divertido para lembrar."
+      }
+    ]
+  },
+  {
+    "id": "amizades.01",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Quando um amigo está desanimado, eu costumo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Escutar sem tentar resolver."
+      },
+      {
+        "id": "B",
+        "label": "Sugerir algo para fazer juntos."
+      },
+      {
+        "id": "C",
+        "label": "Ajudar com uma questão prática."
+      },
+      {
+        "id": "D",
+        "label": "Perguntar do que ele precisa."
+      }
+    ]
+  },
+  {
+    "id": "amizades.02",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Para reencontrar um amigo distante, prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Uma conversa longa a dois."
+      },
+      {
+        "id": "B",
+        "label": "Um encontro com a turma."
+      },
+      {
+        "id": "C",
+        "label": "Fazer alguma atividade juntos."
+      },
+      {
+        "id": "D",
+        "label": "Começar por mensagens."
+      }
+    ]
+  },
+  {
+    "id": "amizades.03",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Em um grupo de amigos, eu frequentemente…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Organizo os encontros."
+      },
+      {
+        "id": "B",
+        "label": "Animo as conversas."
+      },
+      {
+        "id": "C",
+        "label": "Aproximo pessoas."
+      },
+      {
+        "id": "D",
+        "label": "Acompanho as ideias da turma."
+      }
+    ]
+  },
+  {
+    "id": "amizades.04",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Um gesto de amizade que me marca é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Lembrar de algo importante."
+      },
+      {
+        "id": "B",
+        "label": "Aparecer quando preciso."
+      },
+      {
+        "id": "C",
+        "label": "Compartilhar tempo sem pressa."
+      },
+      {
+        "id": "D",
+        "label": "Demonstrar confiança em mim."
+      }
+    ]
+  },
+  {
+    "id": "amizades.05",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Se um amigo cancela um encontro, prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Já combinar outra data."
+      },
+      {
+        "id": "B",
+        "label": "Entender o que aconteceu."
+      },
+      {
+        "id": "C",
+        "label": "Deixar que ele proponha outro dia."
+      },
+      {
+        "id": "D",
+        "label": "Aproveitar o tempo de outro jeito."
+      }
+    ]
+  },
+  {
+    "id": "amizades.06",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Para comemorar com amigos, eu escolheria…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um jantar tranquilo."
+      },
+      {
+        "id": "B",
+        "label": "Uma festa movimentada."
+      },
+      {
+        "id": "C",
+        "label": "Um passeio diferente."
+      },
+      {
+        "id": "D",
+        "label": "Algo simples em casa."
+      }
+    ]
+  },
+  {
+    "id": "amizades.07",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Quando preciso de ajuda, é mais fácil para mim…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Pedir diretamente."
+      },
+      {
+        "id": "B",
+        "label": "Explicar a situação primeiro."
+      },
+      {
+        "id": "C",
+        "label": "Pedir uma coisa pequena."
+      },
+      {
+        "id": "D",
+        "label": "Conversar até encontrar uma saída."
+      }
+    ]
+  },
+  {
+    "id": "amizades.08",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Numa amizade nova, eu me aproximo mais por…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Conversas frequentes."
+      },
+      {
+        "id": "B",
+        "label": "Atividades em comum."
+      },
+      {
+        "id": "C",
+        "label": "Confiança construída aos poucos."
+      },
+      {
+        "id": "D",
+        "label": "Situações espontâneas."
+      }
+    ]
+  },
+  {
+    "id": "amizades.09",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "Quando um amigo discorda de mim, eu valorizo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Que seja sincero."
+      },
+      {
+        "id": "B",
+        "label": "Que explique o raciocínio."
+      },
+      {
+        "id": "C",
+        "label": "Que escute meu lado."
+      },
+      {
+        "id": "D",
+        "label": "Que a conversa continue respeitosa."
+      }
+    ]
+  },
+  {
+    "id": "amizades.10",
+    "version": 1,
+    "topic": "amizades",
+    "anchor": false,
+    "text": "O encontro com amigos que mais me atrai hoje é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Poucas pessoas e boa conversa."
+      },
+      {
+        "id": "B",
+        "label": "Um lugar novo."
+      },
+      {
+        "id": "C",
+        "label": "Um programa ao ar livre."
+      },
+      {
+        "id": "D",
+        "label": "Uma atividade que já gostamos."
+      }
+    ]
+  },
+  {
+    "id": "interesses.01",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": true,
+    "text": "Quando quero descobrir algo novo, eu procuro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um livro ou texto."
+      },
+      {
+        "id": "B",
+        "label": "Um vídeo ou podcast."
+      },
+      {
+        "id": "C",
+        "label": "Uma conversa com alguém."
+      },
+      {
+        "id": "D",
+        "label": "Uma experiência prática."
+      }
+    ]
+  },
+  {
+    "id": "interesses.02",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Na hora de escolher um filme, eu valorizo mais…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Uma história surpreendente."
+      },
+      {
+        "id": "B",
+        "label": "Personagens interessantes."
+      },
+      {
+        "id": "C",
+        "label": "Uma experiência visual."
+      },
+      {
+        "id": "D",
+        "label": "Algo leve para relaxar."
+      }
+    ]
+  },
+  {
+    "id": "interesses.03",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Uma atividade que eu gostaria de experimentar teria mais…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Criatividade."
+      },
+      {
+        "id": "B",
+        "label": "Movimento."
+      },
+      {
+        "id": "C",
+        "label": "Aprendizado."
+      },
+      {
+        "id": "D",
+        "label": "Contato com outras pessoas."
+      }
+    ]
+  },
+  {
+    "id": "interesses.04",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Quando um assunto me prende, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Pesquiso vários pontos de vista."
+      },
+      {
+        "id": "B",
+        "label": "Aprofundo uma fonte."
+      },
+      {
+        "id": "C",
+        "label": "Converso sobre ele."
+      },
+      {
+        "id": "D",
+        "label": "Tento colocar em prática."
+      }
+    ]
+  },
+  {
+    "id": "interesses.05",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Em uma cidade que não conheço, eu começaria por…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um lugar histórico."
+      },
+      {
+        "id": "B",
+        "label": "A comida local."
+      },
+      {
+        "id": "C",
+        "label": "Andar e observar."
+      },
+      {
+        "id": "D",
+        "label": "Pedir dicas a moradores."
+      }
+    ]
+  },
+  {
+    "id": "interesses.06",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Se pudesse dedicar uma tarde a aprender, escolheria…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Criar alguma coisa."
+      },
+      {
+        "id": "B",
+        "label": "Entender uma tecnologia."
+      },
+      {
+        "id": "C",
+        "label": "Conhecer uma cultura."
+      },
+      {
+        "id": "D",
+        "label": "Melhorar uma habilidade prática."
+      }
+    ]
+  },
+  {
+    "id": "interesses.07",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Ao receber uma recomendação, eu me interesso mais quando…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Combina com algo que já gosto."
+      },
+      {
+        "id": "B",
+        "label": "É algo totalmente diferente."
+      },
+      {
+        "id": "C",
+        "label": "Vem de alguém que me conhece."
+      },
+      {
+        "id": "D",
+        "label": "Posso experimentar facilmente."
+      }
+    ]
+  },
+  {
+    "id": "interesses.08",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "O conteúdo que mais compartilho costuma…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ensinar algo útil."
+      },
+      {
+        "id": "B",
+        "label": "Fazer rir."
+      },
+      {
+        "id": "C",
+        "label": "Provocar uma boa conversa."
+      },
+      {
+        "id": "D",
+        "label": "Mostrar algo bonito ou curioso."
+      }
+    ]
+  },
+  {
+    "id": "interesses.09",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Num evento cultural, eu valorizo mais…",
+    "options": [
+      {
+        "id": "A",
+        "label": "O tema."
+      },
+      {
+        "id": "B",
+        "label": "A experiência do lugar."
+      },
+      {
+        "id": "C",
+        "label": "A companhia."
+      },
+      {
+        "id": "D",
+        "label": "A chance de descobrir algo inesperado."
+      }
+    ]
+  },
+  {
+    "id": "interesses.10",
+    "version": 1,
+    "topic": "interesses",
+    "anchor": false,
+    "text": "Quando um interesse meu muda, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Mergulho na novidade."
+      },
+      {
+        "id": "B",
+        "label": "Mantenho os antigos também."
+      },
+      {
+        "id": "C",
+        "label": "Exploro aos poucos."
+      },
+      {
+        "id": "D",
+        "label": "Procuro pessoas com o mesmo interesse."
+      }
+    ]
+  },
+  {
+    "id": "planos.01",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Quando imagino os próximos anos, penso primeiro em…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Experiências que quero viver."
+      },
+      {
+        "id": "B",
+        "label": "Pessoas com quem quero estar."
+      },
+      {
+        "id": "C",
+        "label": "Projetos que quero realizar."
+      },
+      {
+        "id": "D",
+        "label": "Estabilidade para escolher com calma."
+      }
+    ]
+  },
+  {
+    "id": "planos.02",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Um objetivo grande fica mais possível quando eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Divido em pequenas etapas."
+      },
+      {
+        "id": "B",
+        "label": "Tenho uma data em mente."
+      },
+      {
+        "id": "C",
+        "label": "Encontro apoio."
+      },
+      {
+        "id": "D",
+        "label": "Vejo um exemplo de quem conseguiu."
+      }
+    ]
+  },
+  {
+    "id": "planos.03",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Se um plano antigo deixa de fazer sentido, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Faço outro plano."
+      },
+      {
+        "id": "B",
+        "label": "Investigo o que mudou."
+      },
+      {
+        "id": "C",
+        "label": "Converso com alguém."
+      },
+      {
+        "id": "D",
+        "label": "Dou um tempo antes de decidir."
+      }
+    ]
+  },
+  {
+    "id": "planos.04",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Uma conquista que eu gostaria de celebrar seria…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Aprender algo difícil."
+      },
+      {
+        "id": "B",
+        "label": "Concluir um projeto importante."
+      },
+      {
+        "id": "C",
+        "label": "Viver uma experiência desejada."
+      },
+      {
+        "id": "D",
+        "label": "Ajudar alguém a realizar algo."
+      }
+    ]
+  },
+  {
+    "id": "planos.05",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Se eu ganhasse um mês livre, priorizaria…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Viajar."
+      },
+      {
+        "id": "B",
+        "label": "Descansar."
+      },
+      {
+        "id": "C",
+        "label": "Tirar uma ideia do papel."
+      },
+      {
+        "id": "D",
+        "label": "Estar com pessoas próximas."
+      }
+    ]
+  },
+  {
+    "id": "planos.06",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Para me comprometer com um projeto, preciso mais de…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Entender seu propósito."
+      },
+      {
+        "id": "B",
+        "label": "Ver um caminho viável."
+      },
+      {
+        "id": "C",
+        "label": "Ter autonomia."
+      },
+      {
+        "id": "D",
+        "label": "Sentir vontade de começar."
+      }
+    ]
+  },
+  {
+    "id": "planos.07",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Ao planejar uma mudança, eu penso primeiro em…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Recursos necessários."
+      },
+      {
+        "id": "B",
+        "label": "Efeito na minha rotina."
+      },
+      {
+        "id": "C",
+        "label": "Quem será afetado."
+      },
+      {
+        "id": "D",
+        "label": "Possibilidades que ela abre."
+      }
+    ]
+  },
+  {
+    "id": "planos.08",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Quando um objetivo demora mais do que imaginei, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ajusto o prazo."
+      },
+      {
+        "id": "B",
+        "label": "Mudo a estratégia."
+      },
+      {
+        "id": "C",
+        "label": "Procuro orientação."
+      },
+      {
+        "id": "D",
+        "label": "Reavalio se ainda quero aquilo."
+      }
+    ]
+  },
+  {
+    "id": "planos.09",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "Minha maneira favorita de acompanhar progresso é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ver etapas concluídas."
+      },
+      {
+        "id": "B",
+        "label": "Comparar com meu ponto de partida."
+      },
+      {
+        "id": "C",
+        "label": "Receber retorno de alguém."
+      },
+      {
+        "id": "D",
+        "label": "Perceber mudanças na prática."
+      }
+    ]
+  },
+  {
+    "id": "planos.10",
+    "version": 1,
+    "topic": "planos",
+    "anchor": false,
+    "text": "O que eu gostaria de ter mais espaço para fazer é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Aprender."
+      },
+      {
+        "id": "B",
+        "label": "Descansar."
+      },
+      {
+        "id": "C",
+        "label": "Criar."
+      },
+      {
+        "id": "D",
+        "label": "Conviver."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.01",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Em um projeto em grupo, prefiro contribuir…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Organizando as etapas."
+      },
+      {
+        "id": "B",
+        "label": "Criando possibilidades."
+      },
+      {
+        "id": "C",
+        "label": "Executando tarefas concretas."
+      },
+      {
+        "id": "D",
+        "label": "Conectando as pessoas."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.02",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Para aprender uma tarefa nova, me ajuda mais…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ver alguém fazendo."
+      },
+      {
+        "id": "B",
+        "label": "Ler instruções claras."
+      },
+      {
+        "id": "C",
+        "label": "Testar com orientação."
+      },
+      {
+        "id": "D",
+        "label": "Entender primeiro a lógica."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.03",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Quando uma tarefa não está clara, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Peço o resultado esperado."
+      },
+      {
+        "id": "B",
+        "label": "Procuro exemplos."
+      },
+      {
+        "id": "C",
+        "label": "Começo por uma parte pequena."
+      },
+      {
+        "id": "D",
+        "label": "Alinho prioridades com a equipe."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.04",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Num ambiente de trabalho, valorizo especialmente…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Autonomia."
+      },
+      {
+        "id": "B",
+        "label": "Clareza."
+      },
+      {
+        "id": "C",
+        "label": "Cooperação."
+      },
+      {
+        "id": "D",
+        "label": "Oportunidades de aprender."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.05",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Quando recebo uma demanda urgente, minha primeira reação é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Checar o prazo real."
+      },
+      {
+        "id": "B",
+        "label": "Reorganizar o que estava fazendo."
+      },
+      {
+        "id": "C",
+        "label": "Dividir o trabalho."
+      },
+      {
+        "id": "D",
+        "label": "Entender o que pode ser simplificado."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.06",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Ao apresentar uma ideia, eu prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Mostrar um exemplo."
+      },
+      {
+        "id": "B",
+        "label": "Explicar o problema."
+      },
+      {
+        "id": "C",
+        "label": "Contar uma história."
+      },
+      {
+        "id": "D",
+        "label": "Trazer dados e comparações."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.07",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Quando termino um trabalho difícil, gosto de…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ver o resultado funcionando."
+      },
+      {
+        "id": "B",
+        "label": "Ouvir o retorno das pessoas."
+      },
+      {
+        "id": "C",
+        "label": "Registrar o que aprendi."
+      },
+      {
+        "id": "D",
+        "label": "Fazer uma pausa."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.08",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Para manter o foco, funciona melhor para mim…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Silêncio."
+      },
+      {
+        "id": "B",
+        "label": "Blocos curtos de trabalho."
+      },
+      {
+        "id": "C",
+        "label": "Um ambiente organizado."
+      },
+      {
+        "id": "D",
+        "label": "Ter prioridades bem definidas."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.09",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Se algo dá errado em uma tarefa coletiva, eu tento…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Conter o problema imediato."
+      },
+      {
+        "id": "B",
+        "label": "Entender a causa."
+      },
+      {
+        "id": "C",
+        "label": "Alinhar a equipe."
+      },
+      {
+        "id": "D",
+        "label": "Rever o planejamento."
+      }
+    ]
+  },
+  {
+    "id": "trabalho.10",
+    "version": 1,
+    "topic": "trabalho",
+    "anchor": false,
+    "text": "Um reconhecimento que me faz bem é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um agradecimento específico."
+      },
+      {
+        "id": "B",
+        "label": "Mais confiança e autonomia."
+      },
+      {
+        "id": "C",
+        "label": "Ver meu trabalho ser usado."
+      },
+      {
+        "id": "D",
+        "label": "Uma conversa sobre meu desenvolvimento."
+      }
+    ]
+  },
+  {
+    "id": "afeto.01",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Quando quero demonstrar carinho, eu costumo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Dizer o que sinto."
+      },
+      {
+        "id": "B",
+        "label": "Separar tempo para a pessoa."
+      },
+      {
+        "id": "C",
+        "label": "Fazer algo que a ajude."
+      },
+      {
+        "id": "D",
+        "label": "Preparar uma pequena surpresa."
+      }
+    ]
+  },
+  {
+    "id": "afeto.02",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Um primeiro encontro que combina comigo seria…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um café e boa conversa."
+      },
+      {
+        "id": "B",
+        "label": "Um passeio ao ar livre."
+      },
+      {
+        "id": "C",
+        "label": "Uma atividade diferente."
+      },
+      {
+        "id": "D",
+        "label": "Um jantar tranquilo."
+      }
+    ]
+  },
+  {
+    "id": "afeto.03",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Quando gosto de alguém, normalmente…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Tomo a iniciativa."
+      },
+      {
+        "id": "B",
+        "label": "Me aproximo aos poucos."
+      },
+      {
+        "id": "C",
+        "label": "Demonstro com pequenos gestos."
+      },
+      {
+        "id": "D",
+        "label": "Procuro situações para conversar."
+      }
+    ]
+  },
+  {
+    "id": "afeto.04",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Para me sentir à vontade perto de alguém, ajuda…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Poder ser espontâneo."
+      },
+      {
+        "id": "B",
+        "label": "Ser escutado com atenção."
+      },
+      {
+        "id": "C",
+        "label": "Rir junto."
+      },
+      {
+        "id": "D",
+        "label": "Não sentir pressão."
+      }
+    ]
+  },
+  {
+    "id": "afeto.05",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Uma surpresa agradável teria mais chance de ser…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Um convite inesperado."
+      },
+      {
+        "id": "B",
+        "label": "Uma lembrança pessoal."
+      },
+      {
+        "id": "C",
+        "label": "Uma mensagem sincera."
+      },
+      {
+        "id": "D",
+        "label": "Um gesto de cuidado prático."
+      }
+    ]
+  },
+  {
+    "id": "afeto.06",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Ao combinar um programa com alguém especial, prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Planejar juntos."
+      },
+      {
+        "id": "B",
+        "label": "Sugerir algumas opções."
+      },
+      {
+        "id": "C",
+        "label": "Ser surpreendido."
+      },
+      {
+        "id": "D",
+        "label": "Decidir perto da hora."
+      }
+    ]
+  },
+  {
+    "id": "afeto.07",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Quando preciso de espaço, eu gostaria que a pessoa…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Respeitasse meu tempo."
+      },
+      {
+        "id": "B",
+        "label": "Perguntasse como pode ajudar."
+      },
+      {
+        "id": "C",
+        "label": "Mantivesse contato leve."
+      },
+      {
+        "id": "D",
+        "label": "Combinasse quando conversar de novo."
+      }
+    ]
+  },
+  {
+    "id": "afeto.08",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "O que me desperta vontade de conhecer alguém melhor é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "O jeito de conversar."
+      },
+      {
+        "id": "B",
+        "label": "A curiosidade pela vida."
+      },
+      {
+        "id": "C",
+        "label": "O cuidado com as pessoas."
+      },
+      {
+        "id": "D",
+        "label": "Interesses que podemos compartilhar."
+      }
+    ]
+  },
+  {
+    "id": "afeto.09",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Uma conversa que aproxima costuma ter…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Sinceridade."
+      },
+      {
+        "id": "B",
+        "label": "Humor."
+      },
+      {
+        "id": "C",
+        "label": "Perguntas interessantes."
+      },
+      {
+        "id": "D",
+        "label": "Tempo sem distrações."
+      }
+    ]
+  },
+  {
+    "id": "afeto.10",
+    "version": 1,
+    "topic": "afeto",
+    "anchor": false,
+    "text": "Depois de um encontro de que gostei, eu provavelmente…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Mando uma mensagem."
+      },
+      {
+        "id": "B",
+        "label": "Proponho outro encontro."
+      },
+      {
+        "id": "C",
+        "label": "Comento algo que vivemos."
+      },
+      {
+        "id": "D",
+        "label": "Espero um pouco para conversar."
+      }
+    ]
+  },
+  {
+    "id": "familia.01",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Um encontro em família fica melhor para mim quando tem…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Boa conversa."
+      },
+      {
+        "id": "B",
+        "label": "Uma refeição preparada juntos."
+      },
+      {
+        "id": "C",
+        "label": "Uma atividade compartilhada."
+      },
+      {
+        "id": "D",
+        "label": "Tempo para simplesmente estar perto."
+      }
+    ]
+  },
+  {
+    "id": "familia.02",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Quando alguém da família pede opinião, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Digo o que faria."
+      },
+      {
+        "id": "B",
+        "label": "Pergunto o que a pessoa deseja."
+      },
+      {
+        "id": "C",
+        "label": "Ajudo a comparar opções."
+      },
+      {
+        "id": "D",
+        "label": "Escuto antes de opinar."
+      }
+    ]
+  },
+  {
+    "id": "familia.03",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Uma tradição que eu gostaria de manter envolve…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Reunir as pessoas."
+      },
+      {
+        "id": "B",
+        "label": "Preparar alguma coisa juntos."
+      },
+      {
+        "id": "C",
+        "label": "Contar histórias."
+      },
+      {
+        "id": "D",
+        "label": "Criar memórias novas."
+      }
+    ]
+  },
+  {
+    "id": "familia.04",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Ao visitar alguém da família, eu gosto de…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Conversar sem pressa."
+      },
+      {
+        "id": "B",
+        "label": "Ajudar com alguma tarefa."
+      },
+      {
+        "id": "C",
+        "label": "Fazer um passeio."
+      },
+      {
+        "id": "D",
+        "label": "Relembrar momentos."
+      }
+    ]
+  },
+  {
+    "id": "familia.05",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Quando familiares pensam diferente de mim, eu prefiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Entender a experiência deles."
+      },
+      {
+        "id": "B",
+        "label": "Explicar meu ponto."
+      },
+      {
+        "id": "C",
+        "label": "Buscar um assunto em comum."
+      },
+      {
+        "id": "D",
+        "label": "Conversar em outro momento."
+      }
+    ]
+  },
+  {
+    "id": "familia.06",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Uma lembrança de família que me atrai costuma ser…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Uma história divertida."
+      },
+      {
+        "id": "B",
+        "label": "Uma experiência que vivemos."
+      },
+      {
+        "id": "C",
+        "label": "Um conselho que recebi."
+      },
+      {
+        "id": "D",
+        "label": "Um gesto de apoio."
+      }
+    ]
+  },
+  {
+    "id": "familia.07",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Se eu organizasse uma reunião familiar, priorizaria…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Facilitar a participação."
+      },
+      {
+        "id": "B",
+        "label": "Uma boa refeição."
+      },
+      {
+        "id": "C",
+        "label": "Um ambiente confortável."
+      },
+      {
+        "id": "D",
+        "label": "Uma atividade para todos."
+      }
+    ]
+  },
+  {
+    "id": "familia.08",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Para manter contato com a família, combina comigo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Mensagens frequentes."
+      },
+      {
+        "id": "B",
+        "label": "Ligações mais longas."
+      },
+      {
+        "id": "C",
+        "label": "Visitas combinadas."
+      },
+      {
+        "id": "D",
+        "label": "Compartilhar novidades importantes."
+      }
+    ]
+  },
+  {
+    "id": "familia.09",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Quando recebo uma notícia importante da família, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ligo para conversar."
+      },
+      {
+        "id": "B",
+        "label": "Pergunto como posso participar."
+      },
+      {
+        "id": "C",
+        "label": "Procuro mais detalhes."
+      },
+      {
+        "id": "D",
+        "label": "Penso com calma antes de responder."
+      }
+    ]
+  },
+  {
+    "id": "familia.10",
+    "version": 1,
+    "topic": "familia",
+    "anchor": false,
+    "text": "Um gesto familiar que eu gostaria de repetir é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Acolher sem pressa."
+      },
+      {
+        "id": "B",
+        "label": "Comemorar pequenas conquistas."
+      },
+      {
+        "id": "C",
+        "label": "Ajudar em momentos difíceis."
+      },
+      {
+        "id": "D",
+        "label": "Demonstrar carinho no cotidiano."
+      }
+    ]
+  },
+  {
+    "id": "mundo.01",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Quando vejo uma notícia surpreendente, eu primeiro…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Procuro a fonte."
+      },
+      {
+        "id": "B",
+        "label": "Leio outras versões."
+      },
+      {
+        "id": "C",
+        "label": "Converso com alguém."
+      },
+      {
+        "id": "D",
+        "label": "Espero mais informações."
+      }
+    ]
+  },
+  {
+    "id": "mundo.02",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Ao prever o resultado de um jogo, eu consideraria mais…",
+    "options": [
+      {
+        "id": "A",
+        "label": "O desempenho recente."
+      },
+      {
+        "id": "B",
+        "label": "O contexto da partida."
+      },
+      {
+        "id": "C",
+        "label": "A opinião de quem acompanha."
+      },
+      {
+        "id": "D",
+        "label": "Minha impressão sobre os times."
+      }
+    ]
+  },
+  {
+    "id": "mundo.03",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Quando uma tecnologia nova aparece, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Quero experimentar."
+      },
+      {
+        "id": "B",
+        "label": "Procuro usos concretos."
+      },
+      {
+        "id": "C",
+        "label": "Investigo seus limites."
+      },
+      {
+        "id": "D",
+        "label": "Espero observar a adoção."
+      }
+    ]
+  },
+  {
+    "id": "mundo.04",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Se alguém prevê algo diferente de mim, eu…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Pergunto o motivo."
+      },
+      {
+        "id": "B",
+        "label": "Comparo as informações."
+      },
+      {
+        "id": "C",
+        "label": "Reavalio minha confiança."
+      },
+      {
+        "id": "D",
+        "label": "Anoto para conferir depois."
+      }
+    ]
+  },
+  {
+    "id": "mundo.05",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Uma mudança econômica me chama mais atenção pelo efeito…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Na vida cotidiana."
+      },
+      {
+        "id": "B",
+        "label": "No trabalho."
+      },
+      {
+        "id": "C",
+        "label": "Nos preços e compras."
+      },
+      {
+        "id": "D",
+        "label": "Nos planos de longo prazo."
+      }
+    ]
+  },
+  {
+    "id": "mundo.06",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Para confiar em uma previsão, eu valorizo…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Uma fonte verificável."
+      },
+      {
+        "id": "B",
+        "label": "Um raciocínio claro."
+      },
+      {
+        "id": "C",
+        "label": "Um histórico bem documentado."
+      },
+      {
+        "id": "D",
+        "label": "A explicação das incertezas."
+      }
+    ]
+  },
+  {
+    "id": "mundo.07",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Quando erro uma previsão, tenho mais vontade de…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Entender o que faltou."
+      },
+      {
+        "id": "B",
+        "label": "Comparar com outras previsões."
+      },
+      {
+        "id": "C",
+        "label": "Rever minha confiança."
+      },
+      {
+        "id": "D",
+        "label": "Acompanhar o próximo caso."
+      }
+    ]
+  },
+  {
+    "id": "mundo.08",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Um acontecimento que eu gostaria de acompanhar com alguém seria de…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Esporte."
+      },
+      {
+        "id": "B",
+        "label": "Tecnologia."
+      },
+      {
+        "id": "C",
+        "label": "Economia."
+      },
+      {
+        "id": "D",
+        "label": "Ciência e sociedade."
+      }
+    ]
+  },
+  {
+    "id": "mundo.09",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "Ao conversar sobre o futuro, eu tendo a…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Imaginar possibilidades."
+      },
+      {
+        "id": "B",
+        "label": "Questionar pressupostos."
+      },
+      {
+        "id": "C",
+        "label": "Buscar exemplos do passado."
+      },
+      {
+        "id": "D",
+        "label": "Pensar em consequências práticas."
+      }
+    ]
+  },
+  {
+    "id": "mundo.10",
+    "version": 1,
+    "topic": "mundo",
+    "anchor": false,
+    "text": "O que torna uma previsão interessante para mim é…",
+    "options": [
+      {
+        "id": "A",
+        "label": "Ter uma resposta verificável."
+      },
+      {
+        "id": "B",
+        "label": "Desafiar minha expectativa."
+      },
+      {
+        "id": "C",
+        "label": "Gerar uma conversa."
+      },
+      {
+        "id": "D",
+        "label": "Ensinar algo quando se resolve."
+      }
+    ]
+  }
+]

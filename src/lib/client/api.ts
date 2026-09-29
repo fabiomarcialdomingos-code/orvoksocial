@@ -12,12 +12,13 @@ const messages: Record<string, string> = {
   UNAUTHENTICATED: "Sua sessão terminou. Entre novamente para continuar.",
   FORBIDDEN: "Esta conta não tem permissão para esta ação.",
   NOT_FOUND: "Não encontramos o que você procurou.",
+  NO_NEW_QUESTIONS: "Você já explorou as perguntas disponíveis. Novos assuntos chegarão com a ampliação do catálogo.",
   CONFLICT: "Isso já foi feito ou mudou enquanto você usava a página. Atualize e tente de novo.",
   RULE_VIOLATION: "A regra desta etapa não permite a ação agora.",
   VALIDATION_ERROR: "Confira os campos e tente de novo.",
   RATE_LIMITED: "Muitas ações em sequência. Aguarde um minuto.",
   PAYLOAD_TOO_LARGE: "O conteúdo é grande demais.",
-  TEST_CATALOG_IN_DEPLOYED_ENVIRONMENT: "O Radar ainda não está disponível neste ambiente.",
+  TEST_CATALOG_IN_DEPLOYED_ENVIRONMENT: "As descobertas ainda não estão disponíveis neste ambiente.",
 };
 
 export function describeError(error: unknown, fallback = "Não foi possível concluir. Tente de novo."): string {

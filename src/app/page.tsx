@@ -1,167 +1,235 @@
 import Link from "next/link";
-import { LiveClock } from "../components/site/LiveClock";
-import { ParticleField } from "../components/site/ParticleField";
-import { ScrollEffects } from "../components/site/ScrollEffects";
-import styles from "./page.module.css";
-
-export default function HomePage() {
+import { Brand } from "../components/ui/Brand";
+import { SiteNav } from "../components/site/SiteNav";
+export default function Page() {
   return (
-    <div className={styles.page}>
-      <ParticleField />
-      <div className={styles.field} aria-hidden="true" />
-      <div className={styles.fieldGlow} id="field-glow" />
-      <ScrollEffects />
-
-      <div className={styles.topline}>
-        <Link href="/" className={styles.toplineWord}>orvok</Link>
-        <div className={styles.toplineRight}>
-          <span className={styles.clockText}><LiveClock /></span>
-          <Link href="/entrar">entrar</Link>
-          <Link href="/cadastro">criar conta</Link>
-        </div>
-      </div>
-
-      <main className={styles.content} id="conteudo">
-        <section className={`${styles.opening} ${styles.gutter}`} aria-labelledby="hero-title">
-          <div className={styles.openingInner}>
-            <span className={styles.kicker}>Privado · por convite · sem ranking público</span>
-            <h1 id="hero-title" className={styles.openingTitle}>Veja-se pelos olhos de quem te conhece.</h1>
-            <p className={styles.openingLede}>
-              Você responde sobre si. Pessoas próximas, com a sua permissão, tentam antecipar essas respostas.
-              O ORVOK mostra onde elas acertam, onde você surpreende — e o que isso revela.
+    <div className="landing">
+      <SiteNav />
+      <main id="conteudo">
+        <section className="landing-hero">
+          <div className="landing-hero-copy">
+            <span className="eyebrow">
+              <i /> Uma rede de perspectivas
+            </span>
+            <h1>
+              Você é mais
+              <br />
+              do que <em>parece.</em>
+            </h1>
+            <p>
+              Descubra como as pessoas veem você.
+              <br />E como vocês veem o mundo.
             </p>
-            <Link href="/cadastro" className={styles.textCta}>Começar pela minha referência →</Link>
-          </div>
-        </section>
-
-        <section className={`${styles.intro} ${styles.gutter}`} data-reveal>
-          <div className={styles.introInner}>
-            <span className={styles.kicker}>Um mesmo instrumento</span>
-            <h2 className={styles.heading}>Três distâncias, uma leitura.</h2>
-            <p className={styles.bodyText}>
-              Você ao centro. Pessoas próximas, a uma distância medida em consentimento.
-              O mundo, na borda — eventos que ninguém controla. A cor nunca muda de significado.
-            </p>
-          </div>
-        </section>
-
-        <section className={`${styles.flow} ${styles.gutter}`} id="perspectivas">
-          <div className={`${styles.flowRow} ${styles.flowRowLead}`} data-reveal>
-            <div className={styles.flowInner}>
-              <span className={styles.tag}>§ Você</span>
-              <h3>A sua referência</h3>
-              <p>
-                Doze perguntas sobre como você decide, reage e vive. Sem resposta certa.
-                As respostas ficam guardadas em versões que não podem ser alteradas às escondidas.
-              </p>
+            <div className="row wrap">
+              <Link className="button" href="/cadastro">
+                Descobrir meu outro lado ↗
+              </Link>
+              <a href="#como-funciona" className="text-link">
+                Me conta mais ↓
+              </a>
+            </div>
+            <div className="hero-caption">
+              <span>01 — EXPRESSE</span>
+              <span>02 — CONECTE</span>
+              <span>03 — DESCUBRA</span>
             </div>
           </div>
-
-          <div className={`${styles.flowRow} ${styles.flowRowRight}`} data-reveal>
-            <div className={styles.flowInner}>
-              <span className={styles.tag}>§ Pessoas</span>
-              <h3>Quem acerta você?</h3>
-              <p>
-                Amigos, família ou colegas pedem para prever você. Você aceita, escolhe se quer ver as
-                previsões e pode revogar a qualquer momento.
-              </p>
-              <div className={styles.tally}>
-                {([["Bruno", 9], ["Ana", 7], ["Carla", 4]] as const).map(([who, hits]) => (
-                  <div key={who} className={styles.tallyRow}>
-                    <span>{who}</span>
-                    <span className={styles.tallyBar}><i data-tally-fill={`${(hits / 12) * 100}%`} /></span>
-                    <span>{hits}/12</span>
-                  </div>
-                ))}
+          <div
+            className="perspective-collage"
+            aria-label="Exemplo ilustrativo de uma descoberta"
+          >
+            <span className="collage-label">MESMA PESSOA. OUTROS OLHARES.</span>
+            <article className="collage-self">
+              <span>VOCÊ DIZ</span>
+              <h2>
+                “Eu gosto
+                <br />
+                de mudar
+                <br />
+                os planos.”
+              </h2>
+              <div className="collage-avatar">
+                EU <b>↗</b>
               </div>
-            </div>
-          </div>
-
-          <div className={styles.flowRow} data-reveal>
-            <div className={styles.flowInner}>
-              <span className={styles.tag}>§ Mundo</span>
-              <h3>O que vai acontecer?</h3>
+            </article>
+            <article className="collage-other">
+              <span>QUEM TE CONHECE PENSA</span>
+              <h3>
+                “Achei que você
+                <br />
+                preferia ter
+                <br />
+                tudo planejado.”
+              </h3>
+              <div className="row">
+                <b>AL</b>
+                <small>Outro olhar sobre você</small>
+              </div>
+            </article>
+            <div className="collage-note">
+              <b>↔</b>
               <p>
-                Eventos reais de economia, ciência e tecnologia, com critério de resolução publicado
-                antes. Você escolhe um lado e diz o quanto confia.
+                É nessa diferença
+                <br />
+                <strong>que a conversa começa.</strong>
               </p>
             </div>
-          </div>
-
-          <div className={`${styles.flowRow} ${styles.flowRowRight}`} data-reveal>
-            <div className={styles.flowInner}>
-              <span className={styles.tag}>§ Consentimento</span>
-              <h3>Nada acontece sem o seu sim.</h3>
-              <p>
-                Pedido, aceite e consentimento são etapas separadas. Cada uma fica registrada com a
-                versão exata do aviso que você leu.
-              </p>
-            </div>
+            <small className="collage-disclaimer">
+              Prévia ilustrativa. Suas descobertas vêm de pessoas reais.
+            </small>
           </div>
         </section>
-
-        <section className={`${styles.quote} ${styles.gutter}`} data-reveal>
-          <p className={styles.quoteText}>
-            &ldquo;Prever alguém que você ama é, antes de tudo, prestar atenção.&rdquo;
+        <section className="manifesto-strip">
+          <span>SEU JEITO DE SER.</span>
+          <b>↗</b>
+          <span>OUTROS JEITOS DE VER.</span>
+          <b>↗</b>
+          <span>UM MUNDO EM COMUM.</span>
+        </section>
+        <section id="pessoas" className="landing-people">
+          <div>
+            <span className="eyebrow">01 / Pessoas</span>
+            <h2>
+              Quem conhece
+              <br />o seu <em>outro lado?</em>
+            </h2>
+            <p>
+              Seu melhor amigo. Sua mãe. A pessoa em quem você está pensando
+              agora. Cada relação descobre uma versão diferente de você.
+            </p>
+            <Link href="/cadastro" className="text-link">
+              Começar uma descoberta ↗
+            </Link>
+          </div>
+          <div className="people-editorial">
+            <div className="relationship-types">
+              <span>Família</span>
+              <span>Amigos</span>
+              <span className="selected">Crush ↗</span>
+              <span>Colegas</span>
+            </div>
+            <article>
+              <span className="eyebrow">O que alguém perceberia em você?</span>
+              <h3>
+                Um convite inesperado.
+                <br />
+                Você topa ou quer
+                <br />
+                saber o plano?
+              </h3>
+              <div className="sample-options">
+                <span>Quero os detalhes.</span>
+                <span>Me conta no caminho. ↗</span>
+              </div>
+              <small>Exemplo de pergunta · respostas privadas por padrão</small>
+            </article>
+          </div>
+        </section>
+        <section id="mundo" className="landing-world">
+          <div>
+            <span className="eyebrow">02 / Mundo + pessoas</span>
+            <h2>
+              Vocês veem
+              <br />o mesmo futuro?
+            </h2>
+            <p>
+              Faça previsões sobre economia, esporte, tecnologia e outros
+              acontecimentos. Convide alguém para adivinhar o que você pensa — e
+              descubram juntos quem entendeu quem.
+            </p>
+            <Link href="/cadastro" className="button button-light">
+              Quero prever junto ↗
+            </Link>
+          </div>
+          <div className="world-editorial">
+            <span>TECNOLOGIA / ESPORTE / ECONOMIA</span>
+            <div>
+              <strong>
+                O que vai
+                <br />
+                acontecer?
+              </strong>
+              <b>↗</b>
+            </div>
+            <hr />
+            <div>
+              <strong>
+                O que você
+                <br />
+                acha que eu acho?
+              </strong>
+              <b>↔</b>
+            </div>
+            <p>Pensar igual e entender alguém são descobertas diferentes.</p>
+          </div>
+        </section>
+        <section id="como-funciona" className="landing-how">
+          <div className="section-title">
+            <h2>Uma pergunta leva à outra.</h2>
+            <span>Seu primeiro encontro com o ORVOK</span>
+          </div>
+          <div className="how-grid">
+            <article>
+              <span>01</span>
+              <h3>
+                Conte um pouco
+                <br />
+                de você.
+              </h3>
+              <p>
+                Perguntas escolhidas pelos seus interesses. Uma de cada vez, no
+                seu ritmo.
+              </p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>
+                Convide outro
+                <br />
+                ponto de vista.
+              </h3>
+              <p>
+                Escolha a relação e compartilhe um convite individual. Você
+                controla cada conexão.
+              </p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>
+                Descubra.
+                <br />
+                Converse. Repita.
+              </h3>
+              <p>
+                Compare as perspectivas, troque ideias e continue se
+                descobrindo.
+              </p>
+            </article>
+          </div>
+        </section>
+        <section id="consentimento" className="landing-closing">
+          <span className="eyebrow">
+            Sua história está sempre em construção.
+          </span>
+          <h2>
+            Deixe alguém
+            <br />
+            te surpreender.
+          </h2>
+          <Link href="/cadastro" className="button">
+            Criar minha conta ↗
+          </Link>
+          <p>
+            Respostas privadas. Convites com consentimento.
+            <br />
+            Você escolhe o que compartilhar e pode encerrar uma conexão.
           </p>
         </section>
-
-        <section className={`${styles.steps} ${styles.gutter}`} id="steps-section" data-reveal aria-labelledby="como-title">
-          <div className={styles.stepsHead}>
-            <span className={styles.kicker}>Quatro etapas</span>
-            <h2 id="como-title">Da primeira resposta ao encontro.</h2>
-          </div>
-          <div className={styles.stepList}>
-            <div className={styles.fillLine} id="step-fill" />
-            <div className={styles.step}>
-              <span className={styles.stepNum}>01</span>
-              <h4>Responda sobre você</h4>
-              <p>Monte a sua referência em poucos minutos.</p>
-            </div>
-            <div className={styles.step}>
-              <span className={styles.stepNum}>02</span>
-              <h4>Receba pedidos</h4>
-              <p>Quem te conhece pede para te prever usando o seu e-mail.</p>
-            </div>
-            <div className={styles.step}>
-              <span className={styles.stepNum}>03</span>
-              <h4>Consinta, ou não</h4>
-              <p>Você lê o aviso, aceita e decide se quer ver o resultado.</p>
-            </div>
-            <div className={styles.step}>
-              <span className={styles.stepNum}>04</span>
-              <h4>Veja o encontro</h4>
-              <p>Compare, pergunta por pergunta, o que cada pessoa antecipou.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className={`${styles.closing} ${styles.gutter}`} id="comecar" data-reveal aria-labelledby="consent-title">
-          <div className={styles.closingInner}>
-            <span className={styles.kicker}>Privado por padrão</span>
-            <h2 id="consent-title">Privado por padrão, auditável sempre.</h2>
-            <div className={styles.promises}>
-              <p className={styles.promise}>
-                <strong>Você controla quem prevê</strong>
-                <span>Cada pessoa precisa de um pedido aceito e de um consentimento seu. Revogar esconde as previsões na hora.</span>
-              </p>
-              <p className={styles.promise}>
-                <strong>Nada de ranking de pessoas</strong>
-                <span>O ORVOK não publica notas sobre ninguém. O encontro é visível só para você.</span>
-              </p>
-              <p className={styles.promise}>
-                <strong>Seus dados, suas escolhas</strong>
-                <span>Exporte tudo o que existe sobre você ou peça exclusão direto na sua conta.</span>
-              </p>
-            </div>
-            <Link href="/cadastro" className={styles.ctaButton}>Criar minha conta</Link>
-          </div>
-        </section>
       </main>
-
-      <footer className={`${styles.footer} ${styles.gutter}`}>
-        <span>ORVOK · perspectivas com consentimento</span>
-        <span>© {new Date().getFullYear()}</span>
+      <footer className="landing-footer">
+        <Brand />
+        <p>Prever. Compreender. Conectar.</p>
+        <span>© {new Date().getFullYear()} ORVOK</span>
       </footer>
     </div>
   );

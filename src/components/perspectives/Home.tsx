@@ -1,0 +1,124 @@
+"use client";
+import Link from "next/link";
+import { useShell } from "../app/AppShell";
+import { Feed } from "../app/Community";
+import type { Connection, Round } from "../../lib/perspectives/model";
+import { PageHead, useResource, ConnectionCard } from "./Shared";
+export function SocialHome() {
+  const { profile } = useShell(),
+    c = useResource<{ items: Connection[] }>("/perspectives/connections"),
+    r = useResource<{ items: Round[] }>("/perspectives/rounds");
+  const pending =
+      c.data?.items.filter((x) => ["pending", "accepted"].includes(x.state)) ??
+      [],
+    done = c.data?.items.filter((x) => x.state === "completed") ?? [],
+    answered = r.data?.items.some(
+      (x) => Object.keys(x.answers).length === x.questions.length,
+    );
+  return (
+    <>
+      <PageHead
+        kicker="Seu espaço no ORVOK"
+        title={
+          profile?.displayName
+            ? `Que bom te ver, ${profile.displayName.split(" ")[0]}.`
+            : "Uma nova perspectiva começa aqui."
+        }
+        text="Pessoas próximas. Ideias diferentes. Um mundo para descobrir juntos."
+      />
+      <section className="home-invitation">
+        <div>
+          <span className="eyebrow">A pergunta que aproxima</span>
+          <h2>
+            Quem conhece
+            <br />o seu outro lado?
+          </h2>
+          <p>
+            {answered
+              ? "Suas escolhas estão prontas. Convide alguém e descubra o que essa pessoa percebe em você."
+              : "Comece respondendo sobre você. Depois, deixe alguém tentar adivinhar suas escolhas."}
+          </p>
+          <Link href="/sobre-mim" className="button button-light">
+            {answered ? "Preparar um convite" : "Começar por mim"} ↗
+          </Link>
+        </div>
+        <div className="home-invitation-art" aria-hidden="true">
+          <span>seu olhar</span>
+          <b>↔</b>
+          <span>outro olhar</span>
+          <small>O interessante está na conversa.</small>
+        </div>
+      </section>
+      <div className="social-columns">
+        <section>
+          <div className="section-title">
+            <h2>Entre pessoas e ideias</h2>
+            <span>Comunidade</span>
+          </div>
+          <Feed embedded />
+        </section>
+        <aside className="home-aside">
+          <section className="paper-panel">
+            <span className="eyebrow">Sua próxima descoberta</span>
+            <h3>
+              {pending.length
+                ? `${pending.length} conexão(ões) em andamento`
+                : "Toda conexão começa com curiosidade."}
+            </h3>
+            {c.error ? (
+              <p role="alert">{c.error}</p>
+            ) : !c.data ? (
+              <p>Carregando suas conexões…</p>
+            ) : (
+              <p>
+                {pending.length
+                  ? "Veja quem já aceitou e continue de onde vocês pararam."
+                  : "Amigos, família ou crush: cada relação conhece um lado seu."}
+              </p>
+            )}
+            <Link className="text-link" href="/conexoes">
+              Acompanhar convites ↗
+            </Link>
+          </section>
+          <section className="world-teaser">
+            <span className="eyebrow">Prever juntos</span>
+            <h3>Vocês veem o mesmo futuro?</h3>
+            <p>
+              Escolha um acontecimento. Faça sua previsão. Convide alguém para
+              tentar antecipá-la.
+            </p>
+            <Link href="/mundo" className="button">
+              Explorar o mundo ↗
+            </Link>
+          </section>
+          <section className="paper-panel">
+            <span className="eyebrow">Mais sobre você</span>
+            <h3>Você não cabe em 12 respostas.</h3>
+            <p>
+              Novas rodadas, outros assuntos. Até três perguntas novas por dia,
+              quando você quiser.
+            </p>
+            <Link href="/sobre-mim" className="text-link">
+              Continuar me descobrindo ↗
+            </Link>
+          </section>
+        </aside>
+      </div>
+      {!!done.length && (
+        <section className="section-space">
+          <div className="section-title">
+            <h2>Tem outro olhar esperando por você.</h2>
+            <Link href="/descobertas" className="text-link">
+              Ver descobertas ↗
+            </Link>
+          </div>
+          <div className="connection-grid">
+            {done.slice(0, 3).map((c) => (
+              <ConnectionCard key={c.id} connection={c} />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}

@@ -1,4 +1,2 @@
-import { AppShell } from "../../components/app/AppShell";
-import { World } from "../../components/app/World";
-export const metadata = { title: "Mundo" };
-export default function EventsPage() { return <AppShell title="Mundo"><World /></AppShell>; }
+import {redirect} from "next/navigation";
+export default function Page(){redirect("/mundo");}

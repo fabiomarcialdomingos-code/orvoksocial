@@ -11,7 +11,7 @@ function Head({ title, text, children }: { title: string; text: string; children
 }
 
 /* ---------- Feed ---------- */
-export function Feed() {
+export function Feed({embedded=false}:{embedded?:boolean}) {
   const { toast, profile } = useShell();
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [people, setPeople] = useState<Map<string, Profile>>(new Map());
@@ -39,8 +39,8 @@ export function Feed() {
 
   return (
     <>
-      <Head title="Feed" text="O que as pessoas estão percebendo sobre si, sobre os outros e sobre o mundo. Posts de grupos aparecem só para quem é membro." />
-      <div className="grid-main">
+      {!embedded&&<Head title="Conversas" text="O que as pessoas estão percebendo sobre si, sobre os outros e sobre o mundo." />}
+      <div className={embedded?"grid-main embedded-feed":"grid-main"}>
         <section className="card" aria-label="Publicações">
           <form className="post" style={{ paddingTop: 0 }} onSubmit={(e) => { e.preventDefault(); void publish(); }}>
             <span className="avatar">{initials(profile?.displayName)}</span>
@@ -55,7 +55,7 @@ export function Feed() {
             <article className="post" key={p.id}>
               <span className="avatar" data-p="people">{initials(personName(people, p.authorId))}</span>
               <div>
-                <div><strong style={{ fontWeight: 500 }}>{personName(people, p.authorId)}</strong> <span className="faint" style={{ fontSize: 13 }}>{relativeTime(p.createdAt)}</span></div>
+                <div><Link href={`/p/${p.authorId}`}><strong style={{ fontWeight: 500 }}>{personName(people, p.authorId)}</strong></Link> <span className="faint" style={{ fontSize: 13 }}>{relativeTime(p.createdAt)}</span></div>
                 <p className="post-body">{p.body}</p>
                 <div className="post-actions">
                   <button aria-pressed={reacted.has(p.id)} onClick={() => void react(p.id)}>Faz sentido · {p.reactionCount}</button>
@@ -182,12 +182,15 @@ function GroupRow({ group }: { group: Group }) {
 
 /* ---------- Notifications ---------- */
 const labels: Record<string, [string, string]> = {
+  PERSPECTIVE_ACCEPTED: ["Alguém aceitou seu convite", "/conexoes"],
+  PERSPECTIVE_COMPLETED: ["Uma nova descoberta está pronta", "/descobertas"],
+  PERSPECTIVE_MESSAGE: ["Você recebeu uma mensagem na conexão", "/conexoes"],
   RADAR_INVITATION_CREATED: ["Novo pedido para prever você", "/convites"],
   RADAR_INVITED: ["Novo pedido para prever você", "/convites"],
   RADAR_INVITATION_ACCEPTED: ["Seu pedido foi aceito", "/convites"],
   RADAR_CONSENT_GRANTED: ["Alguém consentiu ser prevista por você", "/previsao"],
   RADAR_CONSENT_REVOKED: ["Um consentimento foi revogado", "/convites"],
-  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/resultado"],
+  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/historico"],
   RADAR_SHARE_LINK_REDEEMED: ["Alguém aceitou o seu convite", "/convites"],
   GROUP_INVITATION: ["Convite para um grupo", "/grupos"],
 };
