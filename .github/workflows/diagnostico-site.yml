@@ -26,6 +26,15 @@ jobs:
           echo "resumo=$ru" >> "$GITHUB_OUTPUT"
       - name: "Google ${{ steps.g.outputs.resumo }}"
         run: "true"
+      - name: Permissoes
+        id: pm
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          r=$(psql "$DATABASE_URL" -At -c "SELECT string_agg(t || ':' || p, ' ') FROM (SELECT t, p FROM unnest(ARRAY['WorldComment','WorldReaction','WorldPrediction','SocialPost','SocialComment','SocialReaction','UserProfile','Notification']) t, unnest(ARRAY['SELECT','INSERT','UPDATE']) p WHERE NOT has_table_privilege('orvok_app_runtime', format('public.%I', t), p)) x")
+          echo "resumo=faltando: ${r:-nada}" >> "$GITHUB_OUTPUT"
+      - name: "Permissoes ${{ steps.pm.outputs.resumo }}"
+        run: "true"
       - name: Banco
         id: b
         env:
