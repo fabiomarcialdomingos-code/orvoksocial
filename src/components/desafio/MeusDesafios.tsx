@@ -8,6 +8,12 @@ type Dados = { logado: boolean; desafios: { codigo: string; criadoEm: string; te
 /** Resultado dos desafios. Ao entrar logado, vincula à conta o que foi feito sem cadastro. */
 export function MeusDesafios() {
   const [d, setD] = useState<Dados | null>(null);
+  const [confirmar, setConfirmar] = useState<string | null>(null);
+  const cancelar = async (codigo: string) => {
+    const r = await enviarJson(`/api/v1/desafio/${codigo}/cancelar`, {});
+    if (r.ok && d) setD({ ...d, desafios: d.desafios.filter((c) => c.codigo !== codigo) });
+    setConfirmar(null);
+  };
   useEffect(() => {
     void (async () => {
       await enviarJson("/api/v1/desafio/reivindicar", {}).catch(() => undefined);
@@ -34,6 +40,14 @@ export function MeusDesafios() {
                     {d.logado && t.score !== undefined ? <strong>{t.score} de {t.total}</strong> : <span className={s.miudo}>placar com a conta</span>}
                   </div>
                 ))}
+                {confirmar === c.codigo ? (
+                  <div className={s.linhaBtn}>
+                    <button className={`${s.btn} ${s.btnFio}`} type="button" onClick={() => void cancelar(c.codigo)}>Sim, cancelar</button>
+                    <button className={`${s.btn} ${s.btnTexto}`} type="button" onClick={() => setConfirmar(null)}>Manter</button>
+                  </div>
+                ) : (
+                  <button className={`${s.btn} ${s.btnTexto}`} type="button" onClick={() => setConfirmar(c.codigo)}>Cancelar este convite</button>
+                )}
               </article>
             ))}
           </div>

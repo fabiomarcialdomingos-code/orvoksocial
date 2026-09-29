@@ -154,6 +154,20 @@ export class DesafioService {
     };
   }
 
+  /**
+   * Cancela o convite: o link para de funcionar e ninguém mais consegue prever.
+   * Vale para o aparelho que criou ou para a conta que reivindicou o desafio.
+   */
+  async cancelar(codigo: string, token: string | null, userId: string | null): Promise<void> {
+    if (!token && !userId) throw new AuthError("FORBIDDEN", 403);
+    const r = await this.pool.query(
+      `UPDATE "GuestChallenge" SET "revokedAt"=clock_timestamp()
+        WHERE code=$1 AND "revokedAt" IS NULL AND ("ownerTokenHash"=$2 OR ($3::uuid IS NOT NULL AND "claimedByUserId"=$3))`,
+      [codigoSchema.parse(codigo), token ? tokenHash(token) : "", userId],
+    );
+    if (!r.rowCount) throw new AuthError("NOT_FOUND", 404);
+  }
+
   /** Liga à conta tudo o que este aparelho fez antes do cadastro. */
   async reivindicar(token: string, userId: string): Promise<number> {
     const dono = tokenHash(token);

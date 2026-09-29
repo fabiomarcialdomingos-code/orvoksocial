@@ -33,6 +33,9 @@ ok((await svc.reivindicar(dono, userId)) === 1, "cadastro vincula o desafio à c
 const comConta = await svc.meus(null, userId);
 const t0 = comConta.desafios[0]!.tentativas[0]!;
 ok("score" in t0 && t0.score === 8, "com conta: placar aparece, mesmo em outro aparelho");
+try { await svc.cancelar(codigo, t1.token, null); ok(false, "estranho não cancela"); } catch (e) { ok((e as {status?:number}).status === 404, "quem não criou não consegue cancelar"); }
+await svc.cancelar(codigo, dono, null);
+try { await svc.vitrine(codigo, null); ok(false, "cancelado"); } catch (e) { ok((e as {status?:number}).status === 404, "convite cancelado para de funcionar"); }
 try { await svc.vitrine("AAAAAAAA", null); ok(false, "inexistente"); } catch (e) { ok((e as {status?:number}).status === 404, "código inexistente dá 404"); }
 await pool.end(); await adm.end();
 console.log("TODOS OS TESTES PASSARAM");
