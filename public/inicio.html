@@ -54,7 +54,10 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 
 /* ---------- estrutura ---------- */
 .app{position:relative;z-index:1;display:grid;grid-template-columns:248px minmax(0,600px) 340px;gap:28px;justify-content:center;max-width:1280px;margin:0 auto;padding:0 20px}
-.lateral{position:sticky;top:0;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:20px 0 24px;gap:6px}
+.lateral{position:sticky;top:0;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:20px 0 24px;gap:6px;overflow-y:auto;scrollbar-width:none}
+.lateral::-webkit-scrollbar{display:none}
+@media (max-height:900px){.menu a{padding:9px 14px;font-size:16px}.marca{padding-bottom:10px}.prever{min-height:46px;margin-top:8px}.visitante p{display:none}.visitante{padding:14px}}
+@media (max-height:760px){.visitante{display:none}}
 .centro{min-height:100vh;background:color-mix(in srgb,var(--sup) 90%,transparent);border-inline:1px solid var(--fio)}
 .direita{position:sticky;top:0;height:100vh;height:100dvh;overflow-y:auto;padding:16px 0 32px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none}
 .direita::-webkit-scrollbar{display:none}
@@ -108,7 +111,11 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 .abas button[aria-selected="true"]::after{content:"";position:absolute;left:50%;bottom:0;width:56px;height:3px;border-radius:3px;transform:translateX(-50%);background:var(--azul);box-shadow:0 0 12px var(--azul)}
 
 /* stories */
-.stories{display:flex;gap:14px;padding:16px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--fio)}
+.stories{display:flex;gap:14px;padding:16px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--fio);scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent)}
+.story{scroll-snap-align:start}
+body.filtrado .stories,body.filtrado .fixado,body.filtrado .compor{display:none}
+[hidden]{display:none!important}
+.vazio-filtro{padding:40px 24px;text-align:center;color:var(--suave)}
 .stories::-webkit-scrollbar{display:none}
 .story{flex:none;width:72px;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;font-size:12px;color:var(--suave)}
 .story .anel{position:relative;width:68px;height:68px;border-radius:50%;padding:3px;transition:transform .3s cubic-bezier(.2,1.6,.4,1);isolation:isolate}
@@ -726,7 +733,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-seguir]'
 
 let filtro='todos';
 function aplicaFiltro(){ $$('.post',feed).forEach(p=>p.hidden=filtro!=='todos'&&p.dataset.f!==filtro); }
-$$('.abas button').forEach(b=>b.addEventListener('click',()=>{ $$('.abas button').forEach(x=>x.setAttribute('aria-selected',x===b)); filtro=b.dataset.filtro; aplicaFiltro(); }));
+$$('.abas button').forEach(b=>b.addEventListener('click',()=>{ $$('.abas button').forEach(x=>x.setAttribute('aria-selected',x===b)); filtro=b.dataset.filtro; document.body.classList.toggle('filtrado', filtro!=='todos'); aplicaFiltro(); scrollTo({top:0,behavior:reduz?'auto':'smooth'}); }));
 
 /* luz que segue o cursor */
 document.addEventListener('pointermove', e=>{ const el=e.target.closest?.('.luz'); if(!el) return; const r=el.getBoundingClientRect(); el.style.setProperty('--mx',(e.clientX-r.left)+'px'); el.style.setProperty('--my',(e.clientY-r.top)+'px'); }, {passive:true});
