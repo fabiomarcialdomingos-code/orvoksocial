@@ -3,9 +3,16 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { apiGet, apiPost, initials, type Profile, type Session } from "../../lib/client/api";
-import { Brand } from "../ui/Brand";
+import { apiGet, apiPost, type Profile, type Session } from "../../lib/client/api";
+import { Globo } from "../desafio/Globo";
+import { BrandMark } from "../ui/Brand";
+import s from "./rede.module.css";
 
+/**
+ * Casca das telas internas, no mesmo desenho da página inicial: menu à esquerda,
+ * conteúdo no centro e a rede viva à direita. Mantém o contexto que as telas usam
+ * (sessão, perfil, avisos e notificações não lidas).
+ */
 type Ctx = {
   session: Session;
   profile: Profile | null;
@@ -22,217 +29,148 @@ export function useShell(): Ctx {
   return value;
 }
 
-type NavItem = { href: string; label: string; p?: "self" | "people" | "world"; keywords?: string };
-const primary: NavItem[] = [
-  { href: "/painel", label: "Início" },
-  { href: "/radar", label: "Radar", p: "people", keywords: "pessoas jornada" },
-  { href: "/eventos", label: "Mundo", p: "world", keywords: "eventos previsões" },
-  { href: "/feed", label: "Feed", keywords: "comunidade posts" },
-];
-const groups: { label: string; items: NavItem[] }[] = [
-  { label: "Você", items: [{ href: "/onboarding", label: "Minha referência", p: "self", keywords: "respostas questionário gabarito" }] },
-  {
-    label: "Pessoas",
-    items: [
-      { href: "/radar", label: "Radar", p: "people" },
-      { href: "/convites", label: "Pedidos", p: "people", keywords: "convites aceitar consentimento" },
-      { href: "/previsao", label: "Prever alguém", p: "people", keywords: "previsão" },
-      { href: "/resultado", label: "O encontro", p: "people", keywords: "resultado comparação" },
-    ],
-  },
-  { label: "Mundo", items: [{ href: "/eventos", label: "Eventos", p: "world" }] },
-  { label: "Comunidade", items: [{ href: "/feed", label: "Feed" }, { href: "/grupos", label: "Grupos" }] },
+const ICONES = {
+  casa: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
+  alvo: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></>,
+  radar: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><path d="M12 12 18 6" /></>,
+  globo: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></>,
+  sino: <><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>,
+  perfil: <><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4.5 4-7 8-7s7 2.5 8 7" /></>,
+  mais: <path d="M12 5v14M5 12h14" />,
+  escudo: <><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z" /></>,
+  sair: <><path d="M15 4h4v16h-4" /><path d="M10 8l-4 4 4 4M6 12h10" /></>,
+  casaRel: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />,
+  pessoas: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-4 3.3-6 6.5-6s5.7 2 6.5 6" /><circle cx="17" cy="9" r="2.8" /><path d="M16 14c3 .2 4.8 2.2 5.5 5.5" /></>,
+  coracao: <path d="M12 20s-7.5-4.4-9-9.2C2 7.4 4.2 4.5 7.4 4.5c2 0 3.5 1.1 4.6 2.7 1.1-1.6 2.6-2.7 4.6-2.7 3.2 0 5.4 2.9 4.4 6.3-1.5 4.8-9 9.2-9 9.2z" />,
+};
+export type NomeIcone = keyof typeof ICONES;
+export function IconeRede({ nome }: { nome: NomeIcone }) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONES[nome]}</svg>;
+}
+
+/** Avatar de inicial com o gradiente da identidade (âmbar para você, azul para os outros). */
+export function Avatar({ nome, tamanho = 44, voce }: { nome: string; tamanho?: number; voce?: boolean }) {
+  return (
+    <span className={`${s.avatar} ${voce ? s.avatarVoce : ""}`} style={{ width: tamanho, height: tamanho, fontSize: Math.round(tamanho * 0.4) }} aria-hidden="true">
+      {(nome.trim()[0] ?? "?").toUpperCase()}
+    </span>
+  );
+}
+
+const MENU: { href: string; rotulo: string; icone: NomeIcone; ativo?: string[] }[] = [
+  { href: "/painel", rotulo: "Início", icone: "casa", ativo: ["/painel", "/feed"] },
+  { href: "/desafios", rotulo: "Desafios", icone: "alvo" },
+  { href: "/radar", rotulo: "Meu radar", icone: "radar" },
+  { href: "/eventos", rotulo: "Mundo", icone: "globo" },
+  { href: "/notificacoes", rotulo: "Notificações", icone: "sino" },
+  { href: "/perfil", rotulo: "Perfil", icone: "perfil", ativo: ["/perfil", "/meus-dados"] },
 ];
 
-export function AppShell({ title, children }: { title: string; children: ReactNode }) {
+export function AppShell({ title, children, largo, lateral }: { title: string; children: ReactNode; largo?: boolean; lateral?: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [toastState, setToastState] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
-  const [palette, setPalette] = useState(false);
   const [unread, setUnread] = useState(0);
-
   const toast = useCallback((text: string, kind: "ok" | "error" = "ok") => {
     setToastState({ text, kind });
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => setToastState(null), 4200);
   }, []);
-
   const refreshUnread = useCallback(() => {
     apiGet<{ items: { state: string }[] }>("/notifications")
       .then((data) => setUnread(data.items.filter((item) => item.state === "UNREAD").length))
       .catch(() => undefined);
   }, []);
-
   useEffect(() => {
     let active = true;
     fetch("/api/v1/auth/session?optional=1", { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? (r.json() as Promise<Session>) : { authenticated: false }))
       .then(async (data) => {
         if (!active) return;
-        if (!data.authenticated) {
-          router.replace(`/entrar?returnTo=${encodeURIComponent(pathname)}`);
-          return;
-        }
+        if (!data.authenticated) { router.replace(`/entrar?returnTo=${encodeURIComponent(pathname)}`); return; }
         setSession(data);
         const result = await apiGet<{ profile: Profile | null }>("/social/profile").catch(() => ({ profile: null }));
         if (active) setProfile(result.profile);
         refreshUnread();
-        // A share link opened before signing up: turn it into a Radar request now.
-        let pending: string | null = null;
-        try { pending = localStorage.getItem("orvok:convite") ?? sessionStorage.getItem("orvok:convite"); } catch { /* storage off */ }
-        if (pending) {
-          try { localStorage.removeItem("orvok:convite"); sessionStorage.removeItem("orvok:convite"); } catch { /* ignore */ }
-          let hasGuess = false;
-          try { hasGuess = Boolean(localStorage.getItem(`orvok:convite-palpite:${pending}`)); } catch { /* storage off */ }
-          apiPost<{ ownerId: string; created: boolean }>("/radar/share-links/redeem", { code: pending })
-            .then(() => toast(hasGuess
-              ? "Desafio aceito. Seu palpite ficou guardado; responda a sua referência para poder confirmá-lo assim que a pessoa consentir."
-              : "Desafio aceito. Seu pedido foi enviado; responda a sua referência enquanto a pessoa consente."))
-            .catch(() => undefined);
-        }
+        // Desafios feitos neste aparelho antes do cadastro passam para a conta.
+        void fetch("/api/v1/desafio/reivindicar", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", credentials: "same-origin" }).catch(() => undefined);
       })
       .catch(() => router.replace("/entrar"));
     return () => { active = false; };
-  }, [router, pathname, refreshUnread, toast]);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPalette((open) => !open);
-      }
-      if (event.key === "Escape") setPalette(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [router, pathname, refreshUnread]);
 
   const logout = async () => {
     await apiPost("/auth/logout").catch(() => undefined);
-    router.replace("/entrar");
+    router.replace("/");
+    router.refresh();
   };
-
   const value = useMemo<Ctx | null>(() => (session ? { session, profile, setProfile, toast, unread, refreshUnread } : null),
     [session, profile, toast, unread, refreshUnread]);
+  const nome = profile?.displayName ?? "Você";
+  const ativo = (item: (typeof MENU)[number]) => (item.ativo ?? [item.href]).some((h) => pathname === h || pathname.startsWith(`${h}/`));
 
-  const isAdmin = session?.role === "ADMIN" || session?.role === "MODERATOR";
-  const current = (href: string) => (pathname === href ? "page" : undefined);
-  const name = profile?.displayName ?? "Seu perfil";
+  if (!value) return <div className={s.carregando} aria-busy="true"><span className={s.marcaGrande}><BrandMark size={44} /></span></div>;
 
   return (
-    <div className="shell">
-      <aside className="rail" aria-label="Navegação do aplicativo">
-        <Brand href="/painel" />
-        <div className="rail-group rail-primary rail-mobile-only">
-          {primary.map((item) => (
-            <Link key={item.href} href={item.href} aria-current={current(item.href)} data-p={item.p}>
-              <span className="dot" />{item.label}
-            </Link>
-          ))}
-        </div>
-        <div className="rail-group">
-          <Link href="/painel" aria-current={current("/painel")}><span className="dot" />Início</Link>
-        </div>
-        {groups.map((group) => (
-          <div className="rail-group" key={group.label}>
-            <span className="rail-label">{group.label}</span>
-            {group.items.map((item) => (
-              <Link key={item.href + item.label} href={item.href} aria-current={current(item.href)} data-p={item.p}>
-                <span className="dot" />{item.label}
+    <ShellContext.Provider value={value}>
+      <div className={`${s.shell} ${largo ? s.shellLargo : ""}`}>
+        <aside className={s.lateral} aria-label="Navegação principal">
+          <Link className={s.marca} href="/painel"><BrandMark size={32} /><span>orvok</span></Link>
+          <nav className={s.menu}>
+            {MENU.map((item) => (
+              <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined}>
+                <IconeRede nome={item.icone} /><span>{item.rotulo}</span>
+                {item.href === "/notificacoes" && unread > 0 ? <b className={s.bolha}>{unread}</b> : null}
               </Link>
             ))}
+            {session?.role === "ADMIN" ? <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined}><IconeRede nome="escudo" /><span>Quartel general</span></Link> : null}
+          </nav>
+          <Link className={`${s.btn} ${s.btnAzul} ${s.desafiar}`} href="/comecar"><IconeRede nome="mais" /><span>Desafiar alguém</span></Link>
+          <div className={s.eu}>
+            <Avatar nome={nome} tamanho={40} voce />
+            <span className={s.euNome}><b>{nome}</b><small>Sua conta</small></span>
+            <button type="button" className={s.sair} onClick={() => void logout()} aria-label="Sair"><IconeRede nome="sair" /></button>
           </div>
-        ))}
-        <div className="rail-group rail-bottom">
-          <Link href="/notificacoes" aria-current={current("/notificacoes")}>
-            <span className="dot" />Notificações{unread > 0 && <span className="badge">{unread}</span>}
-          </Link>
-          <Link href="/perfil" aria-current={current("/perfil")}><span className="dot" />Perfil</Link>
-          <Link href="/meus-dados" aria-current={current("/meus-dados")}><span className="dot" />Privacidade e dados</Link>
-          {isAdmin && <Link href="/admin" aria-current={current("/admin")}><span className="dot" />Quartel general</Link>}
-          <button type="button" className="rail-link" onClick={() => void logout()}><span className="dot" />Sair</button>
-        </div>
-      </aside>
-      <div>
-        <header className="topbar">
-          <span className="topbar-title"><strong>{title}</strong></span>
-          <button type="button" className="command-trigger" onClick={() => setPalette(true)} aria-label="Abrir busca de comandos">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <span>Ir para…</span><kbd>Ctrl K</kbd>
-          </button>
-          <Link href="/perfil" className="avatar" aria-label={`Perfil de ${name}`}>{initials(profile?.displayName)}</Link>
-        </header>
-        <main id="conteudo" className="page">
-          {value ? <ShellContext.Provider value={value}>{children}</ShellContext.Provider> : <ShellSkeleton />}
+        </aside>
+
+        <main className={s.centro} id="conteudo">
+          <header className={s.topo}>
+            <Link className={s.marcaMovel} href="/painel"><BrandMark size={28} />orvok</Link>
+            <h1>{title}</h1>
+          </header>
+          <div className={s.conteudo}>{children}</div>
         </main>
+
+        {largo ? null : (
+          <aside className={s.direita} aria-label="Descobrir">
+            {lateral}
+            <section className={`${s.caixa} ${s.caixaRede}`}>
+              <h3>Rede ao vivo</h3>
+              <p className={s.sub}>Cada arco é alguém tentando prever alguém.</p>
+              <div className={s.rede}><Globo opcoes={{ pontos: 900, pessoas: 22, arcos: 9, escala: 0.36, velocidade: 0.0022, montagem: 1.4, malha: true, giroInicial: 2.1 }} /></div>
+            </section>
+            <section className={s.caixa}>
+              <h3>Quem te conhece melhor?</h3>
+              <p className={s.sub}>Cada relação tem perguntas próprias.</p>
+              <div className={s.relacoes}>
+                <Link href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
+                <Link href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
+                <Link href="/comecar?rel=crush"><IconeRede nome="coracao" />Crush</Link>
+              </div>
+            </section>
+            <nav className={s.rodape} aria-label="Links"><Link href="/meus-dados">Meus dados</Link><Link href="/perfil">Perfil</Link><span>© orvok 2026</span></nav>
+          </aside>
+        )}
       </div>
-      {palette && <Palette isAdmin={isAdmin} onClose={() => setPalette(false)} onLogout={logout} />}
+
+      <nav className={s.abasMovel} aria-label="Navegação">
+        {MENU.filter((m) => m.href !== "/notificacoes").slice(0, 2).map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
+        <Link className={s.meio} href="/comecar" aria-label="Desafiar alguém"><IconeRede nome="mais" /></Link>
+        {[MENU[2]!, MENU[5]!].map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
+      </nav>
       {toastState && <div className="toast" role={toastState.kind === "error" ? "alert" : "status"} data-kind={toastState.kind}>{toastState.text}</div>}
-    </div>
-  );
-}
-
-function ShellSkeleton() {
-  return (
-    <div className="stack" aria-busy="true" aria-label="Carregando">
-      <div className="skeleton" style={{ width: "40%", height: 36 }} />
-      <div className="skeleton" style={{ width: "65%" }} />
-      <div className="grid-3" style={{ marginTop: 24 }}>
-        <div className="skeleton" style={{ height: 140 }} /><div className="skeleton" style={{ height: 140 }} /><div className="skeleton" style={{ height: 140 }} />
-      </div>
-    </div>
-  );
-}
-
-function Palette({ isAdmin, onClose, onLogout }: { isAdmin: boolean; onClose: () => void; onLogout: () => void }) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [active, setActive] = useState(0);
-  const items = useMemo(() => {
-    const all: (NavItem & { hint: string; run?: () => void })[] = [
-      { href: "/painel", label: "Início", hint: "Painel" },
-      ...groups.flatMap((group) => group.items.map((item) => ({ ...item, hint: group.label }))),
-      { href: "/notificacoes", label: "Notificações", hint: "Conta" },
-      { href: "/perfil", label: "Perfil", hint: "Conta" },
-      { href: "/meus-dados", label: "Privacidade e dados", hint: "Conta", keywords: "exportar excluir lgpd" },
-      ...(isAdmin ? [{ href: "/admin", label: "Quartel general", hint: "Administração" }, { href: "/admin/catalogo", label: "Pré-cadastros", hint: "Administração" }] : []),
-      { href: "#", label: "Sair da conta", hint: "Conta", run: onLogout },
-    ];
-    const q = query.trim().toLowerCase();
-    return all.filter((item, index, list) => list.findIndex((other) => other.href === item.href && other.label === item.label) === index)
-      .filter((item) => !q || `${item.label} ${item.hint} ${item.keywords ?? ""}`.toLowerCase().includes(q));
-  }, [query, isAdmin, onLogout]);
-
-  const go = (index: number) => {
-    const item = items[index];
-    if (!item) return;
-    onClose();
-    if (item.run) item.run(); else router.push(item.href);
-  };
-
-  return (
-    <div className="palette-backdrop" onClick={onClose}>
-      <div className="palette" role="dialog" aria-modal="true" aria-label="Ir para" onClick={(event) => event.stopPropagation()}>
-        <input autoFocus value={query} placeholder="Para onde você quer ir?" aria-label="Buscar"
-          onChange={(event) => { setQuery(event.target.value); setActive(0); }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowDown") { event.preventDefault(); setActive((i) => Math.min(items.length - 1, i + 1)); }
-            if (event.key === "ArrowUp") { event.preventDefault(); setActive((i) => Math.max(0, i - 1)); }
-            if (event.key === "Enter") go(active);
-          }} />
-        <ul role="listbox">
-          {items.map((item, index) => (
-            <li key={item.href + item.label}>
-              <button type="button" data-active={index === active} onMouseEnter={() => setActive(index)} onClick={() => go(index)} data-p={item.p}>
-                <span className="dot" />{item.label}<small>{item.hint}</small>
-              </button>
-            </li>
-          ))}
-          {!items.length && <li className="faint" style={{ padding: 12 }}>Nada com esse nome.</li>}
-        </ul>
-      </div>
-    </div>
+    </ShellContext.Provider>
   );
 }

@@ -191,10 +191,10 @@ export class DesafioService {
   async meus(token: string | null, userId: string | null) {
     if (!token && !userId) return { desafios: [], logado: false };
     const r = await this.pool.query<{
-      code: string; createdAt: Date; creatorName: string;
+      code: string; createdAt: Date; creatorName: string; relation: Contexto;
       tentativas: { nome: string | null; score: number; total: number; em: string }[] | null;
     }>(
-      `SELECT c.code,c."createdAt",c."creatorName",
+      `SELECT c.code,c."createdAt",c."creatorName",c.relation,
               (SELECT jsonb_agg(jsonb_build_object('nome',a."predictorName",'score',a.score,'total',a.total,'em',a."createdAt") ORDER BY a."createdAt" DESC)
                  FROM "GuestChallengeAttempt" a WHERE a."challengeId"=c.id) AS tentativas
          FROM "GuestChallenge" c
@@ -208,6 +208,8 @@ export class DesafioService {
       desafios: r.rows.map((c) => ({
         codigo: c.code,
         criadoEm: c.createdAt,
+        relacao: c.relation,
+        nome: c.creatorName,
         tentativas: (c.tentativas ?? []).map((t) => (logado ? t : { nome: t.nome, em: t.em })),
       })),
     };
@@ -225,6 +227,19 @@ export class DesafioService {
       [codigoSchema.parse(codigo), token ? tokenHash(token) : "", userId],
     );
     if (!r.rowCount) throw new AuthError("NOT_FOUND", 404);
+  }
+
+  /** Desafios que esta pessoa tentou prever (neste aparelho ou na conta), com o placar dela. */
+  async recebidos(token: string | null, userId: string | null) {
+    if (!token && !userId) return [];
+    const r = await this.pool.query<{ code: string; creatorName: string; relation: Contexto; score: number; total: number; createdAt: Date }>(
+      `SELECT c.code,c."creatorName",c.relation,a.score,a.total,a."createdAt"
+         FROM "GuestChallengeAttempt" a JOIN "GuestChallenge" c ON c.id=a."challengeId"
+        WHERE a."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND a."claimedByUserId"=$2)
+        ORDER BY a."createdAt" DESC LIMIT 50`,
+      [token ? tokenHash(token) : "", userId],
+    );
+    return r.rows.map((x) => ({ codigo: x.code, nome: x.creatorName, relacao: x.relation, acertos: x.score, total: x.total, em: x.createdAt }));
   }
 
   /** Liga à conta tudo o que este aparelho fez antes do cadastro. */

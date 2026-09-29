@@ -1,4 +1,4 @@
 import { AppShell } from "../../components/app/AppShell";
-import { RadarHub } from "../../components/app/Home";
-export const metadata = { title: "Radar" };
-export default function RadarPage() { return <AppShell title="Radar"><RadarHub /></AppShell>; }
+import { RadarVivo } from "../../components/rede/RadarVivo";
+export const metadata = { title: "Meu radar" };
+export default function RadarPage() { return <AppShell title="Meu radar"><RadarVivo /></AppShell>; }

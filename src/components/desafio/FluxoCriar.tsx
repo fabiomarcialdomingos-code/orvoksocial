@@ -34,12 +34,12 @@ const TONS: Record<Relacao, [string, (amigo: string) => string][]> = {
 };
 
 /** Percurso de quem chega pelo anúncio: responde sobre si e desafia alguém, sem cadastro. */
-export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: string | null; conjuntoDe: string | null }) {
+export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null }: { desafiarDeVolta: string | null; conjuntoDe: string | null; relacaoInicial?: Relacao | null }) {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [aviso, setAviso] = useState<Aviso | null>(null);
-  const [tela, setTela] = useState<Tela>(conjuntoDe ? "nome" : "relacao");
-  const [relacao, setRelacao] = useState<Relacao>("amigos");
-  const [escolheu, setEscolheu] = useState(false);
+  const [tela, setTela] = useState<Tela>(conjuntoDe || relacaoInicial ? "nome" : "relacao");
+  const [relacao, setRelacao] = useState<Relacao>(relacaoInicial ?? "amigos");
+  const [escolheu, setEscolheu] = useState(Boolean(relacaoInicial));
   const [nome, setNome] = useState("");
   const [i, setI] = useState(0);
   const [respostas, setRespostas] = useState<(number | undefined)[]>([]);

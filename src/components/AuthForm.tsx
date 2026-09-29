@@ -131,7 +131,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: String(fields.get("email") ?? "").trim(), password: String(fields.get("password") ?? "") }),
         });
-        if (login.ok) router.push("/onboarding?novo=1");
+        if (login.ok) router.push("/painel");
       }
     } catch {
       setMessage({

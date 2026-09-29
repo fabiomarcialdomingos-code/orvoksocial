@@ -182,13 +182,13 @@ function GroupRow({ group }: { group: Group }) {
 
 /* ---------- Notifications ---------- */
 const labels: Record<string, [string, string]> = {
-  RADAR_INVITATION_CREATED: ["Novo pedido para prever você", "/convites"],
-  RADAR_INVITED: ["Novo pedido para prever você", "/convites"],
-  RADAR_INVITATION_ACCEPTED: ["Seu pedido foi aceito", "/convites"],
-  RADAR_CONSENT_GRANTED: ["Alguém consentiu ser prevista por você", "/previsao"],
-  RADAR_CONSENT_REVOKED: ["Um consentimento foi revogado", "/convites"],
-  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/resultado"],
-  RADAR_SHARE_LINK_REDEEMED: ["Alguém aceitou o seu convite", "/convites"],
+  RADAR_INVITATION_CREATED: ["Novo pedido para prever você", "/desafios"],
+  RADAR_INVITED: ["Novo pedido para prever você", "/desafios"],
+  RADAR_INVITATION_ACCEPTED: ["Seu pedido foi aceito", "/desafios"],
+  RADAR_CONSENT_GRANTED: ["Alguém consentiu ser prevista por você", "/desafios"],
+  RADAR_CONSENT_REVOKED: ["Um consentimento foi revogado", "/desafios"],
+  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/radar"],
+  RADAR_SHARE_LINK_REDEEMED: ["Alguém aceitou o seu convite", "/desafios"],
   GROUP_INVITATION: ["Convite para um grupo", "/grupos"],
 };
 

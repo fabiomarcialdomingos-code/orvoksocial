@@ -25,6 +25,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const [prev, setPrev] = useState<(number | undefined)[]>([]);
   const [placar, setPlacar] = useState<{ acertos: number; total: number } | null>(null);
   const [contagem, setContagem] = useState(0);
+  const [meuNome, setMeuNome] = useState("");
 
   useEffect(() => {
     void fetch(`/api/v1/desafio/${encodeURIComponent(codigo)}`).then(async (r) => {
@@ -45,7 +46,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   }, [tela, placar]);
 
   const concluir = async (lista: (number | undefined)[]) => {
-    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { previsoes: lista.map((x) => LETRAS[x ?? 0]) });
+    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { nome: meuNome.trim(), previsoes: lista.map((x) => LETRAS[x ?? 0]) });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este desafio é seu. Envie o link para alguém tentar te prever." : "Não foi possível registrar agora. Tente de novo."); return; }
     setPlacar(r.dados); setTela("placar");
   };
@@ -73,8 +74,13 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <div className={s.centro}><span className={s.chipRelacao}>{{ familia: "Desafio de família", amigos: "Desafio de amigos", crush: "Desafio de crush" }[v.relacao]}</span></div>
         <h1 className={`${s.titulo} ${s.centro}`}>{v.nome} <b>te desafiou.</b></h1>
         <p className={`${s.lead} ${s.centro}`}>{v.nome} respondeu 10 perguntas sobre si. Quanto você acha que conhece essa pessoa?</p>
-        <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Você não vê as respostas de {v.nome}, e {v.nome} não vê as suas escolhas: os dois veem só o placar.</p>
-        <div className={s.empurra}><button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button></div>
+        <div className={s.campo}>
+          <label htmlFor="meu-nome">Como {v.nome} te chama?</label>
+          <input id="meu-nome" autoComplete="given-name" maxLength={24} placeholder="Seu primeiro nome" value={meuNome} onChange={(e) => setMeuNome(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && meuNome.trim().length >= 2) setTela("prever"); }} />
+        </div>
+        <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Seu nome aparece para {v.nome} junto com o placar. Você não vê as respostas de {v.nome}, e {v.nome} não vê as suas escolhas.</p>
+        <div className={s.empurra}><button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={meuNome.trim().length < 2} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button></div>
       </main>
     </Moldura>
   );
