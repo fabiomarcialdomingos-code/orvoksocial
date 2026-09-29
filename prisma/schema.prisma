@@ -97,6 +97,8 @@ model User {
   socialPredictionsMade     SocialPredictionSnapshot[]  @relation("SocialPredictor")
   socialPredictionsReceived SocialPredictionSnapshot[]  @relation("SocialTarget")
   auditActions              AuditLog[]                  @relation("AuditActor")
+  guestChallengesClaimed    GuestChallenge[]            @relation("GuestChallengeClaimer")
+  guestAttemptsClaimed      GuestChallengeAttempt[]     @relation("GuestAttemptClaimer")
   radarInvitationsSent      RadarInvitation[]           @relation("RadarInviter")
   radarInvitationsReceived  RadarInvitation[]           @relation("RadarInvitee")
   authIdentity              AuthIdentity?
@@ -496,4 +498,46 @@ model EvidenceAssessment {
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
 
   @@index([domain, subjectId, assessedAt])
+}
+
+/// Desafio criado antes do cadastro (fluxo do anúncio). Ver migração 20260929000000.
+model GuestChallenge {
+  id                   String                  @id @db.Uuid
+  code                 String                  @unique @db.VarChar(12)
+  creatorName          String                  @db.VarChar(24)
+  catalogVersion       String                  @db.VarChar(80)
+  answers              Json
+  consentNoticeVersion String                  @db.VarChar(80)
+  consentNoticeHash    String                  @db.VarChar(64)
+  consentedAt          DateTime                @db.Timestamptz(6)
+  ownerTokenHash       String                  @db.VarChar(64)
+  claimedByUserId      String?                 @db.Uuid
+  claimedBy            User?                   @relation("GuestChallengeClaimer", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+  claimedAt            DateTime?               @db.Timestamptz(6)
+  revokedAt            DateTime?               @db.Timestamptz(6)
+  expiresAt            DateTime                @db.Timestamptz(6)
+  createdAt            DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  attempts             GuestChallengeAttempt[]
+
+  @@index([ownerTokenHash], map: "GuestChallenge_owner_idx")
+  @@index([claimedByUserId], map: "GuestChallenge_claimed_idx")
+}
+
+/// Tentativa de prever quem criou o desafio, também sem cadastro.
+model GuestChallengeAttempt {
+  id              String         @id @db.Uuid
+  challengeId     String         @db.Uuid
+  challenge       GuestChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  predictorName   String?        @db.VarChar(24)
+  predictions     Json
+  score           Int            @db.SmallInt
+  total           Int            @db.SmallInt
+  ownerTokenHash  String         @db.VarChar(64)
+  claimedByUserId String?        @db.Uuid
+  claimedBy       User?          @relation("GuestAttemptClaimer", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@unique([challengeId, ownerTokenHash], map: "guest_attempt_one_per_device")
+  @@index([challengeId, createdAt], map: "GuestChallengeAttempt_challenge_idx")
+  @@index([ownerTokenHash], map: "GuestChallengeAttempt_owner_idx")
 }
