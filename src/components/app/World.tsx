@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost, describeError, loadPeople, personName, relativeTime, type Profile, type WorldEvent } from "../../lib/client/api";
-import { IconeRede, useShell } from "./AppShell";
+import { useShell } from "./AppShell";
 import r from "../rede/rede.module.css";
 
 type Mine = { eventId: string; opportunityId: string; confidence: string | number; predictedAt: string };
@@ -61,52 +61,103 @@ export function World() {
   );
 }
 
+type Etapa = "escolher" | "confianca" | "registrar" | "registrada";
+
+/**
+ * Previsão em etapas, com efeitos: escolher uma opção abre a confiança;
+ * mexer na confiança libera o botão; ao registrar, aparece a confirmação e a
+ * caixa de comentários.
+ */
 function EventCard({ event, mine, expanded, onToggle, onPredicted }: {
   event: WorldEvent; mine?: Mine | undefined; expanded: boolean; onToggle: () => void; onPredicted: () => Promise<void>;
 }) {
   const { toast } = useShell();
   const [choice, setChoice] = useState<string | null>(mine?.opportunityId ?? null);
-  const [confidence, setConfidence] = useState(mine ? Number(mine.confidence) : 0.65);
+  const [confidence, setConfidence] = useState(mine ? Number(mine.confidence) : 0.7);
+  const [etapa, setEtapa] = useState<Etapa>(mine ? "registrada" : "escolher");
+  const [recemRegistrada, setRecemRegistrada] = useState(false);
   const [pending, setPending] = useState(false);
   const [now] = useState(() => Date.now());
   const locked = event.status !== "PUBLISHED" || now >= new Date(event.closesAt).getTime() - LOCK_MS;
   const options = [...event.opportunities].sort((a, b) => a.position - b.position);
+  const escolhida = options.find((o) => o.id === choice);
+  const pct = Math.round(confidence * 100);
+  const rotuloConfianca = pct >= 90 ? "Certeza quase total" : pct >= 75 ? "Bastante confiança" : pct >= 60 ? "Alguma confiança" : "Pouca certeza";
 
+  const escolher = (id: string) => {
+    if (locked) return;
+    setChoice(id);
+    setEtapa((e) => (e === "registrar" ? "registrar" : "confianca"));
+    setRecemRegistrada(false);
+  };
   const predict = async () => {
     if (!choice) return;
     setPending(true);
     try {
       await apiPost(`/world/events/${event.id}`, { opportunityId: choice, confidence });
-      toast("Previsão registrada com data e hash.");
+      setEtapa("registrada"); setRecemRegistrada(true);
       await onPredicted();
     } catch (error) { toast(describeError(error), "error"); } finally { setPending(false); }
   };
 
   return (
-    <article id={event.id} className={r.evento}>
+    <article id={event.id} className={`${r.evento} ${etapa !== "escolher" ? r.eventoAtivo : ""}`}>
       <div className={r.rodapeEvento}>
         <span className={r.cat}>{event.category}</span>
         <span className={r.muted}>{locked ? statusLabel(event.status) : `fecha ${relativeTime(event.closesAt)}`}</span>
       </div>
       <h3>{event.title}</h3>
-      <div className={r.opcoes} role="radiogroup" aria-label="Sua previsão">
-        {options.map((o) => (
-          <button key={o.id} type="button" className={r.opcao} aria-pressed={choice === o.id} disabled={locked} onClick={() => setChoice(o.id)}>
-            <span>{o.label}</span>{mine?.opportunityId === o.id ? <span className={r.muted}>sua escolha</span> : null}
-          </button>
-        ))}
-      </div>
-      {!locked && (
-        <label className={r.confianca}>
-          <span>Confiança: <b style={{ color: "var(--text)" }}>{Math.round(confidence * 100)}%</b></span>
-          <input type="range" min={0.5} max={0.99} step={0.01} value={confidence} onChange={(e) => setConfidence(Number(e.target.value))} />
-        </label>
+
+      {etapa === "registrada" && !locked ? (
+        <div className={`${r.confirmada} ${recemRegistrada ? r.explode : ""}`}>
+          <span className={r.selo}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg></span>
+          <div>
+            <b>{recemRegistrada ? "Previsão registrada!" : "Sua previsão"}</b>
+            <span>{escolhida?.label ?? "—"}, com {pct}% de confiança</span>
+          </div>
+          <button type="button" className={r.linkSutil} onClick={() => { setEtapa("escolher"); setRecemRegistrada(false); }}>Mudar</button>
+        </div>
+      ) : (
+        <div className={r.opcoes} role="radiogroup" aria-label="Sua previsão">
+          {options.map((o) => (
+            <button key={o.id} type="button" className={r.opcao} aria-pressed={choice === o.id} disabled={locked} onClick={() => escolher(o.id)}>
+              <span>{o.label}</span>
+              {choice === o.id ? <span className={r.marcaEscolha} aria-hidden="true">✓</span> : null}
+            </button>
+          ))}
+        </div>
       )}
+
+      {!locked && (etapa === "confianca" || etapa === "registrar") ? (
+        <div className={r.revela}>
+          <div className={r.painelConfianca}>
+            <div className={r.confiancaTopo}>
+              <span>O quanto você confia em <b>{escolhida?.label}</b>?</span>
+              <strong className={r.pct}>{pct}%</strong>
+            </div>
+            <input className={r.barra} type="range" min={0.5} max={0.99} step={0.01} value={confidence} aria-label="Confiança"
+              style={{ ["--v" as string]: `${((confidence - 0.5) / 0.49) * 100}%` }}
+              onChange={(e) => { setConfidence(Number(e.target.value)); setEtapa("registrar"); }} />
+            <div className={r.confiancaRodape}><span>50%</span><em>{rotuloConfianca}</em><span>99%</span></div>
+          </div>
+        </div>
+      ) : null}
+
+      {!locked && etapa === "registrar" ? (
+        <div className={r.revela}>
+          <button type="button" className={`${r.btnP} ${r.registrar}`} disabled={pending} onClick={() => void predict()}>
+            {pending ? "Registrando…" : mine ? "Atualizar minha previsão" : "Registrar minha previsão"}
+          </button>
+        </div>
+      ) : null}
+
+      {recemRegistrada ? <div className={r.revela}><Comentarios event={event} foco /></div> : null}
+
       <div className={r.rodapeEvento}>
-        <button type="button" className={r.linkSutil} onClick={onToggle}><IconeRede nome="globo" /> {expanded ? "Fechar detalhes" : "Critério e conversa"}</button>
-        {!locked && <button type="button" className={r.btnP} disabled={!choice || pending} onClick={() => void predict()}>{mine ? "Atualizar previsão" : "Prever"}</button>}
+        <button type="button" className={r.linkSutil} onClick={onToggle}>{expanded ? "Fechar detalhes" : "Como será resolvido e conversa"}</button>
       </div>
-      {expanded && <EventDetails event={event} />}
+      {expanded && !recemRegistrada && <EventDetails event={event} />}
+      {expanded && recemRegistrada && <div className={r.detalhes}><div><b>Como será resolvido</b><p style={{ margin: "4px 0 0" }}>{event.resolutionCriteria}</p></div></div>}
     </article>
   );
 }
@@ -116,33 +167,42 @@ function statusLabel(status: string) {
 }
 
 function EventDetails({ event }: { event: WorldEvent }) {
-  const { toast } = useShell();
-  const [comments, setComments] = useState<Comment[] | null>(null);
-  const [people, setPeople] = useState<Map<string, Profile>>(new Map());
-  const [body, setBody] = useState("");
-  const load = useCallback(async () => {
-    const r = await apiGet<{ items: Comment[] }>(`/world/events/${event.id}/comments`);
-    setPeople(new Map(await loadPeople(r.items.map((c) => c.authorId))));
-    setComments(r.items);
-  }, [event.id]);
-  useEffect(() => { void load().catch(() => setComments([])); }, [load]);
   return (
     <div className={r.detalhes}>
       <div><b>Como será resolvido</b><p style={{ margin: "4px 0 0" }}>{event.resolutionCriteria}</p></div>
       <div>Abriu {relativeTime(event.opensAt)}, fecha em {new Date(event.closesAt).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</div>
-      <div>
-        <b>Conversa</b>
-        {!comments ? <p>Carregando…</p> : comments.length === 0 ? <p style={{ margin: "4px 0" }}>Ninguém comentou ainda.</p> : comments.map((c) => (
-          <p key={c.id} style={{ margin: "8px 0" }}><b>{personName(people, c.authorId)}</b> <span className={r.muted}>{relativeTime(c.createdAt)}</span><br />{c.body}</p>
-        ))}
+      <Comentarios event={event} />
+    </div>
+  );
+}
+
+function Comentarios({ event, foco }: { event: WorldEvent; foco?: boolean }) {
+  const { toast } = useShell();
+  const [comments, setComments] = useState<Comment[] | null>(null);
+  const [people, setPeople] = useState<Map<string, Profile>>(new Map());
+  const [body, setBody] = useState("");
+  const [enviado, setEnviado] = useState(false);
+  const load = useCallback(async () => {
+    const res = await apiGet<{ items: Comment[] }>(`/world/events/${event.id}/comments`);
+    setPeople(new Map(await loadPeople(res.items.map((c) => c.authorId))));
+    setComments(res.items);
+  }, [event.id]);
+  useEffect(() => { void load().catch(() => setComments([])); }, [load]);
+  return (
+    <div className={foco ? r.caixaComentario : undefined}>
+      {foco ? <b>{enviado ? "Comentário publicado. Valeu!" : "Quer deixar o seu argumento?"}</b> : <b>Conversa</b>}
+      {!comments ? null : comments.length === 0 ? (foco ? null : <p style={{ margin: "4px 0" }}>Ninguém comentou ainda.</p>) : comments.slice(-4).map((c) => (
+        <p key={c.id} className={r.comentario}><b>{personName(people, c.authorId)}</b> <span className={r.muted}>{relativeTime(c.createdAt)}</span><br />{c.body}</p>
+      ))}
+      {!enviado ? (
         <form className={r.campoLinha} style={{ marginTop: 8 }} onSubmit={async (e) => {
           e.preventDefault();
-          try { await apiPost(`/world/events/${event.id}/comments`, { body: body.trim() }); setBody(""); await load(); } catch (error) { toast(describeError(error), "error"); }
+          try { await apiPost(`/world/events/${event.id}/comments`, { body: body.trim() }); setBody(""); setEnviado(true); await load(); } catch (error) { toast(describeError(error), "error"); }
         }}>
-          <input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Qual é o seu argumento?" maxLength={2000} aria-label="Comentário" />
+          <input autoFocus={foco} value={body} onChange={(e) => setBody(e.target.value)} placeholder={foco ? "Por que você acha isso? (opcional)" : "Qual é o seu argumento?"} maxLength={2000} aria-label="Comentário" />
           <button className={r.btnFio} disabled={!body.trim()}>Comentar</button>
         </form>
-      </div>
+      ) : null}
     </div>
   );
 }
