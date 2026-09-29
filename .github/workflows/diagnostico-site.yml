@@ -18,6 +18,14 @@ jobs:
             r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
+      - name: Google
+        id: g
+        run: |
+          loc=$(curl -s -o /dev/null -w "%{redirect_url}" -m 15 "https://orvoksocial.vercel.app/api/v1/auth/google/start")
+          ru=$(python3 -c "import sys,urllib.parse as u;q=u.parse_qs(u.urlparse(sys.argv[1]).query);print(q.get('redirect_uri',['-'])[0], '| host=' + u.urlparse(sys.argv[1]).netloc)" "$loc")
+          echo "resumo=$ru" >> "$GITHUB_OUTPUT"
+      - name: "Google ${{ steps.g.outputs.resumo }}"
+        run: "true"
       - name: Banco
         id: b
         env:
