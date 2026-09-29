@@ -3,7 +3,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost, describeError, loadPeople, personName, relativeTime, type Profile, type WorldEvent } from "../../lib/client/api";
-import { useShell } from "./AppShell";
+import { IconeRede, useShell } from "./AppShell";
+import r from "../rede/rede.module.css";
 
 type Mine = { eventId: string; opportunityId: string; confidence: string | number; predictedAt: string };
 type Comment = { id: string; authorId: string; body: string; createdAt: string };
@@ -36,29 +37,26 @@ export function World() {
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1 className="display">Mundo</h1>
-          <p>Acontecimentos reais com critério de resolução definido antes. Escolha um lado e diga o quanto confia. As previsões travam dez minutos antes do fechamento.</p>
-        </div>
-        <div className="row" role="group" aria-label="Filtrar por categoria">
+      <section className={r.hero}>
+        <small className={r.marcador}>Previsões do Mundo</small>
+        <h2>O que vai acontecer?</h2>
+        <p>Acontecimentos reais, com critério de resolução definido antes. Escolha um lado e diga o quanto confia. As previsões travam dez minutos antes do fechamento.</p>
+        <div className={r.chips} role="group" aria-label="Filtrar por categoria">
           {categories.map((c) => (
-            <button key={c} className={category === c ? "button button-small" : "button button-small button-secondary"} data-p={category === c ? "world" : undefined}
-              aria-pressed={category === c} onClick={() => setCategory(c)}>{c === "todas" ? "Todas" : c[0]!.toUpperCase() + c.slice(1)}</button>
+            <button key={c} type="button" className={r.chip} aria-pressed={category === c} onClick={() => setCategory(c)}
+              style={category === c ? { borderColor: "var(--people)", background: "rgb(76 141 255 / .16)" } : undefined}>
+              {c === "todas" ? "Todas" : c[0]!.toUpperCase() + c.slice(1)}
+            </button>
           ))}
         </div>
-      </div>
-      {!events ? <div className="grid-2"><div className="skeleton" style={{ height: 220 }} /><div className="skeleton" style={{ height: 220 }} /></div> :
+      </section>
+      {!events ? <p className={r.muted} aria-busy="true">Carregando…</p> :
         list.length === 0 ? (
-          <div className="empty"><strong>Nenhum evento publicado.</strong><span>Administradores pré-cadastram e revisam cada evento antes de abri-lo para previsões.</span></div>
-        ) : (
-          <div className="grid-2">
-            {list.map((event) => (
-              <EventCard key={event.id} event={event} mine={mine.get(event.id)} expanded={open === event.id}
-                onToggle={() => setOpen(open === event.id ? null : event.id)} onPredicted={load} />
-            ))}
-          </div>
-        )}
+          <div className={r.vazio}><strong>Nenhuma previsão aberta agora.</strong><span>Novas previsões aparecem aqui assim que forem publicadas.</span></div>
+        ) : list.map((event) => (
+          <EventCard key={event.id} event={event} mine={mine.get(event.id)} expanded={open === event.id}
+            onToggle={() => setOpen(open === event.id ? null : event.id)} onPredicted={load} />
+        ))}
     </>
   );
 }
@@ -85,29 +83,28 @@ function EventCard({ event, mine, expanded, onToggle, onPredicted }: {
   };
 
   return (
-    <article id={event.id} className="card lit event" data-p="world">
-      <div className="row-between">
-        <span className="tag" data-p="world">{event.category}</span>
-        <span className="faint countdown" style={{ fontSize: 14 }}>{locked ? statusLabel(event.status) : `fecha ${relativeTime(event.closesAt)}`}</span>
+    <article id={event.id} className={r.evento}>
+      <div className={r.rodapeEvento}>
+        <span className={r.cat}>{event.category}</span>
+        <span className={r.muted}>{locked ? statusLabel(event.status) : `fecha ${relativeTime(event.closesAt)}`}</span>
       </div>
       <h3>{event.title}</h3>
-      <div className="choice-row" role="radiogroup" aria-label="Sua previsão">
+      <div className={r.opcoes} role="radiogroup" aria-label="Sua previsão">
         {options.map((o) => (
-          <button key={o.id} type="button" className="choice" aria-pressed={choice === o.id} disabled={locked} onClick={() => setChoice(o.id)}>{o.label}</button>
+          <button key={o.id} type="button" className={r.opcao} aria-pressed={choice === o.id} disabled={locked} onClick={() => setChoice(o.id)}>
+            <span>{o.label}</span>{mine?.opportunityId === o.id ? <span className={r.muted}>sua escolha</span> : null}
+          </button>
         ))}
       </div>
       {!locked && (
-        <div className="field">
-          <span>Confiança: {Math.round(confidence * 100)}%</span>
-          <input type="range" min={0.5} max={0.99} step={0.01} value={confidence} onChange={(e) => setConfidence(Number(e.target.value))} aria-label="Confiança" />
-        </div>
+        <label className={r.confianca}>
+          <span>Confiança: <b style={{ color: "var(--text)" }}>{Math.round(confidence * 100)}%</b></span>
+          <input type="range" min={0.5} max={0.99} step={0.01} value={confidence} onChange={(e) => setConfidence(Number(e.target.value))} />
+        </label>
       )}
-      <div className="row-between">
-        {mine ? <span className="faint" style={{ fontSize: 14 }}>Sua previsão: {options.find((o) => o.id === mine.opportunityId)?.label} com {Math.round(Number(mine.confidence) * 100)}%</span> : <span className="faint" style={{ fontSize: 14 }}>Você ainda não previu</span>}
-        <div className="row">
-          <button className="text-link" onClick={onToggle}>{expanded ? "Fechar detalhes" : "Critério e conversa"}</button>
-          {!locked && <button className="button button-small" data-p="world" disabled={!choice || pending} onClick={() => void predict()}>{mine ? "Atualizar" : "Prever"}</button>}
-        </div>
+      <div className={r.rodapeEvento}>
+        <button type="button" className={r.linkSutil} onClick={onToggle}><IconeRede nome="globo" /> {expanded ? "Fechar detalhes" : "Critério e conversa"}</button>
+        {!locked && <button type="button" className={r.btnP} disabled={!choice || pending} onClick={() => void predict()}>{mine ? "Atualizar previsão" : "Prever"}</button>}
       </div>
       {expanded && <EventDetails event={event} />}
     </article>
@@ -130,20 +127,20 @@ function EventDetails({ event }: { event: WorldEvent }) {
   }, [event.id]);
   useEffect(() => { void load().catch(() => setComments([])); }, [load]);
   return (
-    <div className="stack" style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
-      <div><span className="eyebrow">Como será resolvido</span><p className="muted">{event.resolutionCriteria}</p></div>
-      <div className="faint" style={{ fontSize: 14 }}>Abriu {relativeTime(event.opensAt)}, fecha em {new Date(event.closesAt).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</div>
+    <div className={r.detalhes}>
+      <div><b>Como será resolvido</b><p style={{ margin: "4px 0 0" }}>{event.resolutionCriteria}</p></div>
+      <div>Abriu {relativeTime(event.opensAt)}, fecha em {new Date(event.closesAt).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</div>
       <div>
-        <span className="eyebrow">Conversa</span>
-        {!comments ? <div className="skeleton" /> : comments.length === 0 ? <p className="faint">Ninguém comentou ainda.</p> : (
-          <ul className="list">{comments.map((c) => <li key={c.id}><span className="grow"><strong style={{ fontWeight: 500 }}>{personName(people, c.authorId)}</strong> <span className="faint" style={{ fontSize: 13 }}>{relativeTime(c.createdAt)}</span><span className="muted" style={{ display: "block" }}>{c.body}</span></span></li>)}</ul>
-        )}
-        <form className="row" style={{ marginTop: 12 }} onSubmit={async (e) => {
+        <b>Conversa</b>
+        {!comments ? <p>Carregando…</p> : comments.length === 0 ? <p style={{ margin: "4px 0" }}>Ninguém comentou ainda.</p> : comments.map((c) => (
+          <p key={c.id} style={{ margin: "8px 0" }}><b>{personName(people, c.authorId)}</b> <span className={r.muted}>{relativeTime(c.createdAt)}</span><br />{c.body}</p>
+        ))}
+        <form className={r.campoLinha} style={{ marginTop: 8 }} onSubmit={async (e) => {
           e.preventDefault();
           try { await apiPost(`/world/events/${event.id}/comments`, { body: body.trim() }); setBody(""); await load(); } catch (error) { toast(describeError(error), "error"); }
         }}>
-          <input className="input" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Qual é o seu argumento?" maxLength={2000} aria-label="Comentário" />
-          <button className="button button-small button-secondary" disabled={!body.trim()}>Comentar</button>
+          <input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Qual é o seu argumento?" maxLength={2000} aria-label="Comentário" />
+          <button className={r.btnFio} disabled={!body.trim()}>Comentar</button>
         </form>
       </div>
     </div>

@@ -90,9 +90,11 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
       .then(async (data) => {
         if (!active) return;
         if (!data.authenticated) { router.replace(`/entrar?returnTo=${encodeURIComponent(pathname)}`); return; }
-        setSession(data);
+        // Perfil antes da sessão: as telas já montam com o nome da pessoa.
         const result = await apiGet<{ profile: Profile | null }>("/social/profile").catch(() => ({ profile: null }));
-        if (active) setProfile(result.profile);
+        if (!active) return;
+        setProfile(result.profile);
+        setSession(data);
         refreshUnread();
         // Desafios feitos neste aparelho antes do cadastro passam para a conta.
         void fetch("/api/v1/desafio/reivindicar", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", credentials: "same-origin" }).catch(() => undefined);

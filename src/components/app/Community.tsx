@@ -4,7 +4,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { apiGet, apiPost, describeError, initials, loadPeople, personName, relativeTime, type Group, type Post, type Profile } from "../../lib/client/api";
-import { useShell } from "./AppShell";
+import { Avatar, IconeRede, useShell } from "./AppShell";
+import r from "../rede/rede.module.css";
+import { useDesafios } from "../rede/dados";
 
 function Head({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
   return <div className="page-head"><div><h1 className="display">{title}</h1><p>{text}</p></div>{children}</div>;
@@ -204,24 +206,26 @@ export function Notifications() {
   const act = async (id: string, action: "read" | "dismiss") => {
     try { await apiPost(`/notifications/${id}/${action}`, {}); await load(); } catch (e) { toast(describeError(e), "error"); }
   };
+  const { dados } = useDesafios();
+  const respostas = (dados?.enviados ?? []).flatMap((d) => d.tentativas.map((t) => ({ nome: t.nome ?? "Alguém", em: t.em, score: t.score, total: t.total, codigo: d.codigo })));
+  const lista = [
+    ...respostas.map((x) => ({ chave: `d-${x.codigo}-${x.em}`, em: x.em, texto: `${x.nome} respondeu o seu desafio${x.score !== undefined ? ` e acertou ${x.score} de ${x.total}` : ""}`, href: "/desafios", lida: true, id: null as string | null })),
+    ...(items ?? []).map((n) => {
+      const [text, href] = labels[n.eventType] ?? [n.eventType.toLowerCase().replaceAll("_", " "), "/painel"];
+      return { chave: n.id, em: n.createdAt, texto: text, href, lida: n.state !== "UNREAD", id: n.id as string | null };
+    }),
+  ].sort((a, b) => b.em.localeCompare(a.em));
   return (
     <>
-      <Head title="Notificações" text="Pedidos, consentimentos e previsões que envolvem você." />
-      <section className="card">
-        {!items ? <div className="skeleton" style={{ height: 120 }} /> : items.length === 0 ? <div className="empty"><strong>Tudo em dia.</strong><span>Nada novo por aqui.</span></div> : (
-          <ul className="list">{items.map((n) => {
-            const [text, href] = labels[n.eventType] ?? [n.eventType.toLowerCase().replaceAll("_", " "), "/painel"];
-            return (
-              <li key={n.id}>
-                <span className="dot" style={{ background: n.state === "UNREAD" ? "var(--people)" : "var(--text-3)" }} />
-                <span className="grow"><Link href={href} onClick={() => n.state === "UNREAD" && void act(n.id, "read")} style={{ textDecoration: "none", fontWeight: n.state === "UNREAD" ? 500 : 400 }}>{text}</Link><span className="faint" style={{ display: "block", fontSize: 13 }}>{relativeTime(n.createdAt)}</span></span>
-                {n.state === "UNREAD" && <button className="text-link" onClick={() => void act(n.id, "read")}>Marcar como lida</button>}
-                <button className="text-link" onClick={() => void act(n.id, "dismiss")}>Dispensar</button>
-              </li>
-            );
-          })}</ul>
-        )}
-      </section>
+      {!items || !dados ? <p className={r.muted} aria-busy="true">Carregando…</p> : lista.length === 0 ? (
+        <div className={r.vazio}><strong>Tudo em dia.</strong><span>Quando alguém responder um desafio seu, o aviso aparece aqui.</span><Link className={r.btnP} href="/comecar">Desafiar alguém</Link></div>
+      ) : lista.map((n) => (
+        <div key={n.chave} className={`${r.aviso} ${n.lida ? "" : r.naoLido}`}>
+          <span className={r.iconeAviso}><IconeRede nome={n.href === "/desafios" ? "alvo" : "sino"} /></span>
+          <span><Link href={n.href} onClick={() => { if (!n.lida && n.id) void act(n.id, "read"); }}><b>{n.texto}</b></Link><br /><span className={r.muted}>{relativeTime(n.em)}</span></span>
+          {n.id ? <button type="button" className={r.linkSutil} onClick={() => void act(n.id!, "dismiss")}>Dispensar</button> : <span />}
+        </div>
+      ))}
     </>
   );
 }
@@ -232,24 +236,39 @@ export function ProfileView({ mathPanel }: { mathPanel?: ReactNode }) {
   const [name, setName] = useState(profile?.displayName ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [pending, setPending] = useState(false);
+  const { dados } = useDesafios();
+  const enviados = dados?.enviados.length ?? 0;
+  const respostas = (dados?.enviados ?? []).reduce((n, d) => n + d.tentativas.length, 0);
   return (
     <>
-      <Head title="Perfil" text="O que as pessoas veem quando você envia ou recebe um pedido." />
-      <div className="grid-main">
-        <form className="card form-stack" onSubmit={async (e) => {
-          e.preventDefault(); setPending(true);
-          try { const r = await apiPost<{ profile: Profile }>("/social/profile", { displayName: name.trim(), bio: bio.trim() || undefined }); setProfile(r.profile); toast("Perfil salvo."); } catch (err) { toast(describeError(err), "error"); } finally { setPending(false); }
-        }}>
-          <div className="row"><span className="avatar avatar-lg">{initials(name || profile?.displayName)}</span><div><h2>{name || "Sem nome"}</h2><p className="faint">{bio || "Sem apresentação"}</p></div></div>
-          <label className="field"><span>Nome</span><input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} /></label>
-          <label className="field"><span>Apresentação</span><textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} placeholder="Uma frase sobre você" /></label>
-          <div className="form-actions"><button className="button" disabled={pending || !name.trim()}>Salvar perfil</button></div>
-        </form>
-        <div className="stack">
-          <div className="card"><h3>Conta</h3><ul className="list"><li><span className="grow">Exportar ou excluir dados</span><Link className="text-link" href="/meus-dados">Abrir</Link></li><li><span className="grow">Trocar senha</span><Link className="text-link" href="/recuperar">Recuperar</Link></li></ul></div>
-          {mathPanel}
+      <section className={r.hero}>
+        <div className={r.perfilTopo}>
+          <Avatar nome={name || profile?.displayName || "Você"} tamanho={84} voce />
+          <div><h2>{name || "Sem nome"}</h2><p>{bio || "Conte em uma frase quem você é."}</p></div>
         </div>
-      </div>
+        <div className={r.numeros}>
+          <div><strong>{enviados}</strong><span>desafios enviados</span></div>
+          <div><strong>{respostas}</strong><span>respostas recebidas</span></div>
+          <div><strong>{dados?.recebidos.length ?? 0}</strong><span>pessoas que você previu</span></div>
+        </div>
+      </section>
+      <form className={r.item} onSubmit={async (e) => {
+        e.preventDefault(); setPending(true);
+        try { const res = await apiPost<{ profile: Profile }>("/social/profile", { displayName: name.trim(), bio: bio.trim() || undefined }); setProfile(res.profile); toast("Perfil salvo."); } catch (err) { toast(describeError(err), "error"); } finally { setPending(false); }
+      }}>
+        <b>Editar perfil</b>
+        <label className={r.campo}>Nome<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} /></label>
+        <label className={r.campo}>Apresentação<textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} placeholder="Uma frase sobre você" /></label>
+        <div><button className={r.btnP} disabled={pending || !name.trim()}>Salvar perfil</button></div>
+      </form>
+      <section className={r.item}>
+        <b>Conta</b>
+        <div className={r.listaConta}>
+          <Link href="/meus-dados">Privacidade e meus dados <span>›</span></Link>
+          <Link href="/recuperar">Trocar senha <span>›</span></Link>
+        </div>
+      </section>
+      {mathPanel}
     </>
   );
 }
