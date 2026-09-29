@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Globo } from "./Globo";
-import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, Radar, enviarJson, estilos as s } from "./pecas";
+import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, Radar, enviarJson, estilos as s, useConta } from "./pecas";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Aviso = { versao: string; hash: string; texto: string };
@@ -51,6 +51,10 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
   const [ocupado, setOcupado] = useState(false);
   const [radarVisivel, setRadarVisivel] = useState(false);
   const [buscando, setBuscando] = useState(false);
+  // Quem já tem conta não precisa se apresentar: o nome vem do perfil.
+  const conta = useConta();
+  const logado = Boolean(conta);
+  const nomeEfetivo = conta?.nome ?? nome;
 
   // Abertura: três âncoras (ou, no "desafie de volta", as mesmas 10 perguntas do outro desafio).
   useEffect(() => {
@@ -92,7 +96,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
     window.setTimeout(() => { if (i < perguntas.length - 1) setI(i + 1); else setTela("pronto"); }, 380);
   };
   const voltar = tela === "nome" && !conjuntoDe ? () => setTela("relacao")
-    : tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela("nome"))
+    : tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela(logado ? (conjuntoDe ? "pergunta" : "relacao") : "nome"))
     : tela === "pronto" ? () => { setI(perguntas.length - 1); setTela("pergunta"); }
     : tela === "convite" ? () => setTela("pronto") : undefined;
 
@@ -102,7 +106,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
     if (!aviso) return null;
     setOcupado(true); setErro(null);
     const r = await enviarJson<{ codigo: string }>("/api/v1/desafio", {
-      nome, relacao, perguntas: perguntas.map((p) => p.chave), respostas: respostas.map((v) => LETRAS[v ?? 0]), consentimento: { aceito: true, versao: aviso.versao, hash: aviso.hash },
+      nome: nomeEfetivo, relacao, perguntas: perguntas.map((p) => p.chave), respostas: respostas.map((v) => LETRAS[v ?? 0]), consentimento: { aceito: true, versao: aviso.versao, hash: aviso.hash },
     });
     setOcupado(false);
     if (!r.ok) { setErro(r.status === 429 ? "Muitos desafios criados agora. Tente de novo mais tarde." : "Não foi possível criar o desafio. Tente de novo."); return null; }
@@ -127,7 +131,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
         <div className={s.opcoes} role="radiogroup" aria-label="Quem você quer desafiar">
           {RELACOES.map((rel) => (
             <button key={rel.id} className={`${s.op} ${s.relacao} ${escolheu && relacao === rel.id ? s.opSel : ""}`} type="button" role="radio" aria-checked={escolheu && relacao === rel.id}
-              onClick={() => { setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => setTela("nome"), 250); }}>
+              onClick={() => { setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(logado ? "pergunta" : "nome"); }, 250); }}>
               <span className={s.letra}><Icone nome={rel.icone} /></span>
               <span><b>{rel.rotulo}</b><small>{rel.texto}</small></span>
             </button>
@@ -137,6 +141,14 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
       </main>
     </Moldura>
   );
+
+  if (tela === "nome" && conta === undefined) return <Moldura><main className={s.tela} aria-busy="true" /></Moldura>;
+  if (tela === "nome" && logado) {
+    // Com conta: sem tela de nome. Vai direto às perguntas assim que elas chegarem.
+    if (perguntas.length) queueMicrotask(() => { setI(0); setTela("pergunta"); });
+    return <Moldura><main className={s.tela} aria-busy="true" /></Moldura>;
+  }
+  if (tela === "pergunta" && !perguntas.length) return <Moldura><main className={s.tela} aria-busy="true" /></Moldura>;
 
   if (tela === "nome") return (
     <Moldura aoVoltar={voltar}>
@@ -166,7 +178,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
       <Moldura aoVoltar={voltar}>
         <main className={s.tela} key={`q${i}`}>
           <div className={s.progresso} aria-hidden="true">{Array.from({ length: TOTAL }, (_, k) => <i key={k} className={k < respondidas ? s.feito : ""} />)}</div>
-          <Anel nome={nome} feitas={respondidas} atual={i} />
+          <Anel nome={nomeEfetivo} feitas={respondidas} atual={i} />
           <p className={s.contador}>Pergunta {i + 1} de {TOTAL}</p>
           <h2 className={s.pergunta} id={`perg-${i}`}>{q.texto}</h2>
           <div className={s.opcoes} role="radiogroup" aria-labelledby={`perg-${i}`}>
@@ -186,8 +198,8 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
   if (tela === "pronto") return (
     <Moldura aoVoltar={voltar}>
       <main className={`${s.tela} ${s.centro}`}>
-        <div className={s.radarGrande}><Radar acertos={10} visivel={radarVisivel} /><Inicial nome={nome} tamanho={88} /></div>
-        <h1 className={s.titulo}>Sua referência <b>está pronta, {nome.trim()}.</b></h1>
+        <div className={s.radarGrande}><Radar acertos={10} visivel={radarVisivel} /><Inicial nome={nomeEfetivo} tamanho={88} /></div>
+        <h1 className={s.titulo}>Sua referência <b>está pronta, {nomeEfetivo.trim()}.</b></h1>
         <p className={s.lead}>Agora vem a parte boa: desafie alguém e descubra o quanto essa pessoa te conhece.</p>
         <div className={s.empurra}>
           <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => setTela("convite")}><Icone nome="enviar" />{desafiarDeVolta ? `Desafiar ${desafiarDeVolta} de volta` : "Desafiar alguém"}</button>
@@ -210,7 +222,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
         <div className={s.cartaoConv}>
           <Globo opcoes={{ pontos: 900, pessoas: 16, arcos: 8, escala: 0.62, velocidade: 0.003, montagem: 1, deslocamento: 0.35, giroInicial: 2 }} />
           <span className={s.url}>orvok.com.br</span>
-          <div className={s.sobre}><Inicial nome={nome} ambar tamanho={46} /><div><b>{nome.trim()} te desafiou</b><small>Quanto você me conhece? 10 perguntas</small></div></div>
+          <div className={s.sobre}><Inicial nome={nomeEfetivo} ambar tamanho={46} /><div><b>{nomeEfetivo.trim()} te desafiou</b><small>Quanto você me conhece? 10 perguntas</small></div></div>
         </div>
         {desafiarDeVolta ? null : (
           <div className={s.tons} role="group" aria-label="Tom da mensagem">
@@ -246,6 +258,15 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
           <li className={s.agora}><span className={s.p} />{quem ?? "Seu amigo"} abre e tenta te prever</li>
           <li><span className={s.p} />Você vê o placar</li>
         </ol>
+        {logado ? (
+          <section className={s.oferta}>
+            <h2>Pronto! O placar aparece em Desafios.</h2>
+            <p>Você recebe o aviso em Notificações assim que {quem ?? "a pessoa"} responder.</p>
+            <a className={`${s.btn} ${s.btnAzul}`} href="/desafios">Ver meus desafios</a>
+            <a className={`${s.btn} ${s.btnFio}`} href="/comecar">Desafiar mais alguém</a>
+            <a className={`${s.btn} ${s.btnTexto}`} href="/painel">Voltar ao início</a>
+          </section>
+        ) : (
         <section className={s.oferta}>
           <h2>Quer saber quando {quem ?? "seu amigo"} terminar?</h2>
           <p>Crie sua conta para ver o placar e guardar a sua referência. Leva dez segundos.</p>
@@ -253,6 +274,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
           <a className={`${s.btn} ${s.btnFio}`} href="/cadastro?returnTo=%2Fdesafios"><Icone nome="email" />Continuar com e-mail</a>
           <a className={`${s.btn} ${s.btnTexto}`} href="/desafios">Agora não</a>
         </section>
+        )}
       </main>
     </Moldura>
   );

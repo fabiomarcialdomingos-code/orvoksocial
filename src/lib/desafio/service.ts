@@ -72,7 +72,7 @@ export class DesafioService {
   }
 
   /** Cria o desafio. Devolve o código público e o token do aparelho (novo ou o mesmo). */
-  async criar(raw: unknown, tokenAtual: string | null): Promise<{ codigo: string; token: string }> {
+  async criar(raw: unknown, tokenAtual: string | null, userId: string | null = null): Promise<{ codigo: string; token: string }> {
     const dados = criarSchema.parse(raw);
     const token = tokenAtual ?? randomToken();
     const dono = tokenHash(token);
@@ -82,9 +82,9 @@ export class DesafioService {
       const codigo = novoCodigo();
       try {
         await this.pool.query(
-          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys",relation,"consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt")
-           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,clock_timestamp(),$10,clock_timestamp()+($11::int * interval '1 day'))`,
-          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), dados.relacao, AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE],
+          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys",relation,"consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt","claimedByUserId","claimedAt")
+           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,clock_timestamp(),$10,clock_timestamp()+($11::int * interval '1 day'),$12::uuid,CASE WHEN $12::uuid IS NULL THEN NULL ELSE clock_timestamp() END)`,
+          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), dados.relacao, AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE, userId],
         );
         return { codigo, token };
       } catch (error) {
@@ -165,7 +165,7 @@ export class DesafioService {
   }
 
   /** Registra a tentativa e devolve só o placar. Uma tentativa por aparelho. */
-  async tentar(codigo: string, raw: unknown, tokenAtual: string | null) {
+  async tentar(codigo: string, raw: unknown, tokenAtual: string | null, userId: string | null = null) {
     const dados = tentativaSchema.parse(raw);
     const d = await this.ativo(codigo);
     const token = tokenAtual ?? randomToken();
@@ -175,11 +175,11 @@ export class DesafioService {
     await this.limite(`tentar:${dono}`, 60, 86400);
     const score = dados.previsoes.reduce((n, v, i) => n + (v === d.answers[i] ? 1 : 0), 0);
     const r = await this.pool.query<{ score: number; total: number }>(
-      `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash")
-       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7)
+      `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId")
+       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid)
        ON CONFLICT ("challengeId","ownerTokenHash") DO UPDATE SET "challengeId"=EXCLUDED."challengeId"
        RETURNING score,total`,
-      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono],
+      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono, userId],
     );
     return { ...r.rows[0]!, token };
   }

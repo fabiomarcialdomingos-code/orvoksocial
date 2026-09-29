@@ -1,5 +1,6 @@
 import { authEndpoint } from "@/lib/auth/http";
 import { authPool } from "@/lib/auth/session";
+import { principalOpcional } from "@/lib/desafio/http";
 import { DesafioService, gravarTokenConvidado, lerTokenConvidado } from "@/lib/desafio/service";
 
 export const runtime = "nodejs";
@@ -8,7 +9,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   const { codigo } = await params;
   return authEndpoint(request, async (body) => {
     const atual = lerTokenConvidado(request);
-    const { score, total, token } = await new DesafioService(authPool()).tentar(codigo, body, atual);
+    const { score, total, token } = await new DesafioService(authPool()).tentar(codigo, body, atual, await principalOpcional(request));
     const response = Response.json({ schemaVersion: "1", acertos: score, total });
     if (token !== atual) gravarTokenConvidado(response, token);
     return response;

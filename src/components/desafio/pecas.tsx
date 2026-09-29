@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import s from "./desafio.module.css";
 
 const ICONES = {
@@ -103,5 +103,27 @@ export async function enviarJson<T>(caminho: string, corpo: unknown): Promise<{ 
 
 /** Login com Google que volta para os resultados, onde o desafio é vinculado à conta. */
 export const LOGIN_GOOGLE = `/api/v1/auth/google/start?returnTo=${encodeURIComponent("/desafios")}`;
+
+/**
+ * Conta de quem está usando o desafio. undefined enquanto carrega, null sem
+ * login, ou o primeiro nome do perfil de quem já entrou.
+ */
+export function useConta(): { nome: string } | null | undefined {
+  const [conta, setConta] = useState<{ nome: string } | null | undefined>(undefined);
+  useEffect(() => {
+    let ativo = true;
+    void (async () => {
+      const sessao = await fetch("/api/v1/auth/session?optional=1", { credentials: "same-origin", cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : { authenticated: false })).catch(() => ({ authenticated: false })) as { authenticated?: boolean };
+      if (!sessao.authenticated) { if (ativo) setConta(null); return; }
+      const perfil = await fetch("/api/v1/social/profile", { credentials: "same-origin", cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : {})).catch(() => ({})) as { profile?: { displayName?: string } | null };
+      const nome = (perfil.profile?.displayName ?? "").trim().split(/\s+/)[0] ?? "";
+      if (ativo) setConta(nome.length >= 2 ? { nome } : null);
+    })();
+    return () => { ativo = false; };
+  }, []);
+  return conta;
+}
 
 export { s as estilos };

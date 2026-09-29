@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Globo } from "./Globo";
-import { Anel, Icone, Inicial, Moldura, Radar, enviarJson, estilos as s } from "./pecas";
+import { Anel, Icone, Inicial, Moldura, Radar, enviarJson, estilos as s, useConta } from "./pecas";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null };
@@ -26,6 +26,8 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const [placar, setPlacar] = useState<{ acertos: number; total: number } | null>(null);
   const [contagem, setContagem] = useState(0);
   const [meuNome, setMeuNome] = useState("");
+  const conta = useConta();
+  const nomeFinal = conta?.nome ?? meuNome;
 
   useEffect(() => {
     void fetch(`/api/v1/desafio/${encodeURIComponent(codigo)}`).then(async (r) => {
@@ -46,7 +48,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   }, [tela, placar]);
 
   const concluir = async (lista: (number | undefined)[]) => {
-    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { nome: meuNome.trim(), previsoes: lista.map((x) => LETRAS[x ?? 0]) });
+    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { nome: nomeFinal.trim(), previsoes: lista.map((x) => LETRAS[x ?? 0]) });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este desafio é seu. Envie o link para alguém tentar te prever." : "Não foi possível registrar agora. Tente de novo."); return; }
     setPlacar(r.dados); setTela("placar");
   };
@@ -74,13 +76,13 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <div className={s.centro}><span className={s.chipRelacao}>{{ familia: "Desafio de família", amigos: "Desafio de amigos", crush: "Desafio de crush" }[v.relacao]}</span></div>
         <h1 className={`${s.titulo} ${s.centro}`}>{v.nome} <b>te desafiou.</b></h1>
         <p className={`${s.lead} ${s.centro}`}>{v.nome} respondeu 10 perguntas sobre si. Quanto você acha que conhece essa pessoa?</p>
-        <div className={s.campo}>
+        {conta ? <p className={s.miudo} style={{ marginBottom: 14 }}><Icone nome="ok" />Você vai responder como <b style={{ color: "var(--tinta)", marginLeft: 4 }}>{conta.nome}</b>.</p> : <div className={s.campo}>
           <label htmlFor="meu-nome">Como {v.nome} te chama?</label>
           <input id="meu-nome" autoComplete="given-name" maxLength={24} placeholder="Seu primeiro nome" value={meuNome} onChange={(e) => setMeuNome(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && meuNome.trim().length >= 2) setTela("prever"); }} />
-        </div>
+        </div>}
         <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Seu nome aparece para {v.nome} junto com o placar. Você não vê as respostas de {v.nome}, e {v.nome} não vê as suas escolhas.</p>
-        <div className={s.empurra}><button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={meuNome.trim().length < 2} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button></div>
+        <div className={s.empurra}><button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={nomeFinal.trim().length < 2} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button></div>
       </main>
     </Moldura>
   );
