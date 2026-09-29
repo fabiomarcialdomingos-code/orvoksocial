@@ -1,0 +1,22 @@
+# Diagnóstico somente leitura do site publicado: códigos de resposta das rotas.
+name: Diagnóstico do site
+on: workflow_dispatch
+jobs:
+  sondar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sondar
+        id: s
+        run: |
+          r=""
+          for base in https://orvok.com.br https://www.orvok.com.br https://orvoksocial.vercel.app; do
+            h=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/" || echo ERR)
+            c=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/desafio/catalogo" || echo ERR)
+            p=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/auth/providers" || echo ERR)
+            l=$(curl -s -m 20 -X POST "$base/api/v1/auth/login" -H "Content-Type: application/json" -H "Origin: $base" -d '{"email":"diagnostico@example.com","password":"senha-errada-123"}' -w " %{http_code}" | tr -d '\n' | sed -E 's/.*"code":"([A-Z_]+)".* ([0-9]+)$/\1 \2/;s/^(.{0,40}).* ([0-9]+)$/\1 \2/' | tr -cd 'A-Za-z0-9_ <>' )
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l"
+          done
+          echo "resumo=$r" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.s.outputs.resumo }}"
+        run: "true"
