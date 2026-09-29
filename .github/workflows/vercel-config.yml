@@ -1,0 +1,44 @@
+# Diagnóstico e ajuste da configuração do projeto na Vercel.
+# acao=ver: lista só NOMES de variáveis e domínios (nunca valores).
+# acao=corrigir: remove credenciais de dono do banco do ambiente do site e republica.
+name: Configuração da Vercel
+on:
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: "ver ou corrigir"
+        required: true
+        default: ver
+jobs:
+  vercel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VT: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Ler projeto
+        id: ver
+        run: |
+          set -e
+          teams=$(curl -s -H "Authorization: Bearer $VT" https://api.vercel.com/v2/teams)
+          team=$(echo "$teams" | jq -r '[.teams[]? | select(.slug=="script-char")][0].id // empty')
+          q=""; [ -n "$team" ] && q="?teamId=$team"
+          echo "team=$team" >> "$GITHUB_OUTPUT"
+          proj=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial$q")
+          pid=$(echo "$proj" | jq -r '.id // empty'); echo "pid=$pid" >> "$GITHUB_OUTPUT"
+          envs=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env$q" | jq -r '[.envs[]? | .key + "[" + (.target|join("/")) + "]"] | join(" ")')
+          doms=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/domains$q" | jq -r '[.domains[]? | .name + (if .verified then "(ok)" else "(pendente)" end)] | join(" ")')
+          erro=$(echo "$proj" | jq -r '.error.message // empty')
+          echo "resumo=time=${team:-pessoal} projeto=${pid:-?} ${erro} | ENV: ${envs} | DOMINIOS: ${doms}" | cut -c1-900 >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.ver.outputs.resumo }}"
+        run: "true"
+      - name: Corrigir e republicar
+        if: ${{ inputs.acao == 'corrigir' }}
+        run: |
+          set -e
+          team="${{ steps.ver.outputs.team }}"; q=""; [ -n "$team" ] && q="?teamId=$team"
+          ids=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env$q" | jq -r '.envs[] | select((.key=="DATABASE_URL" or .key=="DB_OWNER_URL") and ((.target|index("production")) or (.target|index("preview")))) | .id')
+          for id in $ids; do curl -s -X DELETE -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env/$id$q" -o /dev/null -w "removida %{http_code}\n"; done
+          last=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v6/deployments?projectId=${{ steps.ver.outputs.pid }}&target=production&limit=1${team:+&teamId=$team}" | jq -r '.deployments[0].uid')
+          curl -s -X POST -H "Authorization: Bearer $VT" -H "Content-Type: application/json" "https://api.vercel.com/v13/deployments$q" \
+            -d "{\"name\":\"orvoksocial\",\"deploymentId\":\"$last\",\"target\":\"production\"}" | jq -r '"republicado: " + (.id // .error.message)'
