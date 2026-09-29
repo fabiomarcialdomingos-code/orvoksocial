@@ -86,6 +86,7 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 .btn-fio:hover{background:var(--sup-2);border-color:var(--azul)}
 .btn-p{min-height:36px;padding:0 16px;font-size:14px}
 .prever{margin:14px 0 0;min-height:52px;font-size:16px}
+.entrar-lat{margin-top:8px;min-height:48px;font-size:15px}
 .visitante{margin-top:auto;padding:18px;border-radius:20px;background:var(--sup);border:1px solid var(--fio);position:relative;overflow:hidden}
 .visitante strong{display:block;font-size:16px;margin-bottom:4px}
 .visitante p{margin:0 0 14px;color:var(--suave);font-size:14px}
@@ -367,7 +368,8 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
   .menu a[aria-current="page"]::before{left:-6px}
   .marca{justify-content:center;padding:10px 0 18px}
   .prever{width:56px;height:56px;padding:0;border-radius:50%}
-  .prever span{display:none}
+  .prever span,.entrar-lat span{display:none}
+  .entrar-lat{width:56px;height:56px;padding:0;border-radius:50%;min-height:0}
   .tema{justify-content:center}
 }
 @media (max-width:980px){.app{grid-template-columns:84px minmax(0,1fr);max-width:720px}.direita{display:none}}
@@ -406,13 +408,14 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     <a class="marca" href="#" aria-label="orvok, início"><svg viewBox="0 0 32 32" aria-hidden="true" class="orb"></svg><span>orvok</span></a>
     <nav class="menu">
       <a href="#" aria-current="page"><svg data-ic="casa"></svg><span>Início</span></a>
-      <a href="#" data-comecar><svg data-ic="radar"></svg><span>Meu radar</span></a>
-      <a href="#" data-comecar><svg data-ic="globo"></svg><span>Mundo</span></a>
+      <a href="/entrar?returnTo=%2Fradar"><svg data-ic="radar"></svg><span>Meu radar</span></a>
+      <a href="/entrar?returnTo=%2Feventos"><svg data-ic="globo"></svg><span>Mundo</span></a>
       <a href="#" data-comecar><svg data-ic="pessoas"></svg><span>Pessoas</span></a>
-      <a href="#" data-comecar><svg data-ic="sino"></svg><span>Notificações</span><b class="bolha">3</b></a>
-      <a href="#" data-comecar><svg data-ic="perfil"></svg><span>Perfil</span></a>
+      <a href="/entrar?returnTo=%2Fnotificacoes"><svg data-ic="sino"></svg><span>Notificações</span></a>
+      <a href="/entrar?returnTo=%2Fperfil"><svg data-ic="perfil"></svg><span>Perfil</span></a>
     </nav>
     <button class="btn btn-azul prever" type="button" data-comecar><svg data-ic="mais" style="width:22px;height:22px"></svg><span>Desafiar alguém</span></button>
+    <a class="btn btn-fio entrar-lat" href="/entrar" aria-label="Entrar na minha conta"><svg data-ic="perfil" style="width:20px;height:20px"></svg><span>Entrar</span></a>
     <div class="visitante luz">
       <strong>Comece sem cadastro</strong>
       <p>Responda sobre você e desafie um amigo. A conta só é pedida depois, se quiser acompanhar o resultado.</p>
@@ -426,7 +429,7 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     <div class="topo">
       <div class="topo-movel">
         <a class="marca" href="#" aria-label="orvok, início"><svg viewBox="0 0 32 32" aria-hidden="true" class="orb"></svg>orvok</a>
-        <button class="btn btn-tinta btn-p" type="button" data-comecar>Começar</button>
+        <span style="display:flex;gap:8px;align-items:center"><a class="btn btn-fio btn-p" href="/entrar">Entrar</a><button class="btn btn-tinta btn-p" type="button" data-comecar>Começar</button></span>
       </div>
       <div class="abas" role="tablist" aria-label="Filtrar publicações">
         <button role="tab" aria-selected="true" data-filtro="todos">Para você</button>
@@ -491,10 +494,10 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
 
 <nav class="abas-movel" aria-label="Navegação">
   <a href="#" aria-current="page" aria-label="Início"><svg data-ic="casa"></svg></a>
-  <a href="#" data-comecar aria-label="Mundo"><svg data-ic="globo"></svg></a>
+  <a href="/entrar?returnTo=%2Feventos" aria-label="Mundo"><svg data-ic="globo"></svg></a>
   <a href="#" class="meio" data-comecar aria-label="Desafiar alguém"><svg data-ic="mais"></svg></a>
-  <a href="#" data-comecar aria-label="Meu radar"><svg data-ic="radar"></svg></a>
-  <a href="#" data-comecar aria-label="Perfil"><svg data-ic="perfil"></svg></a>
+  <a href="/entrar?returnTo=%2Fradar" aria-label="Meu radar"><svg data-ic="radar"></svg></a>
+  <a href="/entrar" aria-label="Entrar na minha conta"><svg data-ic="perfil"></svg></a>
 </nav>
 
 <aside class="empurrao" id="empurrao" aria-label="Convite para começar">
