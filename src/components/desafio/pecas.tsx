@@ -17,6 +17,9 @@ const ICONES = {
   voltar: <path d="M15 5l-7 7 7 7" />,
   fechar: <path d="M6 6l12 12M18 6 6 18" />,
   email: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></>,
+  casa: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
+  pessoas: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-4 3.3-6 6.5-6s5.7 2 6.5 6" /><circle cx="17" cy="9" r="2.8" /><path d="M16 14c3 .2 4.8 2.2 5.5 5.5" /></>,
+  coracao: <path d="M12 20s-7.5-4.4-9-9.2C2 7.4 4.2 4.5 7.4 4.5c2 0 3.5 1.1 4.6 2.7 1.1-1.6 2.6-2.7 4.6-2.7 3.2 0 5.4 2.9 4.4 6.3-1.5 4.8-9 9.2-9 9.2z" />,
 };
 export type NomeIcone = keyof typeof ICONES;
 export function Icone({ nome }: { nome: NomeIcone }) {

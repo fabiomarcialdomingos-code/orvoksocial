@@ -1,5 +1,6 @@
 /**
- * Banco de 100 perguntas do desafio, em 10 temas com 10 perguntas cada.
+ * Banco de perguntas do desafio: 100 gerais (10 temas × 10) e mais 15 para cada
+ * tipo de relação (família, amigos, crush), distribuídas nos mesmos temas.
  *
  * - `{voce}` vira "você" para quem responde sobre si e o primeiro nome para
  *   quem tenta prever. As opções são neutras (infinitivo ou substantivo) e
@@ -12,15 +13,21 @@
  *     cabeca: L razão, C coração
  * - para: traço de quem mais se divide nessa pergunta (bom para evitar o óbvio).
  * - d: pergunta divertida, boa para fechar o desafio.
+ * - contexto: pergunta feita para um tipo de relação (família, amigos ou crush).
+ *   As de crush são leves e sem nenhum conteúdo sexual.
  */
 export type Eixo = "social" | "ritmo" | "cabeca";
 export type Traco = "E" | "R" | "P" | "S" | "L" | "C";
+export type Contexto = "familia" | "amigos" | "crush";
+export const CONTEXTOS: Record<Contexto, string> = { familia: "Família", amigos: "Amigos", crush: "Crush" };
 export type Tema = "decisoes" | "tempo-livre" | "relacoes" | "dinheiro" | "social" | "imprevistos" | "rotina" | "emocoes" | "gostos" | "futuro";
 export type PerguntaBanco = {
   chave: string; tema: Tema; nivel: 1 | 2 | 3; texto: string; opcoes: [string, string, string, string];
   ancora?: { eixo: Eixo; mapa: [Traco | null, Traco | null, Traco | null, Traco | null] }; para?: Traco; d?: true;
+  /** Perguntas específicas de um tipo de relação. Sem contexto: servem para todos. */
+  contexto?: Contexto;
 };
-type Extra = Pick<PerguntaBanco, "ancora" | "para" | "d">;
+type Extra = Pick<PerguntaBanco, "ancora" | "para" | "d" | "contexto">;
 const q = (chave: string, tema: Tema, nivel: 1 | 2 | 3, texto: string, opcoes: [string, string, string, string], extra: Extra = {}): PerguntaBanco =>
   ({ chave, tema, nivel, texto, opcoes, ...extra });
 
@@ -140,4 +147,52 @@ export const BANCO: PerguntaBanco[] = [
   q("fut-voltar", "futuro", 3, "Se pudesse voltar no tempo, {voce} iria…", ["Mudar muita coisa", "Mudar só um detalhe", "Não mudar nada", "Só reviver um dia especial"], { para: "C" }),
   q("fut-poder", "futuro", 1, "Um superpoder para {voce}:", ["Voar", "Ler pensamentos", "Parar o tempo", "Teletransporte"], { d: true }),
   q("fut-recomecar", "futuro", 3, "Largar tudo e recomeçar do zero em outro lugar. {voce} faria?", ["Sim, amanhã mesmo", "Sim, com um bom plano", "Só sem outra escolha", "Nunca"], { para: "S" }),
+  // ——— Família ———
+  q("fam-infancia", "emocoes", 1, "Quando era criança, {voce} era…", ["Uma criança agitada", "Uma criança tranquila", "Uma criança curiosa", "Uma criança teimosa"], { contexto: "familia" }),
+  q("fam-reuniao", "social", 1, "Numa reunião de família, {voce} é quem…", ["Conta as histórias", "Ajuda na cozinha", "Fica com as crianças", "Some para o sofá"], { contexto: "familia", d: true }),
+  q("fam-comida", "gostos", 1, "A comida de casa de que {voce} mais sente falta:", ["Arroz e feijão de todo dia", "Um doce de família", "O almoço de domingo", "Um lanche da infância"], { contexto: "familia" }),
+  q("fam-conselho", "relacoes", 2, "Quando alguém da família dá um conselho que {voce} não pediu, a reação é…", ["Ouvir e agradecer", "Ouvir e fazer do próprio jeito", "Discutir na hora", "Mudar de assunto"], { contexto: "familia" }),
+  q("fam-feliz", "tempo-livre", 1, "Na infância, o que deixava {voce} mais feliz?", ["Brincar na rua", "Ganhar um presente", "Viajar com a família", "Ficar em casa vendo desenho"], { contexto: "familia" }),
+  q("fam-contato", "relacoes", 1, "Com que frequência {voce} fala com a família?", ["Todo dia", "Algumas vezes por semana", "Só quando tem novidade", "Quando alguém cobra"], { contexto: "familia", d: true }),
+  q("fam-tarefa", "rotina", 1, "Em casa, a tarefa que {voce} mais detesta é…", ["Lavar louça", "Arrumar o quarto", "Tirar o lixo", "Passar roupa"], { contexto: "familia", d: true }),
+  q("fam-briga", "relacoes", 3, "Numa discussão de família, {voce} costuma…", ["Tomar partido", "Tentar acalmar todo mundo", "Ficar de fora", "Resolver depois, em particular"], { contexto: "familia" }),
+  q("fam-heranca", "emocoes", 3, "O que {voce} mais herdou da família?", ["O jeito de falar", "A teimosia", "O senso de humor", "O jeito de cuidar dos outros"], { contexto: "familia" }),
+  q("fam-presente", "gostos", 2, "Um presente da família que emocionaria {voce}:", ["Fotos antigas", "Uma carta escrita à mão", "Uma viagem juntos", "Uma receita de família"], { contexto: "familia" }),
+  q("fam-mudar", "futuro", 3, "Se pudesse mudar uma coisa na convivência da família, {voce} escolheria…", ["Mais almoços juntos", "Menos cobrança", "Mais viagens", "Mais conversas sinceras"], { contexto: "familia" }),
+  q("fam-aperto", "dinheiro", 2, "Num aperto de dinheiro, {voce} pede ajuda para a família?", ["Sim, a família vem primeiro", "Só em último caso", "Nunca: prefere se virar", "Depende de quem"], { contexto: "familia" }),
+  q("fam-conserto", "imprevistos", 1, "Quando algo quebra em casa, {voce} costuma…", ["Consertar com as próprias mãos", "Chamar um profissional", "Ver um tutorial e tentar", "Fingir que não viu"], { contexto: "familia", d: true }),
+  q("fam-decisao", "decisoes", 3, "Qual decisão {voce} tomaria sem consultar a família?", ["Mudar de emprego", "Mudar de cidade", "Uma compra grande", "Nenhuma"], { contexto: "familia" }),
+  q("fam-fim-de-ano", "social", 1, "No fim de ano, {voce} prefere…", ["Casa cheia e bagunça", "Algo pequeno e tranquilo", "Viajar", "Tanto faz, desde que tenha comida"], { contexto: "familia" }),
+  // ——— Amigos ———
+  q("ami-grupo", "social", 1, "No grupo de amigos, {voce} é quem…", ["Marca os encontros", "Some e reaparece", "Dá os melhores conselhos", "Faz todo mundo rir"], { contexto: "amigos" }),
+  q("ami-viagem", "tempo-livre", 1, "Numa viagem com amigos, {voce} é quem…", ["Planeja tudo", "Topa tudo", "Cuida do dinheiro", "Esquece alguma coisa"], { contexto: "amigos", d: true }),
+  q("ami-loucura", "decisoes", 1, "Um amigo conta que vai fazer uma loucura. O que {voce} faz?", ["Ir junto", "Tentar convencer a desistir", "Pedir detalhes antes", "Filmar tudo"], { contexto: "amigos", d: true }),
+  q("ami-mensagens", "social", 1, "No grupo de mensagens dos amigos, {voce} costuma…", ["Mandar áudio longo", "Só reagir com figurinha", "Ler tudo e não responder", "Responder tudo na hora"], { contexto: "amigos", d: true }),
+  q("ami-afastar", "relacoes", 3, "O que faria {voce} se afastar de um amigo?", ["Uma mentira", "Falta de apoio num momento difícil", "Fofoca", "Nunca estar disponível"], { contexto: "amigos" }),
+  q("ami-comemorar", "tempo-livre", 1, "Para comemorar com os amigos, {voce} escolhe…", ["Bar ou restaurante", "Festa em casa", "Um programa ao ar livre", "Jogo ou maratona de filmes"], { contexto: "amigos" }),
+  q("ami-esqueceu", "relacoes", 2, "Se um amigo esquecer o aniversário, {voce}…", ["Cobra com humor", "Finge que não ligou", "Guarda a mágoa em silêncio", "Nem percebe"], { contexto: "amigos" }),
+  q("ami-roupa", "dinheiro", 1, "Quando um amigo pede uma roupa emprestada, {voce}…", ["Empresta sem problema", "Só empresta para quem é muito próximo", "Nunca empresta roupa", "Empresta e cobra de volta"], { contexto: "amigos", d: true }),
+  q("ami-noite", "imprevistos", 1, "Numa saída à noite, {voce} é quem…", ["Leva todo mundo em casa", "Anima o grupo", "Vai embora primeiro", "Inventa de esticar"], { contexto: "amigos", d: true }),
+  q("ami-republica", "rotina", 1, "Dividindo apartamento com amigos, {voce} seria quem…", ["Organiza a limpeza", "Faz a comida", "Esquece as contas", "Faz a festa"], { contexto: "amigos", d: true }),
+  q("ami-sinceridade", "decisoes", 2, "Um amigo pede sinceridade sobre uma roupa feia. O que {voce} faz?", ["Dizer a verdade na lata", "Sugerir outra com jeitinho", "Elogiar mesmo assim", "Desconversar"], { contexto: "amigos" }),
+  q("ami-saudade", "emocoes", 2, "Quanto tempo {voce} aguenta sem ver os amigos?", ["Uma semana, no máximo", "Um mês, tranquilo", "Meses, desde que tenha mensagem", "Muito tempo, sem problema"], { contexto: "amigos" }),
+  q("ami-briga", "relacoes", 3, "Numa discussão entre dois amigos, {voce} costuma…", ["Tomar partido", "Tentar reconciliar", "Ficar de fora", "Chamar os dois para conversar"], { contexto: "amigos" }),
+  q("ami-jogo", "gostos", 1, "O jogo favorito de {voce} numa noite com amigos:", ["Cartas ou tabuleiro", "Videogame", "Mímica ou adivinhação", "Karaokê"], { contexto: "amigos", d: true }),
+  q("ami-valor", "futuro", 3, "O que {voce} mais valoriza numa amizade?", ["Lealdade", "Humor", "Estar presente", "Sinceridade"], { contexto: "amigos" }),
+  // ——— Crush (leve, sem conteúdo sexual) ———
+  q("cru-encontro", "tempo-livre", 1, "Num primeiro encontro, {voce} prefere…", ["Jantar", "Cinema", "Café e conversa", "Passeio ao ar livre"], { contexto: "crush" }),
+  q("cru-interesse", "relacoes", 2, "Para mostrar interesse em alguém, {voce} costuma…", ["Puxar assunto sem parar", "Mandar indiretas", "Esperar o outro dar o primeiro passo", "Chamar para sair direto"], { contexto: "crush" }),
+  q("cru-bom-dia", "social", 1, "A mensagem de bom-dia ideal para {voce} é…", ["Um texto carinhoso", "Um meme", "Um áudio", "Nenhuma, só no encontro"], { contexto: "crush", d: true }),
+  q("cru-atencao", "gostos", 1, "O que chama a atenção de {voce} primeiro em alguém?", ["O sorriso", "O jeito de conversar", "O estilo", "O senso de humor"], { contexto: "crush" }),
+  q("cru-programa", "tempo-livre", 1, "Um programa a dois perfeito para {voce}:", ["Sofá, filme e pipoca", "Viagem de fim de semana", "Show ou festa", "Cozinhar juntos"], { contexto: "crush" }),
+  q("cru-ciume", "emocoes", 2, "Quando sente ciúme, {voce} costuma…", ["Falar na hora", "Ficar em silêncio", "Fingir que não é nada", "Fazer piada para disfarçar"], { contexto: "crush" }),
+  q("cru-presente", "gostos", 2, "Um presente que conquistaria {voce}:", ["Flores ou chocolate", "Uma carta", "Uma experiência juntos", "Algo que mostre atenção aos detalhes"], { contexto: "crush" }),
+  q("cru-briga", "relacoes", 3, "Numa briga com quem gosta, {voce} costuma…", ["Pedir desculpas primeiro", "Esperar o outro", "Resolver na conversa, na hora", "Dar um tempo e voltar"], { contexto: "crush" }),
+  q("cru-musica", "gostos", 1, "A música que {voce} dedicaria a alguém especial seria…", ["Romântica clássica", "Sertanejo", "Pop do momento", "Algo que ninguém conhece"], { contexto: "crush", d: true }),
+  q("cru-publico", "emocoes", 2, "Sobre demonstrar carinho em público, {voce}…", ["Adora, sem vergonha", "Só um pouquinho", "Prefere no particular", "Fica sem graça"], { contexto: "crush" }),
+  q("cru-data", "futuro", 2, "Numa data especial a dois, {voce} planejaria…", ["Uma surpresa elaborada", "Um jantar especial", "Uma viagem", "Algo simples em casa"], { contexto: "crush" }),
+  q("cru-conta", "dinheiro", 1, "Sobre a conta do encontro, {voce} prefere…", ["Dividir", "Pagar tudo", "Revezar a cada encontro", "Quem convidou paga"], { contexto: "crush" }),
+  q("cru-mico", "decisoes", 1, "O maior mico que {voce} pagaria por alguém especial:", ["Cantar em público", "Dançar mesmo sem saber", "Uma declaração na frente de todo mundo", "Nenhum, mico não é comigo"], { contexto: "crush", d: true }),
+  q("cru-responder", "rotina", 1, "Quanto tempo {voce} demora para responder o crush?", ["Na hora, sem joguinho", "Alguns minutos, para disfarçar", "Horas, de propósito", "Depende do humor"], { contexto: "crush", d: true }),
+  q("cru-desinteresse", "futuro", 3, "O que faria {voce} perder o interesse em alguém?", ["Falta de educação", "Falta de assunto", "Arrogância", "Demora para responder"], { contexto: "crush" }),
 ];

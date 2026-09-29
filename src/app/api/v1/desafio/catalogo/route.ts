@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   return leituraPublica(async () => {
     const de = new URL(request.url).searchParams.get("de");
     const servico = new DesafioService(authPool());
-    if (de) return Response.json({ schemaVersion: "1", perguntas: await servico.conjuntoDe(de.toUpperCase()), aviso: AVISO });
+    if (de) return Response.json({ schemaVersion: "1", ...(await servico.conjuntoDe(de.toUpperCase())), aviso: AVISO });
     return Response.json({ schemaVersion: "1", ancoras: servico.ancoras(), aviso: AVISO });
   });
 }

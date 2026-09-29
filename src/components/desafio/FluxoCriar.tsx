@@ -5,21 +5,41 @@ import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, Radar, enviarJson, estilos
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Aviso = { versao: string; hash: string; texto: string };
-type Tela = "nome" | "pergunta" | "pronto" | "convite" | "enviado";
+type Tela = "relacao" | "nome" | "pergunta" | "pronto" | "convite" | "enviado";
+type Relacao = "familia" | "amigos" | "crush";
 const LETRAS = ["A", "B", "C", "D"] as const;
 const TOTAL = 10;
 
-const TONS: [string, (amigo: string) => string][] = [
-  ["Provocador", (a) => `${a ? `${a}, duvido` : "Duvido"} você acertar mais de 7 sobre mim. Respondi 10 perguntas no orvok, tenta aí:`],
-  ["Carinhoso", (a) => `${a ? `${a}, quero` : "Quero"} ver o quanto você me conhece de verdade. Fiz um desafio pra você:`],
-  ["Direto", () => "Responde esse desafio do orvok sobre mim? Leva 2 minutos:"],
+const RELACOES: { id: Relacao; rotulo: string; texto: string; campo: string; exemplo: string; icone: "casa" | "pessoas" | "coracao" }[] = [
+  { id: "familia", rotulo: "Família", texto: "Mãe, pai, irmãos, avós… quem cresceu com você", campo: "Quem da família vai receber? (opcional)", exemplo: "Ex.: Mãe", icone: "casa" },
+  { id: "amigos", rotulo: "Amigos", texto: "Quem está sempre por perto e acha que te conhece", campo: "Nome do amigo (opcional)", exemplo: "Ex.: Marina", icone: "pessoas" },
+  { id: "crush", rotulo: "Crush", texto: "Quem faz o coração acelerar. Será que te conhece mesmo?", campo: "Nome do crush (opcional)", exemplo: "Ex.: Rafa", icone: "coracao" },
 ];
+const TONS: Record<Relacao, [string, (amigo: string) => string][]> = {
+  familia: [
+    ["Provocador", (a) => `${a ? `${a}, duvido` : "Duvido"} você acertar mais de 7 sobre mim! Respondi 10 perguntas no orvok. Quem da família me conhece melhor?`],
+    ["Carinhoso", (a) => `${a ? `${a}, será` : "Será"} que você me conhece tanto quanto eu acho? Fiz um desafio pra você:`],
+    ["Direto", () => "Responde esse desafio do orvok sobre mim? Leva 2 minutos:"],
+  ],
+  amigos: [
+    ["Provocador", (a) => `${a ? `${a}, duvido` : "Duvido"} você acertar mais de 7 sobre mim. Respondi 10 perguntas no orvok, tenta aí:`],
+    ["Carinhoso", (a) => `${a ? `${a}, quero` : "Quero"} ver o quanto você me conhece de verdade. Fiz um desafio pra você:`],
+    ["Direto", () => "Responde esse desafio do orvok sobre mim? Leva 2 minutos:"],
+  ],
+  crush: [
+    ["Provocador", (a) => `${a ? `${a}, será` : "Será"} que você me conhece mesmo? Duvido passar de 7. Tenta aí:`],
+    ["Carinhoso", (a) => `${a ? `${a}, fiz` : "Fiz"} um desafio só pra você. Quero ver o quanto você me conhece:`],
+    ["Direto", () => "Responde esse desafio do orvok sobre mim? Leva 2 minutos:"],
+  ],
+};
 
 /** Percurso de quem chega pelo anúncio: responde sobre si e desafia alguém, sem cadastro. */
 export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: string | null; conjuntoDe: string | null }) {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [aviso, setAviso] = useState<Aviso | null>(null);
-  const [tela, setTela] = useState<Tela>("nome");
+  const [tela, setTela] = useState<Tela>(conjuntoDe ? "nome" : "relacao");
+  const [relacao, setRelacao] = useState<Relacao>("amigos");
+  const [escolheu, setEscolheu] = useState(false);
   const [nome, setNome] = useState("");
   const [i, setI] = useState(0);
   const [respostas, setRespostas] = useState<(number | undefined)[]>([]);
@@ -36,7 +56,9 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
   useEffect(() => {
     const url = conjuntoDe ? `/api/v1/desafio/catalogo?de=${encodeURIComponent(conjuntoDe)}` : "/api/v1/desafio/catalogo";
     void fetch(url).then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((d: { perguntas?: Pergunta[]; ancoras?: Pergunta[]; aviso: Aviso }) => { setPerguntas(d.perguntas ?? d.ancoras ?? []); setAviso(d.aviso); })
+      .then((d: { perguntas?: Pergunta[]; ancoras?: Pergunta[]; relacao?: Relacao; aviso: Aviso }) => {
+        setPerguntas(d.perguntas ?? d.ancoras ?? []); setAviso(d.aviso); if (d.relacao) setRelacao(d.relacao);
+      })
       .catch(() => setErro("Não foi possível carregar as perguntas. Tente de novo em instantes."));
   }, [conjuntoDe]);
   useEffect(() => {
@@ -49,7 +71,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
   const link = codigo ? `${typeof window === "undefined" ? "" : window.location.origin}/d/${codigo}` : "";
   const mensagem = useMemo(() => (desafiarDeVolta
     ? `${desafiarDeVolta}, já tentei te prever. Agora é a sua vez de me prever:`
-    : TONS[tom]![1](amigo.trim())), [desafiarDeVolta, tom, amigo]);
+    : TONS[relacao][tom]![1](amigo.trim())), [desafiarDeVolta, tom, amigo, relacao]);
 
   const escolher = (k: number) => {
     if (buscando) return;
@@ -58,6 +80,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
     if (i === perguntas.length - 1 && perguntas.length < TOTAL) {
       setBuscando(true);
       void enviarJson<{ perguntas: Pergunta[] }>("/api/v1/desafio/selecao", {
+        relacao,
         ancoras: perguntas.map((p, n) => ({ chave: p.chave, opcao: novas[n] ?? 0 })),
       }).then((r) => {
         setBuscando(false);
@@ -68,7 +91,8 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
     }
     window.setTimeout(() => { if (i < perguntas.length - 1) setI(i + 1); else setTela("pronto"); }, 380);
   };
-  const voltar = tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela("nome"))
+  const voltar = tela === "nome" && !conjuntoDe ? () => setTela("relacao")
+    : tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela("nome"))
     : tela === "pronto" ? () => { setI(perguntas.length - 1); setTela("pergunta"); }
     : tela === "convite" ? () => setTela("pronto") : undefined;
 
@@ -78,7 +102,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
     if (!aviso) return null;
     setOcupado(true); setErro(null);
     const r = await enviarJson<{ codigo: string }>("/api/v1/desafio", {
-      nome, perguntas: perguntas.map((p) => p.chave), respostas: respostas.map((v) => LETRAS[v ?? 0]), consentimento: { aceito: true, versao: aviso.versao, hash: aviso.hash },
+      nome, relacao, perguntas: perguntas.map((p) => p.chave), respostas: respostas.map((v) => LETRAS[v ?? 0]), consentimento: { aceito: true, versao: aviso.versao, hash: aviso.hash },
     });
     setOcupado(false);
     if (!r.ok) { setErro(r.status === 429 ? "Muitos desafios criados agora. Tente de novo mais tarde." : "Não foi possível criar o desafio. Tente de novo."); return null; }
@@ -94,6 +118,25 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
     if (canal === "outros" && navigator.share) await navigator.share({ text: mensagem, url }).catch(() => undefined);
     setTela("enviado");
   };
+
+  if (tela === "relacao") return (
+    <Moldura>
+      <main className={s.tela}>
+        <h1 className={s.titulo}>Quem você <b>quer desafiar?</b></h1>
+        <p className={s.lead}>As perguntas mudam conforme a relação. Descobrir se a família te conhece é bem diferente de descobrir se o crush te conhece.</p>
+        <div className={s.opcoes} role="radiogroup" aria-label="Quem você quer desafiar">
+          {RELACOES.map((rel) => (
+            <button key={rel.id} className={`${s.op} ${s.relacao} ${escolheu && relacao === rel.id ? s.opSel : ""}`} type="button" role="radio" aria-checked={escolheu && relacao === rel.id}
+              onClick={() => { setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => setTela("nome"), 250); }}>
+              <span className={s.letra}><Icone nome={rel.icone} /></span>
+              <span><b>{rel.rotulo}</b><small>{rel.texto}</small></span>
+            </button>
+          ))}
+        </div>
+        <p className={`${s.miudo} ${s.rodapeQ}`}><Icone nome="escudo" />Sem cadastro para começar. Dá para desafiar os outros grupos depois.</p>
+      </main>
+    </Moldura>
+  );
 
   if (tela === "nome") return (
     <Moldura aoVoltar={voltar}>
@@ -160,8 +203,8 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
         <h1 className={s.titulo}>{desafiarDeVolta ? <>Desafie <b>{desafiarDeVolta} de volta</b></> : <>Quem você <b>quer desafiar?</b></>}</h1>
         {desafiarDeVolta ? null : (
           <div className={s.campo}>
-            <label htmlFor="amigo-desafio">Nome de quem vai receber (opcional)</label>
-            <input id="amigo-desafio" maxLength={24} placeholder="Ex.: Marina" value={amigo} onChange={(e) => setAmigo(e.target.value)} />
+            <label htmlFor="amigo-desafio">{RELACOES.find((x) => x.id === relacao)!.campo}</label>
+            <input id="amigo-desafio" maxLength={24} placeholder={RELACOES.find((x) => x.id === relacao)!.exemplo} value={amigo} onChange={(e) => setAmigo(e.target.value)} />
           </div>
         )}
         <div className={s.cartaoConv}>
@@ -171,7 +214,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: s
         </div>
         {desafiarDeVolta ? null : (
           <div className={s.tons} role="group" aria-label="Tom da mensagem">
-            {TONS.map(([rotulo], k) => <button key={rotulo} className={s.tom} type="button" aria-pressed={tom === k} onClick={() => setTom(k)}>{rotulo}</button>)}
+            {TONS[relacao].map(([rotulo], k) => <button key={rotulo} className={s.tom} type="button" aria-pressed={tom === k} onClick={() => setTom(k)}>{rotulo}</button>)}
           </div>
         )}
         <div className={s.balao}>{mensagem} <span className={s.link}>{link || "orvok.com.br/d/…"}</span></div>

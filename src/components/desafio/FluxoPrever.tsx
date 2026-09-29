@@ -5,7 +5,7 @@ import { Globo } from "./Globo";
 import { Anel, Icone, Inicial, Moldura, Radar, enviarJson, estilos as s } from "./pecas";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
-type Vitrine = { nome: string; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null };
+type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null };
 const LETRAS = ["A", "B", "C", "D"] as const;
 
 function veredito(n: number, nome: string) {
@@ -70,6 +70,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
       <main className={s.tela}>
         <div className={s.globoTopo}><Globo opcoes={{ pontos: 1100, pessoas: 18, arcos: 9, escala: 0.38, velocidade: 0.003, montagem: 1.2, deslocamento: 0.02 }} /></div>
         <div style={{ display: "flex", justifyContent: "center", margin: "-66px 0 16px", position: "relative" }}><Inicial nome={v.nome} ambar tamanho={84} /></div>
+        <div className={s.centro}><span className={s.chipRelacao}>{{ familia: "Desafio de família", amigos: "Desafio de amigos", crush: "Desafio de crush" }[v.relacao]}</span></div>
         <h1 className={`${s.titulo} ${s.centro}`}>{v.nome} <b>te desafiou.</b></h1>
         <p className={`${s.lead} ${s.centro}`}>{v.nome} respondeu 10 perguntas sobre si. Quanto você acha que conhece essa pessoa?</p>
         <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Você não vê as respostas de {v.nome}, e {v.nome} não vê as suas escolhas: os dois veem só o placar.</p>

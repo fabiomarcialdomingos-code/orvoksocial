@@ -1,4 +1,4 @@
-import { BANCO, type Eixo, type PerguntaBanco, type Tema, type Traco } from "./banco";
+import { BANCO, type Contexto, type Eixo, type PerguntaBanco, type Tema, type Traco } from "./banco";
 
 /**
  * Seleção das 10 perguntas de cada pessoa.
@@ -12,6 +12,9 @@ import { BANCO, type Eixo, type PerguntaBanco, type Tema, type Traco } from "./b
  *      - bônus quando a pergunta divide pessoas com o mesmo perfil (evita o óbvio);
  *      - um pouco de sorte, para variar entre pessoas.
  *    Uma divertida fecha o desafio; as demais vão da mais leve à mais profunda.
+ * 3. Relação escolhida (família, amigos ou crush): entram as perguntas gerais e
+ *    as daquela relação, que recebem um bônus para aparecer bastante. Perguntas
+ *    de outra relação nunca entram.
  */
 export type Estatistica = { tentativas: number; acertos: number; distribuicao: [number, number, number, number] };
 export type Perfil = Partial<Record<Eixo, Traco>>;
@@ -60,13 +63,17 @@ export function perfilDasAncoras(respostas: { chave: string; opcao: number }[]):
   return perfil;
 }
 
+const BONUS_RELACAO = 0.3;
+const servePara = (p: PerguntaBanco, contexto: Contexto) => !p.contexto || p.contexto === contexto;
+
 export function escolherRestantes(
-  ancoras: string[], perfil: Perfil, estatisticas: Map<string, Estatistica>, sorte: () => number = Math.random,
+  ancoras: string[], perfil: Perfil, estatisticas: Map<string, Estatistica>, contexto: Contexto, sorte: () => number = Math.random,
 ): PerguntaBanco[] {
   const usados = new Set(ancoras.map((c) => porChave.get(c)?.tema));
   const tracos = new Set(Object.values(perfil));
-  const nota = (p: PerguntaBanco) => qualidade(estatisticas.get(p.chave)) + (p.para && tracos.has(p.para) ? 0.25 : 0) + sorte() * 0.25;
-  const livres = (tema: Tema) => BANCO.filter((p) => p.tema === tema && !p.ancora && !ancoras.includes(p.chave));
+  const nota = (p: PerguntaBanco) => qualidade(estatisticas.get(p.chave)) + (p.para && tracos.has(p.para) ? 0.25 : 0)
+    + (p.contexto ? BONUS_RELACAO : 0) + sorte() * 0.25;
+  const livres = (tema: Tema) => BANCO.filter((p) => p.tema === tema && !p.ancora && !ancoras.includes(p.chave) && servePara(p, contexto));
   const temas = embaralhar((Object.keys(TEMAS_ORDEM) as Tema[]).filter((t) => !usados.has(t)), sorte);
 
   // A divertida que fecha: a melhor entre os temas restantes.
@@ -86,8 +93,9 @@ const TEMAS_ORDEM: Record<Tema, true> = {
 };
 
 /** Confere se um conjunto enviado pelo navegador é válido: 10 chaves únicas do banco. */
-export function conjuntoValido(chaves: string[]): boolean {
-  return chaves.length === TOTAL_PERGUNTAS && new Set(chaves).size === chaves.length && chaves.every((c) => porChave.has(c));
+export function conjuntoValido(chaves: string[], contexto?: Contexto): boolean {
+  return chaves.length === TOTAL_PERGUNTAS && new Set(chaves).size === chaves.length
+    && chaves.every((c) => { const p = porChave.get(c); return Boolean(p) && (!contexto || servePara(p!, contexto)); });
 }
 
 /** Texto da pergunta para quem responde (`você`) ou para quem prevê (primeiro nome). */

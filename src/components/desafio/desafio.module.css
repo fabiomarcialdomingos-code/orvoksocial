@@ -113,3 +113,9 @@
 .tent { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; padding-top: 8px; border-top: 1px solid var(--fio); }
 .tent strong { color: var(--ambar); font-size: 18px; }
 @media (prefers-reduced-motion: reduce) { .tela, .varre, .status .agora .p::after { animation: none; } .pt { transition: none; } }
+.relacao { min-height: 84px; }
+.relacao b { display: block; font-size: 18px; font-weight: 600; }
+.relacao small { display: block; color: var(--suave); font-size: 14px; font-weight: 400; margin-top: 2px; }
+.relacao .letra { width: 44px; height: 44px; border-radius: 14px; }
+.relacao .letra svg { width: 22px; height: 22px; }
+.chipRelacao { display: inline-flex; margin: 0 auto 12px; padding: 4px 12px; border-radius: 999px; background: var(--ambar-sub); color: var(--ambar); font-size: 13px; font-weight: 600; }

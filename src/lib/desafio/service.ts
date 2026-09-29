@@ -4,7 +4,7 @@ import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
 import { AVISO_HASH, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, perguntaPublica } from "./catalogo";
-import { BANCO } from "./banco";
+import { BANCO, type Contexto } from "./banco";
 import {
   TOTAL_PERGUNTAS, conjuntoValido, escolherAncoras, escolherRestantes, perfilDasAncoras, perguntaPorChave, type Estatistica,
 } from "./selecao";
@@ -15,16 +15,18 @@ const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const nome = z.string().transform((v) => v.trim().replace(/\s+/g, " ")).pipe(z.string().min(2).max(24));
 const opcoes = z.array(z.enum(CODIGOS)).length(TOTAL);
-const chaves = z.array(z.string().max(40)).length(TOTAL).refine(conjuntoValido, "conjunto inválido");
+const relacao = z.enum(["familia", "amigos", "crush"]);
 export const criarSchema = z.strictObject({
   nome,
-  perguntas: chaves,
+  relacao,
+  perguntas: z.array(z.string().max(40)).length(TOTAL),
   respostas: opcoes,
   consentimento: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_VERSAO), hash: z.literal(AVISO_HASH) }),
-});
+}).refine((d) => conjuntoValido(d.perguntas, d.relacao), "conjunto inválido");
 export const tentativaSchema = z.strictObject({ nome: nome.optional(), previsoes: opcoes });
 const chavesAncoras = new Set(BANCO.filter((p) => p.ancora).map((p) => p.chave));
 export const selecaoSchema = z.strictObject({
+  relacao,
   ancoras: z.array(z.strictObject({ chave: z.string().refine((c) => chavesAncoras.has(c)), opcao: z.number().int().min(0).max(3) }))
     .length(3).refine((l) => new Set(l.map((a) => a.chave)).size === 3),
 });
@@ -80,9 +82,9 @@ export class DesafioService {
       const codigo = novoCodigo();
       try {
         await this.pool.query(
-          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys","consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt")
-           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,clock_timestamp(),$9,clock_timestamp()+($10::int * interval '1 day'))`,
-          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE],
+          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys",relation,"consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt")
+           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,clock_timestamp(),$10,clock_timestamp()+($11::int * interval '1 day'))`,
+          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), dados.relacao, AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE],
         );
         return { codigo, token };
       } catch (error) {
@@ -93,8 +95,8 @@ export class DesafioService {
   }
 
   private async ativo(codigo: string) {
-    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; ownerTokenHash: string }>(
-      `SELECT id,"creatorName",answers,"questionKeys","ownerTokenHash" FROM "GuestChallenge"
+    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; relation: Contexto; ownerTokenHash: string }>(
+      `SELECT id,"creatorName",answers,"questionKeys",relation,"ownerTokenHash" FROM "GuestChallenge"
         WHERE code=$1 AND "revokedAt" IS NULL AND "expiresAt">clock_timestamp()`,
       [codigoSchema.parse(codigo)],
     );
@@ -112,6 +114,7 @@ export class DesafioService {
       : null;
     return {
       nome: d.creatorName,
+      relacao: d.relation,
       proprio: token ? tokenHash(token) === d.ownerTokenHash : false,
       perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!, d.creatorName)),
       resultado: jaTentou?.rows[0] ?? null,
@@ -125,16 +128,16 @@ export class DesafioService {
 
   /** Depois das âncoras: as outras sete, escolhidas pelo perfil e pelo que o uso ensinou. */
   async restantes(raw: unknown) {
-    const { ancoras } = selecaoSchema.parse(raw);
+    const { ancoras, relacao: rel } = selecaoSchema.parse(raw);
     const perfil = perfilDasAncoras(ancoras);
-    const lista = escolherRestantes(ancoras.map((a) => a.chave), perfil, await this.estatisticas());
+    const lista = escolherRestantes(ancoras.map((a) => a.chave), perfil, await this.estatisticas(), rel);
     return lista.map((p) => perguntaPublica(p));
   }
 
   /** Mesmo conjunto de um desafio existente, para o "desafie de volta". */
   async conjuntoDe(codigo: string) {
     const d = await this.ativo(codigo);
-    return d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!));
+    return { relacao: d.relation, perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!)) };
   }
 
   /**
