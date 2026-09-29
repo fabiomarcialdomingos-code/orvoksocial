@@ -26,7 +26,8 @@ jobs:
           echo "team=$team" >> "$GITHUB_OUTPUT"
           proj=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial$q")
           pid=$(echo "$proj" | jq -r '.id // empty'); echo "pid=$pid" >> "$GITHUB_OUTPUT"
-          envs=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env$q" | jq -r '[.envs[]? | .key + "[" + (.target|join("/")) + "]"] | join(" ")')
+          todos=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env$q")
+          envs=$(echo "$todos" | jq -r '[.envs[]? | select(.target|index("production")) | select(.key|test("^(APP_|AUTH_|DATABASE_URL$|DB_OWNER|SMTP|GOOGLE_CLIENT|MATH|SCORE|RANKING)")) | .key + ":" + (.type // "?")] | join(" ")')
           doms=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/domains$q" | jq -r '[.domains[]? | .name + (if .verified then "(ok)" else "(pendente)" end)] | join(" ")')
           erro=$(echo "$proj" | jq -r '.error.message // empty')
           echo "resumo=time=${team:-pessoal} projeto=${pid:-?} ${erro} | ENV: ${envs} | DOMINIOS: ${doms}" | cut -c1-900 >> "$GITHUB_OUTPUT"
