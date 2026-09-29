@@ -7,11 +7,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Contar perguntas
+        id: contar
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          psql "$DATABASE_URL" -At -F ' | ' -c "
-            SELECT q.domain::text, v.\"catalogStatus\"::text, count(DISTINCT q.id), count(DISTINCT v.\"familyKey\"), string_agg(DISTINCT v.sensitivity, ',')
-              FROM \"Question\" q JOIN \"QuestionVersion\" v ON v.\"questionId\"=q.id
-             GROUP BY 1,2 ORDER BY 1,2" | while read -r linha; do echo "::notice title=catalogo::$linha"; done
-          psql "$DATABASE_URL" -At -c "SELECT string_agg(DISTINCT v.\"familyKey\", ', ') FROM \"QuestionVersion\" v JOIN \"Question\" q ON q.id=v.\"questionId\" WHERE q.domain='RADAR'" | while read -r linha; do echo "::notice title=familias::$linha"; done
+          r=$(psql "$DATABASE_URL" -At -F '/' -c "
+            SELECT string_agg(d || ':' || s || '=' || n || ' fam' || f, '; ') FROM (
+              SELECT q.domain::text d, v.\"catalogStatus\"::text s, count(DISTINCT q.id) n, count(DISTINCT v.\"familyKey\") f
+                FROM \"Question\" q JOIN \"QuestionVersion\" v ON v.\"questionId\"=q.id GROUP BY 1,2) x")
+          echo "resumo=${r:-vazio}" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.contar.outputs.resumo }}"
+        run: "true"
