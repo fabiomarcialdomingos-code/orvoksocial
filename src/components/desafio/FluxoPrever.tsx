@@ -109,7 +109,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <p className={s.veredito}>{veredito(acertos, v.nome)}</p>
         <p className={s.lead}>{v.nome} vai ver o seu placar quando entrar no orvok.</p>
         <div className={s.empurra}>
-          <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => router.push(`/comecar?volta=${encodeURIComponent(v.nome)}`)}><Icone nome="alvo" />Agora é a sua vez</button>
+          <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => router.push(`/comecar?volta=${encodeURIComponent(v.nome)}&de=${encodeURIComponent(codigo)}`)}><Icone nome="alvo" />Agora é a sua vez</button>
           <p className={s.miudo} style={{ justifyContent: "center" }}>Responda sobre você e veja se {v.nome} te conhece tão bem assim.</p>
         </div>
       </main>

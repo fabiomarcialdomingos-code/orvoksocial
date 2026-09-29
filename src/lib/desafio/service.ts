@@ -3,20 +3,31 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
-import { AVISO_HASH, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, PERGUNTAS, perguntasTerceira } from "./catalogo";
+import { AVISO_HASH, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, perguntaPublica } from "./catalogo";
+import { BANCO } from "./banco";
+import {
+  TOTAL_PERGUNTAS, conjuntoValido, escolherAncoras, escolherRestantes, perfilDasAncoras, perguntaPorChave, type Estatistica,
+} from "./selecao";
 
-const TOTAL = PERGUNTAS.length;
+const TOTAL = TOTAL_PERGUNTAS;
 const DIAS_VALIDADE = 60;
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const nome = z.string().transform((v) => v.trim().replace(/\s+/g, " ")).pipe(z.string().min(2).max(24));
 const opcoes = z.array(z.enum(CODIGOS)).length(TOTAL);
+const chaves = z.array(z.string().max(40)).length(TOTAL).refine(conjuntoValido, "conjunto inválido");
 export const criarSchema = z.strictObject({
   nome,
+  perguntas: chaves,
   respostas: opcoes,
   consentimento: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_VERSAO), hash: z.literal(AVISO_HASH) }),
 });
 export const tentativaSchema = z.strictObject({ nome: nome.optional(), previsoes: opcoes });
+const chavesAncoras = new Set(BANCO.filter((p) => p.ancora).map((p) => p.chave));
+export const selecaoSchema = z.strictObject({
+  ancoras: z.array(z.strictObject({ chave: z.string().refine((c) => chavesAncoras.has(c)), opcao: z.number().int().min(0).max(3) }))
+    .length(3).refine((l) => new Set(l.map((a) => a.chave)).size === 3),
+});
 export const codigoSchema = z.string().regex(/^[A-HJ-NP-Z2-9]{8}$/);
 
 /** Cookie do aparelho: liga o visitante aos desafios e tentativas que ele fez. */
@@ -40,6 +51,8 @@ function novoCodigo(): string {
   for (let i = 0; i < 8; i++) c += ALFABETO[randomInt(ALFABETO.length)];
   return c;
 }
+
+let cacheEstatisticas: { expira: number; dados: Map<string, Estatistica> } | null = null;
 
 export class DesafioService {
   constructor(private readonly pool: Pool) {}
@@ -67,9 +80,9 @@ export class DesafioService {
       const codigo = novoCodigo();
       try {
         await this.pool.query(
-          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt")
-           VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,clock_timestamp(),$8,clock_timestamp()+($9::int * interval '1 day'))`,
-          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE],
+          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys","consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt")
+           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,clock_timestamp(),$9,clock_timestamp()+($10::int * interval '1 day'))`,
+          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE],
         );
         return { codigo, token };
       } catch (error) {
@@ -80,13 +93,13 @@ export class DesafioService {
   }
 
   private async ativo(codigo: string) {
-    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; ownerTokenHash: string }>(
-      `SELECT id,"creatorName",answers,"ownerTokenHash" FROM "GuestChallenge"
+    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; ownerTokenHash: string }>(
+      `SELECT id,"creatorName",answers,"questionKeys","ownerTokenHash" FROM "GuestChallenge"
         WHERE code=$1 AND "revokedAt" IS NULL AND "expiresAt">clock_timestamp()`,
       [codigoSchema.parse(codigo)],
     );
     const linha = r.rows[0];
-    if (!linha) throw new AuthError("NOT_FOUND", 404);
+    if (!linha || !conjuntoValido(linha.questionKeys)) throw new AuthError("NOT_FOUND", 404);
     return linha;
   }
 
@@ -100,9 +113,52 @@ export class DesafioService {
     return {
       nome: d.creatorName,
       proprio: token ? tokenHash(token) === d.ownerTokenHash : false,
-      perguntas: perguntasTerceira(d.creatorName),
+      perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!, d.creatorName)),
       resultado: jaTentou?.rows[0] ?? null,
     };
+  }
+
+  /** Abertura do questionário: três âncoras, uma por eixo. */
+  ancoras() {
+    return escolherAncoras().map((p) => perguntaPublica(p));
+  }
+
+  /** Depois das âncoras: as outras sete, escolhidas pelo perfil e pelo que o uso ensinou. */
+  async restantes(raw: unknown) {
+    const { ancoras } = selecaoSchema.parse(raw);
+    const perfil = perfilDasAncoras(ancoras);
+    const lista = escolherRestantes(ancoras.map((a) => a.chave), perfil, await this.estatisticas());
+    return lista.map((p) => perguntaPublica(p));
+  }
+
+  /** Mesmo conjunto de um desafio existente, para o "desafie de volta". */
+  async conjuntoDe(codigo: string) {
+    const d = await this.ativo(codigo);
+    return d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!));
+  }
+
+  /**
+   * Aprendizado: para cada pergunta, quantas vezes os amigos acertaram e como as
+   * respostas de quem se descreveu se espalham entre as opções. Últimos 180 dias,
+   * guardado em memória por 10 minutos.
+   */
+  async estatisticas(): Promise<Map<string, Estatistica>> {
+    if (cacheEstatisticas && cacheEstatisticas.expira > Date.now()) return cacheEstatisticas.dados;
+    const r = await this.pool.query<{ chave: string; tentativas: number; acertos: number; a: number; b: number; c: number; d: number }>(
+      `SELECT k.chave, count(*)::int AS tentativas, count(*) FILTER (WHERE pr.v = an.v)::int AS acertos,
+              count(*) FILTER (WHERE an.v='A')::int AS a, count(*) FILTER (WHERE an.v='B')::int AS b,
+              count(*) FILTER (WHERE an.v='C')::int AS c, count(*) FILTER (WHERE an.v='D')::int AS d
+         FROM "GuestChallengeAttempt" t
+         JOIN "GuestChallenge" g ON g.id = t."challengeId"
+         CROSS JOIN LATERAL jsonb_array_elements_text(g."questionKeys") WITH ORDINALITY AS k(chave, i)
+         JOIN LATERAL jsonb_array_elements_text(t.predictions) WITH ORDINALITY AS pr(v, j) ON pr.j = k.i
+         JOIN LATERAL jsonb_array_elements_text(g.answers) WITH ORDINALITY AS an(v, m) ON an.m = k.i
+        WHERE t."createdAt" > clock_timestamp() - interval '180 days'
+        GROUP BY k.chave`,
+    );
+    const dados = new Map(r.rows.map((x) => [x.chave, { tentativas: x.tentativas, acertos: x.acertos, distribuicao: [x.a, x.b, x.c, x.d] as [number, number, number, number] }]));
+    cacheEstatisticas = { expira: Date.now() + 10 * 60_000, dados };
+    return dados;
   }
 
   /** Registra a tentativa e devolve só o placar. Uma tentativa por aparelho. */

@@ -507,6 +507,7 @@ model GuestChallenge {
   creatorName          String                  @db.VarChar(24)
   catalogVersion       String                  @db.VarChar(80)
   answers              Json
+  questionKeys         Json                    @default("[]")
   consentNoticeVersion String                  @db.VarChar(80)
   consentNoticeHash    String                  @db.VarChar(64)
   consentedAt          DateTime                @db.Timestamptz(6)

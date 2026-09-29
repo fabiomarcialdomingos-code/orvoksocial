@@ -1,8 +1,18 @@
-import { AVISO_HASH, AVISO_TEXTO, AVISO_VERSAO, perguntasPublicas } from "@/lib/desafio/catalogo";
+import { authPool } from "@/lib/auth/session";
+import { AVISO } from "@/lib/desafio/catalogo";
 import { leituraPublica } from "@/lib/desafio/http";
+import { DesafioService } from "@/lib/desafio/service";
 
 export const runtime = "nodejs";
-export async function GET() {
-  return leituraPublica(async () =>
-    Response.json({ schemaVersion: "1", perguntas: perguntasPublicas(), aviso: { versao: AVISO_VERSAO, hash: AVISO_HASH, texto: AVISO_TEXTO } }));
+/**
+ * Abertura do questionário. Sem parâmetros: três âncoras escolhidas na hora.
+ * Com `?de=CODIGO`: as mesmas 10 perguntas de um desafio existente ("desafie de volta").
+ */
+export async function GET(request: Request) {
+  return leituraPublica(async () => {
+    const de = new URL(request.url).searchParams.get("de");
+    const servico = new DesafioService(authPool());
+    if (de) return Response.json({ schemaVersion: "1", perguntas: await servico.conjuntoDe(de.toUpperCase()), aviso: AVISO });
+    return Response.json({ schemaVersion: "1", ancoras: servico.ancoras(), aviso: AVISO });
+  });
 }

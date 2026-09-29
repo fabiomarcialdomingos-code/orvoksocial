@@ -7,6 +7,7 @@ type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Aviso = { versao: string; hash: string; texto: string };
 type Tela = "nome" | "pergunta" | "pronto" | "convite" | "enviado";
 const LETRAS = ["A", "B", "C", "D"] as const;
+const TOTAL = 10;
 
 const TONS: [string, (amigo: string) => string][] = [
   ["Provocador", (a) => `${a ? `${a}, duvido` : "Duvido"} você acertar mais de 7 sobre mim. Respondi 10 perguntas no orvok, tenta aí:`],
@@ -15,7 +16,7 @@ const TONS: [string, (amigo: string) => string][] = [
 ];
 
 /** Percurso de quem chega pelo anúncio: responde sobre si e desafia alguém, sem cadastro. */
-export function FluxoCriar({ desafiarDeVolta }: { desafiarDeVolta: string | null }) {
+export function FluxoCriar({ desafiarDeVolta, conjuntoDe }: { desafiarDeVolta: string | null; conjuntoDe: string | null }) {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [tela, setTela] = useState<Tela>("nome");
@@ -29,12 +30,15 @@ export function FluxoCriar({ desafiarDeVolta }: { desafiarDeVolta: string | null
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [radarVisivel, setRadarVisivel] = useState(false);
+  const [buscando, setBuscando] = useState(false);
 
+  // Abertura: três âncoras (ou, no "desafie de volta", as mesmas 10 perguntas do outro desafio).
   useEffect(() => {
-    void fetch("/api/v1/desafio/catalogo").then((r) => r.json()).then((d: { perguntas: Pergunta[]; aviso: Aviso }) => {
-      setPerguntas(d.perguntas); setAviso(d.aviso);
-    }).catch(() => setErro("Não foi possível carregar as perguntas. Tente de novo em instantes."));
-  }, []);
+    const url = conjuntoDe ? `/api/v1/desafio/catalogo?de=${encodeURIComponent(conjuntoDe)}` : "/api/v1/desafio/catalogo";
+    void fetch(url).then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d: { perguntas?: Pergunta[]; ancoras?: Pergunta[]; aviso: Aviso }) => { setPerguntas(d.perguntas ?? d.ancoras ?? []); setAviso(d.aviso); })
+      .catch(() => setErro("Não foi possível carregar as perguntas. Tente de novo em instantes."));
+  }, [conjuntoDe]);
   useEffect(() => {
     if (tela !== "pronto") return;
     const t = requestAnimationFrame(() => setRadarVisivel(true));
@@ -48,7 +52,20 @@ export function FluxoCriar({ desafiarDeVolta }: { desafiarDeVolta: string | null
     : TONS[tom]![1](amigo.trim())), [desafiarDeVolta, tom, amigo]);
 
   const escolher = (k: number) => {
+    if (buscando) return;
     const novas = [...respostas]; novas[i] = k; setRespostas(novas);
+    // Terminadas as âncoras, o servidor escolhe as outras sete pelo perfil da pessoa.
+    if (i === perguntas.length - 1 && perguntas.length < TOTAL) {
+      setBuscando(true);
+      void enviarJson<{ perguntas: Pergunta[] }>("/api/v1/desafio/selecao", {
+        ancoras: perguntas.map((p, n) => ({ chave: p.chave, opcao: novas[n] ?? 0 })),
+      }).then((r) => {
+        setBuscando(false);
+        if (!r.ok) { setErro("Não foi possível continuar agora. Tente de novo."); return; }
+        setPerguntas([...perguntas, ...r.dados.perguntas]); setI(i + 1);
+      });
+      return;
+    }
     window.setTimeout(() => { if (i < perguntas.length - 1) setI(i + 1); else setTela("pronto"); }, 380);
   };
   const voltar = tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela("nome"))
@@ -61,7 +78,7 @@ export function FluxoCriar({ desafiarDeVolta }: { desafiarDeVolta: string | null
     if (!aviso) return null;
     setOcupado(true); setErro(null);
     const r = await enviarJson<{ codigo: string }>("/api/v1/desafio", {
-      nome, respostas: respostas.map((v) => LETRAS[v ?? 0]), consentimento: { aceito: true, versao: aviso.versao, hash: aviso.hash },
+      nome, perguntas: perguntas.map((p) => p.chave), respostas: respostas.map((v) => LETRAS[v ?? 0]), consentimento: { aceito: true, versao: aviso.versao, hash: aviso.hash },
     });
     setOcupado(false);
     if (!r.ok) { setErro(r.status === 429 ? "Muitos desafios criados agora. Tente de novo mais tarde." : "Não foi possível criar o desafio. Tente de novo."); return null; }
@@ -105,9 +122,9 @@ export function FluxoCriar({ desafiarDeVolta }: { desafiarDeVolta: string | null
     return (
       <Moldura aoVoltar={voltar}>
         <main className={s.tela} key={`q${i}`}>
-          <div className={s.progresso} aria-hidden="true">{perguntas.map((p, k) => <i key={p.chave} className={k < respondidas ? s.feito : ""} />)}</div>
+          <div className={s.progresso} aria-hidden="true">{Array.from({ length: TOTAL }, (_, k) => <i key={k} className={k < respondidas ? s.feito : ""} />)}</div>
           <Anel nome={nome} feitas={respondidas} atual={i} />
-          <p className={s.contador}>Pergunta {i + 1} de {perguntas.length}</p>
+          <p className={s.contador}>Pergunta {i + 1} de {TOTAL}</p>
           <h2 className={s.pergunta} id={`perg-${i}`}>{q.texto}</h2>
           <div className={s.opcoes} role="radiogroup" aria-labelledby={`perg-${i}`}>
             {q.opcoes.map((o, k) => (
@@ -116,7 +133,8 @@ export function FluxoCriar({ desafiarDeVolta }: { desafiarDeVolta: string | null
               </button>
             ))}
           </div>
-          <p className={`${s.miudo} ${s.rodapeQ}`}><Icone nome="olho" />Só você vê as suas respostas</p>
+          {erro ? <p className={s.erro} role="alert">{erro}</p> : null}
+          <p className={`${s.miudo} ${s.rodapeQ}`}><Icone nome="olho" />{buscando ? "Escolhendo as próximas perguntas para você…" : "Só você vê as suas respostas"}</p>
         </main>
       </Moldura>
     );
