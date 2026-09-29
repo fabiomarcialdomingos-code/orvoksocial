@@ -58,7 +58,7 @@ export function RadarHub() {
       </nav>
       <div className="grid-main" style={{ marginTop: 16 }}>
         <section className="card" aria-label="Seu radar">
-          <div style={{ maxWidth: 520, margin: "0 auto" }}>
+          <div className="radar-caixa">
             <Instrument nodes={nodes} label="Seu radar de pessoas" />
           </div>
           {nodes.length === 1 && <p className="muted" style={{ textAlign: "center" }}>Seu radar ainda está vazio. As pessoas aparecem aqui quando pedidos são aceitos.</p>}
