@@ -18,5 +18,14 @@ jobs:
             r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
+      - name: Banco
+        id: b
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          r=$(psql "$DATABASE_URL" -At -c "SELECT 'papeis=' || coalesce((SELECT string_agg(rolname || (CASE WHEN rolcanlogin THEN '+login' ELSE '' END), ',') FROM pg_roles WHERE rolname LIKE 'orvok_%'),'nenhum') || ' usuarios=' || (SELECT count(*) FROM \"User\") || ' identidades=' || (SELECT count(*) FROM \"AuthIdentity\") || ' verificadas=' || (SELECT count(*) FROM \"AuthIdentity\" WHERE \"verifiedAt\" IS NOT NULL) || ' sessoes=' || (SELECT count(*) FROM \"AuthSession\")")
+          echo "resumo=$r" >> "$GITHUB_OUTPUT"
+      - name: "Banco ${{ steps.b.outputs.resumo }}"
+        run: "true"
       - name: "Resultado ${{ steps.s.outputs.resumo }}"
         run: "true"
