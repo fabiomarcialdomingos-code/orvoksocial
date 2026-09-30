@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, IconeRede, useShell } from "../app/AppShell";
 import { ROTULO_RELACAO, quando, useDesafios } from "./dados";
 import s from "./rede.module.css";
@@ -11,6 +11,8 @@ export function DesafiosConta() {
   const { dados, recarregar } = useDesafios();
   const [aba, setAba] = useState<"enviados" | "recebidos">("enviados");
   const [confirmar, setConfirmar] = useState<string | null>(null);
+  // Abriu Desafios: as respostas até agora deixam de contar como novidade.
+  useEffect(() => { try { window.localStorage.setItem("orvok:desafios-visto", String(Date.now())); } catch { /* sem armazenamento local */ } }, []);
 
   const copiar = async (codigo: string) => {
     await navigator.clipboard?.writeText(`${window.location.origin}/d/${codigo}`).catch(() => undefined);

@@ -73,6 +73,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
   const [profile, setProfile] = useState<Profile | null>(null);
   const [toastState, setToastState] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
   const [unread, setUnread] = useState(0);
+  const [novas, setNovas] = useState(0);
   const toast = useCallback((text: string, kind: "ok" | "error" = "ok") => {
     setToastState({ text, kind });
     window.clearTimeout(toastTimer);
@@ -97,7 +98,12 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
         setSession(data);
         refreshUnread();
         // Desafios feitos neste aparelho antes do cadastro passam para a conta.
-        void fetch("/api/v1/desafio/reivindicar", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", credentials: "same-origin" }).catch(() => undefined);
+        await fetch("/api/v1/desafio/reivindicar", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", credentials: "same-origin" }).catch(() => undefined);
+        // Respostas novas desde a última visita a Desafios viram um número no menu.
+        const meus = await fetch("/api/v1/desafio/meus", { credentials: "same-origin", cache: "no-store" }).then((x) => (x.ok ? x.json() : { desafios: [] })).catch(() => ({ desafios: [] })) as { desafios: { tentativas: { em: string }[] }[] };
+        let visto = 0;
+        try { visto = Number(window.localStorage.getItem("orvok:desafios-visto") ?? 0); } catch { visto = 0; }
+        if (active && !pathname.startsWith("/desafios")) setNovas(meus.desafios.flatMap((d) => d.tentativas).filter((t) => new Date(t.em).getTime() > visto).length);
       })
       .catch(() => router.replace("/entrar"));
     return () => { active = false; };
@@ -125,6 +131,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
               <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined}>
                 <IconeRede nome={item.icone} /><span>{item.rotulo}</span>
                 {item.href === "/notificacoes" && unread > 0 ? <b className={s.bolha}>{unread}</b> : null}
+                {item.href === "/desafios" && novas > 0 ? <b className={s.bolha} title="Respostas novas">{novas}</b> : null}
               </Link>
             ))}
             {session?.role === "ADMIN" ? <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined}><IconeRede nome="escudo" /><span>Quartel general</span></Link> : null}

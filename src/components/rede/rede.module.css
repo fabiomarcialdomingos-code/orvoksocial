@@ -155,3 +155,14 @@
 .comentario { margin: 6px 0; font-size: 14px; color: var(--text-2); }
 .comentario b { color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .revela, .registrar, .marcaEscolha, .explode, .explode .selo { animation: none; } }
+
+/* Caminho no Início */
+.caminho { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.caminho a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line-strong); color: var(--text); text-decoration: none; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+.caminho a:hover { border-color: var(--people); background: rgb(76 141 255 / 0.08); transform: translateX(2px); }
+.caminho b { display: block; font-size: 15px; }
+.caminho small { color: var(--text-3); font-size: 13px; }
+.check { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--panel-2); color: var(--self); border: 1px solid var(--line-strong); }
+.check svg { width: 18px; height: 18px; }
+.feito .check { background: #2dd4a0; color: #04241a; border-color: transparent; font-weight: 800; box-shadow: 0 0 16px -2px #2dd4a0; }
+.feito b { color: var(--text-2); }

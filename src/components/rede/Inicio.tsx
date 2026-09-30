@@ -86,11 +86,19 @@ export function Inicio() {
             <div><strong>{dados?.recebidos.length ?? 0}</strong><span>que você previu</span></div>
           </div>
         ) : <p>Responda 10 perguntas sobre você e desafie alguém. As perguntas mudam conforme a relação.</p>}
-        <div className={s.chips}>
-          <Link className={s.chip} href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
-          <Link className={s.chip} href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-          <Link className={s.chip} href="/comecar?rel=crush"><IconeRede nome="coracao" />Crush</Link>
-        </div>
+        <ol className={s.caminho} aria-label="Seu caminho no orvok">
+          {([["familia", "Família", "casaRel"], ["amigos", "Amigos", "pessoas"], ["crush", "Crush", "coracao"]] as const).map(([rel, rotulo, icone]) => {
+            const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel);
+            return (
+              <li key={rel} className={feito ? s.feito : ""}>
+                <Link href={`/comecar?rel=${rel}`}>
+                  <span className={s.check} aria-hidden="true">{feito ? "✓" : <IconeRede nome={icone} />}</span>
+                  <span><b>{feito ? `${rotulo}: desafio enviado` : `Desafie ${rotulo === "Crush" ? "o crush" : rotulo === "Família" ? "a família" : "os amigos"}`}</b><small>{feito ? "Mandar para mais alguém" : "Perguntas feitas para essa relação"}</small></span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
       </section>
 
       <div className={s.compor}>

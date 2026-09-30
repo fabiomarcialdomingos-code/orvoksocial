@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>orvok · quem conhece você de verdade</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#040811">
 <meta name="description" content="Responda sobre você, desafie um amigo e descubra quem te conhece de verdade. Sem cadastro para começar.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2213%22 fill=%22none%22 stroke=%22%23EAF0FA%22 stroke-width=%222.4%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%224.2%22 fill=%22%23FFA834%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -895,6 +898,7 @@ function iconeTema(){ btnTema.querySelector('svg').outerHTML=ic(escuro()?'sol':'
 btnTema.addEventListener('click',()=>{ const n=escuro()?'light':'dark'; document.documentElement.dataset.theme=n; try{localStorage.setItem('orvok-tema',n)}catch(_){ } iconeTema(); teias(); });
 
 if(!DEMO) $$('[data-demo]').forEach(e=>e.remove());
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 pintaIcones(); iconeTema();
 })();
 </script>

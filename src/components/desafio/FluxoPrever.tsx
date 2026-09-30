@@ -120,6 +120,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <div className={s.empurra}>
           <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => router.push(`/comecar?volta=${encodeURIComponent(v.nome)}&de=${encodeURIComponent(codigo)}`)}><Icone nome="alvo" />Agora é a sua vez</button>
           <p className={s.miudo} style={{ justifyContent: "center" }}>Responda sobre você e veja se {v.nome} te conhece tão bem assim.</p>
+          <a className={`${s.btn} ${s.btnFio}`} href="/comecar">Desafiar outra pessoa</a>
         </div>
       </main>
     </Moldura>
