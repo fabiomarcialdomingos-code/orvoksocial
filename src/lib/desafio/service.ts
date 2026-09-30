@@ -4,7 +4,7 @@ import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
 import { AVISO_HASH, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
-import { type Contexto } from "./banco";
+import { type Relacao as Contexto } from "./nucleo";
 import { NUCLEO } from "./nucleo";
 import { media, notas, perfil, selo, type Notas } from "./perfil";
 import {
