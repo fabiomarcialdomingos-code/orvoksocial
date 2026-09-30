@@ -71,6 +71,19 @@ const comConta = await svc.meus(null, userId);
 const t0 = comConta.desafios[0]!.tentativas[0]!;
 ok("score" in t0 && t0.score === 8, "com conta: placar aparece, mesmo em outro aparelho");
 try { await svc.cancelar(codigo, t1.token, null); ok(false, "estranho não cancela"); } catch (e) { ok((e as {status?:number}).status === 404, "quem não criou não consegue cancelar"); }
+// Retrato: só respostas com o aviso novo e só com 3 ou mais pessoas por pergunta
+const antes = await svc.retrato(dono, null);
+ok(antes.perguntas.length === 0, "retrato ignora respostas dadas antes do aviso do retrato");
+const aviso = "desafio-retrato-v1" as const;
+await svc.tentar(codigo, { nome: "Ana", previsoes: respostas, avisoRetrato: aviso }, null);
+await svc.tentar(codigo, { nome: "Leo", previsoes: respostas, avisoRetrato: aviso }, null);
+const dois = await svc.retrato(dono, null);
+ok(dois.perguntas.length === 0 && dois.pendentes > 0, "com 2 pessoas nenhuma pergunta aparece (ficam pendentes)");
+const outras = respostas.map((x) => (x === "A" ? "B" : "A")) as typeof respostas;
+await svc.tentar(codigo, { nome: "Bia", previsoes: outras, avisoRetrato: aviso }, null);
+const tres = await svc.retrato(dono, null);
+ok(tres.perguntas.length === 10 && tres.respondentes === 3 && tres.perguntas.every((p) => p.total === 3 && !("nome" in p)), "com 3 pessoas as perguntas aparecem, sem nomes");
+ok(tres.perguntas.every((p) => p.tipo === "acordo" && p.concordam === 2), "2 de 3 concordando conta como acordo");
 const est = await svc.estatisticas();
 ok((est.get(conjunto[0]!)?.tentativas ?? 0) >= 1, "estatísticas de aprendizado registram cada pergunta");
 await svc.cancelar(codigo, dono, null);

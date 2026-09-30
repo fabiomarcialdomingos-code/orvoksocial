@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
-import { AVISO_HASH, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, perguntaPublica } from "./catalogo";
+import { AVISO_HASH, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
 import { BANCO, type Contexto } from "./banco";
 import {
   TOTAL_PERGUNTAS, conjuntoValido, escolherAncoras, escolherRestantes, perfilDasAncoras, perguntaPorChave, type Estatistica,
@@ -23,7 +23,7 @@ export const criarSchema = z.strictObject({
   respostas: opcoes,
   consentimento: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_VERSAO), hash: z.literal(AVISO_HASH) }),
 }).refine((d) => conjuntoValido(d.perguntas, d.relacao), "conjunto inválido");
-export const tentativaSchema = z.strictObject({ nome: nome.optional(), previsoes: opcoes });
+export const tentativaSchema = z.strictObject({ nome: nome.optional(), previsoes: opcoes, avisoRetrato: z.literal(AVISO_RETRATO_VERSAO).optional() });
 const chavesAncoras = new Set(BANCO.filter((p) => p.ancora).map((p) => p.chave));
 export const selecaoSchema = z.strictObject({
   relacao,
@@ -175,11 +175,11 @@ export class DesafioService {
     await this.limite(`tentar:${dono}`, 60, 86400);
     const score = dados.previsoes.reduce((n, v, i) => n + (v === d.answers[i] ? 1 : 0), 0);
     const r = await this.pool.query<{ score: number; total: number }>(
-      `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId")
-       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid)
+      `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId","portraitNoticeVersion")
+       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid,$9)
        ON CONFLICT ("challengeId","ownerTokenHash") DO UPDATE SET "challengeId"=EXCLUDED."challengeId"
        RETURNING score,total`,
-      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono, userId],
+      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono, userId, dados.avisoRetrato ?? null],
     );
     return { ...r.rows[0]!, token };
   }
@@ -240,6 +240,53 @@ export class DesafioService {
       [token ? tokenHash(token) : "", userId],
     );
     return r.rows.map((x) => ({ codigo: x.code, nome: x.creatorName, relacao: x.relation, acertos: x.score, total: x.total, em: x.createdAt }));
+  }
+
+  /**
+   * Retrato "como você se vê vs. como te veem". Regras de privacidade:
+   * só tentativas feitas depois do aviso do retrato, e cada pergunta só entra
+   * com pelo menos MINIMO_RETRATO pessoas. Nenhum nome sai daqui.
+   */
+  async retrato(token: string | null, userId: string | null) {
+    if (!token && !userId) return { perguntas: [], pendentes: 0, respondentes: 0 };
+    const r = await this.pool.query<{ keys: string[]; answers: string[]; relation: Contexto; created: Date; predictions: string[] | null; aviso: string | null; quem: string | null }>(
+      `SELECT c."questionKeys" AS keys, c.answers, c.relation, c."createdAt" AS created, a.predictions, a."portraitNoticeVersion" AS aviso, a."ownerTokenHash" AS quem
+         FROM "GuestChallenge" c LEFT JOIN "GuestChallengeAttempt" a ON a."challengeId"=c.id
+        WHERE c."revokedAt" IS NULL AND (c."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND c."claimedByUserId"=$2))
+        ORDER BY c."createdAt" ASC`,
+      [token ? tokenHash(token) : "", userId],
+    );
+    const eu = new Map<string, string>();
+    const palpites = new Map<string, { opcao: string; relacao: Contexto }[]>();
+    const pessoas = new Set<string>();
+    for (const linha of r.rows) {
+      linha.keys.forEach((k, i) => { const a = linha.answers[i]; if (a) eu.set(k, a); }); // a resposta mais recente vale
+      if (!linha.predictions || linha.aviso !== AVISO_RETRATO_VERSAO) continue;
+      if (linha.quem) pessoas.add(linha.quem);
+      linha.keys.forEach((k, i) => {
+        const p = linha.predictions![i];
+        if (p) palpites.set(k, [...(palpites.get(k) ?? []), { opcao: p, relacao: linha.relation }]);
+      });
+    }
+    const perguntas = [];
+    let pendentes = 0;
+    for (const [chave, lista] of palpites) {
+      const pergunta = perguntaPorChave(chave), minha = eu.get(chave);
+      if (!pergunta || !minha) continue;
+      if (lista.length < MINIMO_RETRATO) { pendentes++; continue; }
+      const contagem = new Map<string, number>();
+      for (const x of lista) contagem.set(x.opcao, (contagem.get(x.opcao) ?? 0) + 1);
+      const [maisVotada, votos] = [...contagem.entries()].sort((a, b) => b[1] - a[1])[0]!;
+      const concordam = contagem.get(minha) ?? 0;
+      const idx = (c: string) => CODIGOS.indexOf(c as (typeof CODIGOS)[number]);
+      perguntas.push({
+        chave, texto: perguntaPublica(pergunta).texto, tema: pergunta.tema,
+        voce: pergunta.opcoes[idx(minha)]!, maioria: pergunta.opcoes[idx(maisVotada)]!,
+        total: lista.length, concordam, votosMaioria: votos,
+        tipo: maisVotada !== minha && votos / lista.length >= 0.6 ? "cego" : concordam / lista.length >= 0.6 ? "acordo" : "dividido",
+      });
+    }
+    return { perguntas, pendentes, respondentes: pessoas.size };
   }
 
   /** Liga à conta tudo o que este aparelho fez antes do cadastro. */

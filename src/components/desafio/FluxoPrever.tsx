@@ -48,7 +48,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   }, [tela, placar]);
 
   const concluir = async (lista: (number | undefined)[]) => {
-    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { nome: nomeFinal.trim(), previsoes: lista.map((x) => LETRAS[x ?? 0]) });
+    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { nome: nomeFinal.trim(), avisoRetrato: "desafio-retrato-v1", previsoes: lista.map((x) => LETRAS[x ?? 0]) });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este desafio é seu. Envie o link para alguém tentar te prever." : "Não foi possível registrar agora. Tente de novo."); return; }
     setPlacar(r.dados); setTela("placar");
   };
@@ -81,7 +81,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
           <input id="meu-nome" autoComplete="given-name" maxLength={24} placeholder="Seu primeiro nome" value={meuNome} onChange={(e) => setMeuNome(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && meuNome.trim().length >= 2) setTela("prever"); }} />
         </div>}
-        <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Seu nome aparece para {v.nome} junto com o placar. Você não vê as respostas de {v.nome}, e {v.nome} não vê as suas escolhas.</p>
+        <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Seu nome aparece para {v.nome} junto com o placar. Suas escolhas entram, sem o seu nome, no retrato de {v.nome}, e cada pergunta só aparece lá quando pelo menos 3 pessoas responderam.</p>
         <div className={s.empurra}><button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={nomeFinal.trim().length < 2} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button></div>
       </main>
     </Moldura>

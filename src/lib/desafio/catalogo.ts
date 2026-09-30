@@ -17,3 +17,10 @@ export const AVISO = { versao: AVISO_VERSAO, hash: AVISO_HASH, texto: AVISO_TEXT
 export function perguntaPublica(p: PerguntaBanco, quem: string | null = null) {
   return { chave: p.chave, texto: textoPara(p, quem), opcoes: p.opcoes };
 }
+
+/** Aviso a quem responde: as escolhas entram, sem nome, no retrato de quem desafiou. */
+export const AVISO_RETRATO_VERSAO = "desafio-retrato-v1";
+export const AVISO_RETRATO_TEXTO =
+  "Suas escolhas entram, sem o seu nome, no retrato de quem te desafiou. Cada pergunta só aparece nesse retrato quando pelo menos 3 pessoas responderam.";
+/** Mínimo de pessoas por pergunta para ela aparecer no retrato. */
+export const MINIMO_RETRATO = 3;

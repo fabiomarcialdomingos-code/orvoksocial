@@ -37,6 +37,7 @@ const ICONES = {
   sino: <><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>,
   perfil: <><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4.5 4-7 8-7s7 2.5 8 7" /></>,
   mais: <path d="M12 5v14M5 12h14" />,
+  espelho: <><circle cx="9" cy="12" r="6" /><circle cx="15" cy="12" r="6" /></>,
   escudo: <><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z" /></>,
   sair: <><path d="M15 4h4v16h-4" /><path d="M10 8l-4 4 4 4M6 12h10" /></>,
   casaRel: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />,
@@ -61,6 +62,7 @@ const MENU: { href: string; rotulo: string; icone: NomeIcone; ativo?: string[] }
   { href: "/painel", rotulo: "Início", icone: "casa", ativo: ["/painel", "/feed"] },
   { href: "/desafios", rotulo: "Desafios", icone: "alvo" },
   { href: "/radar", rotulo: "Meu radar", icone: "radar" },
+  { href: "/retrato", rotulo: "Meu retrato", icone: "espelho" },
   { href: "/eventos", rotulo: "Mundo", icone: "globo" },
   { href: "/notificacoes", rotulo: "Notificações", icone: "sino" },
   { href: "/perfil", rotulo: "Perfil", icone: "perfil", ativo: ["/perfil", "/meus-dados"] },
@@ -177,7 +179,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
       <nav className={s.abasMovel} aria-label="Navegação">
         {MENU.filter((m) => m.href !== "/notificacoes").slice(0, 2).map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
         <Link className={s.meio} href="/comecar" aria-label="Desafiar alguém"><IconeRede nome="mais" /></Link>
-        {[MENU[2]!, MENU[5]!].map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
+        {[MENU[2]!, MENU[6]!].map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
       </nav>
       {toastState && <div className="toast" role={toastState.kind === "error" ? "alert" : "status"} data-kind={toastState.kind}>{toastState.text}</div>}
     </ShellContext.Provider>

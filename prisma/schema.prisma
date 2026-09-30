@@ -535,6 +535,7 @@ model GuestChallengeAttempt {
   score           Int            @db.SmallInt
   total           Int            @db.SmallInt
   ownerTokenHash  String         @db.VarChar(64)
+  portraitNoticeVersion String?  @db.VarChar(40)
   claimedByUserId String?        @db.Uuid
   claimedBy       User?          @relation("GuestAttemptClaimer", fields: [claimedByUserId], references: [id], onDelete: SetNull)
   createdAt       DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)

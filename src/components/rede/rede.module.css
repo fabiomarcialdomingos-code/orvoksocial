@@ -166,3 +166,22 @@
 .check svg { width: 18px; height: 18px; }
 .feito .check { background: #2dd4a0; color: #04241a; border-color: transparent; font-weight: 800; box-shadow: 0 0 16px -2px #2dd4a0; }
 .feito b { color: var(--text-2); }
+
+/* Retrato */
+.espelho { width: 100%; max-width: 380px; display: block; margin: 4px auto 10px; }
+.espelhoVoce { animation: aproximaE 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.espelhoOutros { animation: aproximaD 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes aproximaE { from { transform: translateX(-40px); opacity: 0; } }
+@keyframes aproximaD { from { transform: translateX(40px); opacity: 0; } }
+.tituloSecao { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 800; margin: 18px 0 10px; }
+.tituloSecao svg { width: 18px; height: 18px; color: var(--self); }
+.cego { background: radial-gradient(90% 120% at 100% 0%, rgb(255 79 130 / 0.1), transparent 60%), var(--panel); }
+.duelo { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.ladoVoce, .ladoOutros { border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; }
+.ladoVoce { background: rgb(255 168 52 / 0.12); border: 1px solid rgb(255 168 52 / 0.35); }
+.ladoOutros { background: rgb(76 141 255 / 0.12); border: 1px solid rgb(76 141 255 / 0.4); }
+.ladoVoce small, .ladoOutros small { color: var(--text-3); font-size: 12px; }
+.ladoVoce span, .ladoOutros span { font-weight: 700; }
+.diferente { font-size: 22px; font-weight: 800; color: #ff8fb1; }
+@media (max-width: 520px) { .duelo { grid-template-columns: 1fr; } .diferente { text-align: center; } }
+@media (prefers-reduced-motion: reduce) { .espelhoVoce, .espelhoOutros { animation: none; } }
