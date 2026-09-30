@@ -185,3 +185,22 @@
 .diferente { font-size: 22px; font-weight: 800; color: #ff8fb1; }
 @media (max-width: 520px) { .duelo { grid-template-columns: 1fr; } .diferente { text-align: center; } }
 @media (prefers-reduced-motion: reduce) { .espelhoVoce, .espelhoOutros { animation: none; } }
+
+/* Retrato com selo */
+.medalha { display: flex; align-items: center; gap: 16px; padding: 16px; margin-bottom: 12px; border-radius: 22px; border: 1px solid color-mix(in srgb, var(--cor) 45%, transparent); background: radial-gradient(90% 120% at 0% 50%, color-mix(in srgb, var(--cor) 16%, transparent), transparent 60%), var(--panel); animation: revela 0.6s both; }
+.medalha svg { width: 104px; height: 104px; flex: none; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--cor) 60%, transparent)); }
+.medalha b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--cor); }
+.medalha span { color: var(--text-2); }
+.medalhaGira { transform-origin: 60px 60px; animation: gira 14s linear infinite; }
+.comparacao { display: grid; gap: 6px; }
+.linhaTraco { display: grid; grid-template-columns: 90px 1fr 24px 1fr; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 12px; background: var(--panel-2); }
+.nomeTraco { color: var(--text-3); font-size: 13px; }
+.voceTraco { color: #ffd39a; font-weight: 700; }
+.elesTraco { color: #bfd7ff; font-weight: 700; text-align: right; }
+.sinal { text-align: center; font-weight: 800; color: #2dd4a0; }
+.diverge { background: rgb(255 79 130 / 0.08); box-shadow: inset 0 0 0 1px rgb(255 79 130 / 0.3); }
+.diverge .sinal { color: #ff8fb1; }
+.progressoRetrato { display: flex; gap: 8px; }
+.progressoRetrato i { flex: 1; height: 10px; border-radius: 10px; background: var(--panel-3); }
+.progressoRetrato i.ok { background: linear-gradient(90deg, var(--people), var(--self)); box-shadow: 0 0 12px -2px var(--people); }
+@media (prefers-reduced-motion: reduce) { .medalha, .medalhaGira { animation: none; } }

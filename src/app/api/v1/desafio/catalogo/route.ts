@@ -13,6 +13,8 @@ export async function GET(request: Request) {
     const de = new URL(request.url).searchParams.get("de");
     const servico = new DesafioService(authPool());
     if (de) return Response.json({ schemaVersion: "1", ...(await servico.conjuntoDe(de.toUpperCase())), aviso: AVISO });
-    return Response.json({ schemaVersion: "1", ancoras: servico.ancoras(), aviso: AVISO });
+    const rel = new URL(request.url).searchParams.get("rel");
+    const relacao = rel === "familia" || rel === "crush" ? rel : "amigos";
+    return Response.json({ schemaVersion: "1", ancoras: await servico.ancoras(relacao), aviso: AVISO });
   });
 }

@@ -4,9 +4,11 @@ import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
 import { AVISO_HASH, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
-import { BANCO, type Contexto } from "./banco";
+import { type Contexto } from "./banco";
+import { NUCLEO } from "./nucleo";
+import { media, notas, perfil, selo, type Notas } from "./perfil";
 import {
-  TOTAL_PERGUNTAS, conjuntoValido, escolherAncoras, escolherRestantes, perfilDasAncoras, perguntaPorChave, type Estatistica,
+  TOTAL_PERGUNTAS, conjuntoValido, escolherAberturaNucleo, escolherReforcoNucleo, perguntaPorChave, type Estatistica,
 } from "./selecao";
 
 const TOTAL = TOTAL_PERGUNTAS;
@@ -24,12 +26,14 @@ export const criarSchema = z.strictObject({
   consentimento: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_VERSAO), hash: z.literal(AVISO_HASH) }),
 }).refine((d) => conjuntoValido(d.perguntas, d.relacao), "conjunto inválido");
 export const tentativaSchema = z.strictObject({ nome: nome.optional(), previsoes: opcoes, avisoRetrato: z.literal(AVISO_RETRATO_VERSAO).optional() });
-const chavesAncoras = new Set(BANCO.filter((p) => p.ancora).map((p) => p.chave));
+const chavesNucleo = new Set(NUCLEO.map((p) => p.chave));
 export const selecaoSchema = z.strictObject({
   relacao,
-  ancoras: z.array(z.strictObject({ chave: z.string().refine((c) => chavesAncoras.has(c)), opcao: z.number().int().min(0).max(3) }))
-    .length(3).refine((l) => new Set(l.map((a) => a.chave)).size === 3),
+  ancoras: z.array(z.strictObject({ chave: z.string().refine((c) => chavesNucleo.has(c)), opcao: z.number().int().min(0).max(3) }))
+    .length(6).refine((l) => new Set(l.map((a) => a.chave)).size === 6),
 });
+export const perfilSchema = z.strictObject({ perguntas: z.array(z.string().max(40)).length(TOTAL), respostas: opcoes }).refine((d) => conjuntoValido(d.perguntas));
+const indice = (c: string) => CODIGOS.indexOf(c as (typeof CODIGOS)[number]);
 export const codigoSchema = z.string().regex(/^[A-HJ-NP-Z2-9]{8}$/);
 
 /** Cookie do aparelho: liga o visitante aos desafios e tentativas que ele fez. */
@@ -121,17 +125,21 @@ export class DesafioService {
     };
   }
 
-  /** Abertura do questionário: três âncoras, uma por eixo. */
-  ancoras() {
-    return escolherAncoras().map((p) => perguntaPublica(p));
+  /** Abertura: seis perguntas, uma de cada traço do perfil, adequadas à relação. */
+  async ancoras(rel: Contexto) {
+    return escolherAberturaNucleo(rel, await this.estatisticas()).map((p) => perguntaPublica(p));
   }
 
-  /** Depois das âncoras: as outras sete, escolhidas pelo perfil e pelo que o uso ensinou. */
+  /** Reforço: mais quatro perguntas nos traços em que a pessoa ficou mais em cima do muro. */
   async restantes(raw: unknown) {
     const { ancoras, relacao: rel } = selecaoSchema.parse(raw);
-    const perfil = perfilDasAncoras(ancoras);
-    const lista = escolherRestantes(ancoras.map((a) => a.chave), perfil, await this.estatisticas(), rel);
-    return lista.map((p) => perguntaPublica(p));
+    return escolherReforcoNucleo(ancoras, rel, await this.estatisticas()).map((p) => perguntaPublica(p));
+  }
+
+  /** Diagnóstico "como você se vê", logo depois das perguntas. Não grava nada. */
+  diagnostico(raw: unknown) {
+    const d = perfilSchema.parse(raw);
+    return perfil(notas(d.perguntas, d.respostas.map(indice)));
   }
 
   /** Mesmo conjunto de um desafio existente, para o "desafie de volta". */
@@ -248,45 +256,35 @@ export class DesafioService {
    * com pelo menos MINIMO_RETRATO pessoas. Nenhum nome sai daqui.
    */
   async retrato(token: string | null, userId: string | null) {
-    if (!token && !userId) return { perguntas: [], pendentes: 0, respondentes: 0 };
-    const r = await this.pool.query<{ keys: string[]; answers: string[]; relation: Contexto; created: Date; predictions: string[] | null; aviso: string | null; quem: string | null }>(
-      `SELECT c."questionKeys" AS keys, c.answers, c.relation, c."createdAt" AS created, a.predictions, a."portraitNoticeVersion" AS aviso, a."ownerTokenHash" AS quem
+    const vazio = { eu: null, eles: null, selo: null, respondentes: 0, faltam: MINIMO_RETRATO, relacoes: [] as unknown[] };
+    if (!token && !userId) return vazio;
+    const r = await this.pool.query<{ id: string; keys: string[]; answers: string[]; relation: Contexto; predictions: string[] | null; aviso: string | null }>(
+      `SELECT c.id, c."questionKeys" AS keys, c.answers, c.relation, a.predictions, a."portraitNoticeVersion" AS aviso
          FROM "GuestChallenge" c LEFT JOIN "GuestChallengeAttempt" a ON a."challengeId"=c.id
-        WHERE c."revokedAt" IS NULL AND (c."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND c."claimedByUserId"=$2))
-        ORDER BY c."createdAt" ASC`,
-      [token ? tokenHash(token) : "", userId],
+        WHERE c."revokedAt" IS NULL AND c."catalogVersion"=$3 AND (c."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND c."claimedByUserId"=$2))`,
+      [token ? tokenHash(token) : "", userId, CATALOGO_VERSAO],
     );
-    const eu = new Map<string, string>();
-    const palpites = new Map<string, { opcao: string; relacao: Contexto }[]>();
-    const pessoas = new Set<string>();
-    for (const linha of r.rows) {
-      linha.keys.forEach((k, i) => { const a = linha.answers[i]; if (a) eu.set(k, a); }); // a resposta mais recente vale
-      if (!linha.predictions || linha.aviso !== AVISO_RETRATO_VERSAO) continue;
-      if (linha.quem) pessoas.add(linha.quem);
-      linha.keys.forEach((k, i) => {
-        const p = linha.predictions![i];
-        if (p) palpites.set(k, [...(palpites.get(k) ?? []), { opcao: p, relacao: linha.relation }]);
-      });
+    // Como você se vê: todas as suas respostas somadas (mais perguntas, perfil mais preciso).
+    const vistos = new Set<string>(); const minhasChaves: string[] = []; const minhasOpcoes: number[] = [];
+    const deles: { relacao: Contexto; n: Notas }[] = [];
+    for (const l of r.rows) {
+      if (!vistos.has(l.id)) { vistos.add(l.id); l.keys.forEach((k, i) => { minhasChaves.push(k); minhasOpcoes.push(indice(l.answers[i] ?? "")); }); }
+      if (l.predictions && l.aviso === AVISO_RETRATO_VERSAO) deles.push({ relacao: l.relation, n: notas(l.keys, l.predictions.map(indice)) });
     }
-    const perguntas = [];
-    let pendentes = 0;
-    for (const [chave, lista] of palpites) {
-      const pergunta = perguntaPorChave(chave), minha = eu.get(chave);
-      if (!pergunta || !minha) continue;
-      if (lista.length < MINIMO_RETRATO) { pendentes++; continue; }
-      const contagem = new Map<string, number>();
-      for (const x of lista) contagem.set(x.opcao, (contagem.get(x.opcao) ?? 0) + 1);
-      const [maisVotada, votos] = [...contagem.entries()].sort((a, b) => b[1] - a[1])[0]!;
-      const concordam = contagem.get(minha) ?? 0;
-      const idx = (c: string) => CODIGOS.indexOf(c as (typeof CODIGOS)[number]);
-      perguntas.push({
-        chave, texto: perguntaPublica(pergunta).texto, tema: pergunta.tema,
-        voce: pergunta.opcoes[idx(minha)]!, maioria: pergunta.opcoes[idx(maisVotada)]!,
-        total: lista.length, concordam, votosMaioria: votos,
-        tipo: maisVotada !== minha && votos / lista.length >= 0.6 ? "cego" : concordam / lista.length >= 0.6 ? "acordo" : "dividido",
-      });
-    }
-    return { perguntas, pendentes, respondentes: pessoas.size };
+    if (!minhasChaves.length) return vazio;
+    const eu = notas(minhasChaves, minhasOpcoes);
+    // Como te veem: só com pelo menos 3 pessoas, e só a média (ninguém é identificado).
+    const eles = deles.length >= MINIMO_RETRATO ? media(deles.map((x) => x.n)) : null;
+    const relacoes = (["familia", "amigos", "crush"] as Contexto[]).map((rel) => {
+      const lista = deles.filter((x) => x.relacao === rel);
+      if (lista.length < MINIMO_RETRATO) return { relacao: rel, respondentes: lista.length, selo: null, perfil: null };
+      const m = media(lista.map((x) => x.n));
+      return { relacao: rel, respondentes: lista.length, selo: selo(eu, m), perfil: perfil(m) };
+    });
+    return {
+      eu: perfil(eu), eles: eles ? perfil(eles) : null, selo: eles ? selo(eu, eles) : null,
+      respondentes: deles.length, faltam: Math.max(0, MINIMO_RETRATO - deles.length), relacoes,
+    };
   }
 
   /** Liga à conta tudo o que este aparelho fez antes do cadastro. */

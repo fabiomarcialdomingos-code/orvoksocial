@@ -7,6 +7,7 @@ type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Aviso = { versao: string; hash: string; texto: string };
 type Tela = "relacao" | "nome" | "pergunta" | "pronto" | "convite" | "enviado";
 type Relacao = "familia" | "amigos" | "crush";
+type Diagnostico = { nome: string; frase: string; descricao: string; marcantes: string[]; tracos: { traco: string; nome: string; polo: string; forca: number }[] };
 const LETRAS = ["A", "B", "C", "D"] as const;
 const TOTAL = 10;
 
@@ -50,6 +51,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [radarVisivel, setRadarVisivel] = useState(false);
+  const [diag, setDiag] = useState<Diagnostico | null>(null);
   const [buscando, setBuscando] = useState(false);
   // Quem já tem conta não precisa se apresentar: o nome vem do perfil.
   const conta = useConta();
@@ -58,13 +60,14 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
 
   // Abertura: três âncoras (ou, no "desafie de volta", as mesmas 10 perguntas do outro desafio).
   useEffect(() => {
-    const url = conjuntoDe ? `/api/v1/desafio/catalogo?de=${encodeURIComponent(conjuntoDe)}` : "/api/v1/desafio/catalogo";
+    if (!conjuntoDe && !escolheu) return;
+    const url = conjuntoDe ? `/api/v1/desafio/catalogo?de=${encodeURIComponent(conjuntoDe)}` : `/api/v1/desafio/catalogo?rel=${relacao}`;
     void fetch(url).then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((d: { perguntas?: Pergunta[]; ancoras?: Pergunta[]; relacao?: Relacao; aviso: Aviso }) => {
         setPerguntas(d.perguntas ?? d.ancoras ?? []); setAviso(d.aviso); if (d.relacao) setRelacao(d.relacao);
       })
       .catch(() => setErro("Não foi possível carregar as perguntas. Tente de novo em instantes."));
-  }, [conjuntoDe]);
+  }, [conjuntoDe, relacao, escolheu]);
   useEffect(() => {
     if (tela !== "pronto") return;
     const t = requestAnimationFrame(() => setRadarVisivel(true));
@@ -93,7 +96,12 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
       });
       return;
     }
-    window.setTimeout(() => { if (i < perguntas.length - 1) setI(i + 1); else setTela("pronto"); }, 380);
+    window.setTimeout(() => {
+      if (i < perguntas.length - 1) { setI(i + 1); return; }
+      setTela("pronto");
+      void enviarJson<{ perfil: Diagnostico }>("/api/v1/desafio/perfil", { perguntas: perguntas.map((p) => p.chave), respostas: novas.map((v) => LETRAS[v ?? 0]) })
+        .then((r) => { if (r.ok) setDiag(r.dados.perfil); });
+    }, 380);
   };
   const voltar = tela === "nome" && !conjuntoDe ? () => setTela("relacao")
     : tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela(logado ? (conjuntoDe ? "pergunta" : "relacao") : "nome"))
@@ -131,7 +139,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
         <div className={s.opcoes} role="radiogroup" aria-label="Quem você quer desafiar">
           {RELACOES.map((rel) => (
             <button key={rel.id} className={`${s.op} ${s.relacao} ${escolheu && relacao === rel.id ? s.opSel : ""}`} type="button" role="radio" aria-checked={escolheu && relacao === rel.id}
-              onClick={() => { setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(logado ? "pergunta" : "nome"); }, 250); }}>
+              onClick={() => { if (rel.id !== relacao) { setPerguntas([]); setRespostas([]); } setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(logado ? "pergunta" : "nome"); }, 250); }}>
               <span className={s.letra}><Icone nome={rel.icone} /></span>
               <span><b>{rel.rotulo}</b><small>{rel.texto}</small></span>
             </button>
@@ -197,13 +205,27 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
 
   if (tela === "pronto") return (
     <Moldura aoVoltar={voltar}>
-      <main className={`${s.tela} ${s.centro}`}>
-        <div className={s.radarGrande}><Radar acertos={10} visivel={radarVisivel} /><Inicial nome={nomeEfetivo} tamanho={88} /></div>
-        <h1 className={s.titulo}>Sua referência <b>está pronta, {nomeEfetivo.trim()}.</b></h1>
-        <p className={s.lead}>Agora vem a parte boa: desafie alguém e descubra o quanto essa pessoa te conhece.</p>
+      <main className={s.tela}>
+        {!diag ? <p className={s.lead} aria-busy="true">Montando o seu perfil…</p> : (
+          <div className={s.diagnostico}>
+            <div className={s.centro}><span className={s.chipRelacao}>Como você se vê</span></div>
+            <div className={s.radarGrande} style={{ width: "min(200px, 50vw)" }}><Radar acertos={10} visivel={radarVisivel} /><Inicial nome={nomeEfetivo} tamanho={72} /></div>
+            <h1 className={`${s.titulo} ${s.centro}`}>Você se vê como <b>{diag.nome}</b></h1>
+            <p className={`${s.lead} ${s.centro}`} style={{ marginBottom: 12 }}>{diag.frase}</p>
+            <div className={s.marcantes}><small>Traços marcantes</small>{diag.marcantes.map((m) => <span key={m}>{m}</span>)}</div>
+            <div className={s.barras}>
+              {diag.tracos.map((t, k) => (
+                <div key={t.traco} className={s.barraTraco} style={{ animationDelay: `${k * 90}ms` }}>
+                  <div className={s.barraTopo}><span>{t.nome}</span><b>{t.polo} {t.forca}%</b></div>
+                  <i><em style={{ width: `${t.forca}%` }} /></i>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className={s.empurra}>
-          <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => setTela("convite")}><Icone nome="enviar" />{desafiarDeVolta ? `Desafiar ${desafiarDeVolta} de volta` : "Desafiar alguém"}</button>
-          <button className={`${s.btn} ${s.btnTexto}`} type="button" onClick={() => { setI(0); setTela("pergunta"); }}>Revisar minhas respostas</button>
+          <button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={!diag} onClick={() => setTela("convite")}><Icone nome="enviar" />{desafiarDeVolta ? `Será que ${desafiarDeVolta} te vê assim?` : "Descobrir se te veem assim"}</button>
+          <p className={s.miudo} style={{ justifyContent: "center" }}>Quando 3 pessoas responderem, você vê como elas te enxergam e pode ganhar um selo.</p>
         </div>
       </main>
     </Moldura>
