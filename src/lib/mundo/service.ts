@@ -170,6 +170,75 @@ export class MundoService {
     return this.visao(atual.rodada, atual.e, "criador");
   }
 
+  /**
+   * Meu placar: cada rodada revelada é uma partida. Para cada pessoa, conta
+   * separadamente quanto ela acertou sobre você e quanto você acertou sobre ela.
+   * "Não sei" vira abstenção; rodadas canceladas ou sem comparação não entram.
+   */
+  async placar(userId: string, token: string | null) {
+    const meuHash = token ? tokenHash(token) : "";
+    const r = await this.pool.query<Rodada>(
+      `SELECT * FROM "WorldRound" WHERE "revokedAt" IS NULL AND ("initiatorUserId"=$1 OR "guestUserId"=$1 OR "guestTokenHash"=$2) ORDER BY "createdAt" ASC`,
+      [userId, meuHash],
+    );
+    const evs = new Map((await this.eventos([...new Set(r.rows.map((x) => x.eventId))])).map((e) => [e.id, e]));
+    type Conta = { acertos: number; erros: number; naoSei: number };
+    type Pessoa = {
+      chave: string; nome: string; sobreVoce: Conta; voceSobre: Conta; pendentes: number; ultima: Date;
+      porCategoria: Record<string, { acertos: number; total: number }>; sequencia: number;
+      historico: { data: Date; categoria: string; evento: string; quemRespondeu: string; resposta: string | null; palpite: string | null; resultado: "acertou" | "errou" | "nao_sei"; direcao: "sobre_voce" | "voce_sobre" }[];
+    };
+    const pessoas = new Map<string, Pessoa>();
+    const andamento = [];
+    const vazio = (): Conta => ({ acertos: 0, erros: 0, naoSei: 0 });
+    for (const x of r.rows) {
+      const e = evs.get(x.eventId);
+      if (!e) continue;
+      const souCriador = x.initiatorUserId === userId;
+      const outroChave = souCriador ? (x.guestUserId ?? x.guestTokenHash) : x.initiatorUserId;
+      const outroNome = souCriador ? x.guestName : x.initiatorName;
+      const est = this.estado(x, e);
+      if (["aguardando_convidado", "aguardando_palpite", "aguardando_revelacao"].includes(est)) andamento.push(this.visao(x, e, souCriador ? "criador" : "convidado"));
+      if (!outroChave || !outroNome) continue;
+      const p = pessoas.get(outroChave) ?? { chave: outroChave, nome: outroNome, sobreVoce: vazio(), voceSobre: vazio(), pendentes: 0, ultima: x.createdAt, porCategoria: {}, sequencia: 0, historico: [] };
+      p.nome = outroNome; if (x.createdAt > p.ultima) p.ultima = x.createdAt;
+      if (["aguardando_convidado", "aguardando_palpite", "aguardando_revelacao"].includes(est)) p.pendentes++;
+      if (est === "revelada") {
+        // Quem respondeu foi você? Então o outro tentou te prever.
+        const euRespondi = (x.mode === "ser_previsto") === souCriador;
+        const conta = euRespondi ? p.sobreVoce : p.voceSobre;
+        const resultado = x.guessUnsure ? "nao_sei" : x.guessOpportunityId === x.answerOpportunityId ? "acertou" : "errou";
+        if (resultado === "nao_sei") conta.naoSei++; else if (resultado === "acertou") conta.acertos++; else conta.erros++;
+        const cat = e.category in CATEGORIAS ? e.category : "entretenimento";
+        if (euRespondi && resultado !== "nao_sei") {
+          const c = p.porCategoria[cat] ?? { acertos: 0, total: 0 };
+          c.total++; if (resultado === "acertou") c.acertos++;
+          p.porCategoria[cat] = c;
+          p.sequencia = resultado === "acertou" ? p.sequencia + 1 : 0;
+        }
+        const rotulo = (id: string | null) => e.opps.find((o) => o.id === id)?.label ?? null;
+        p.historico.unshift({ data: e.closesAt, categoria: cat, evento: e.title, quemRespondeu: euRespondi ? "Você" : outroNome,
+          resposta: rotulo(x.answerOpportunityId), palpite: x.guessUnsure ? null : rotulo(x.guessOpportunityId), resultado, direcao: euRespondi ? "sobre_voce" : "voce_sobre" });
+      }
+      pessoas.set(outroChave, p);
+    }
+    const lista = [...pessoas.values()].map((p) => {
+      const tot = p.sobreVoce.acertos + p.sobreVoce.erros;
+      return { ...p, rodadas: tot + p.sobreVoce.naoSei + p.voceSobre.acertos + p.voceSobre.erros + p.voceSobre.naoSei, aproveitamento: tot ? p.sobreVoce.acertos / tot : null };
+    }).sort((a, b) => b.sobreVoce.acertos - a.sobreVoce.acertos || (b.sobreVoce.acertos + b.sobreVoce.erros) - (a.sobreVoce.acertos + a.sobreVoce.erros) || +b.ultima - +a.ultima);
+    const soma = (f: (p: (typeof lista)[number]) => number) => lista.reduce((n, p) => n + f(p), 0);
+    return {
+      resumo: {
+        concluidas: soma((p) => p.rodadas),
+        previsoesRecebidas: soma((p) => p.sobreVoce.acertos + p.sobreVoce.erros + p.sobreVoce.naoSei),
+        acertosSobreVoce: soma((p) => p.sobreVoce.acertos),
+        pendentes: andamento.length,
+      },
+      pessoas: lista.map(({ chave, ...p }) => ({ id: tokenHash(chave).slice(0, 12), ...p })),
+      andamento,
+    };
+  }
+
   /** Rodadas de quem está logado: as que criou e as que recebeu como convidado. */
   async minhas(userId: string, token: string | null) {
     const r = await this.pool.query<Rodada>(

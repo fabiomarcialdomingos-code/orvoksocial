@@ -60,6 +60,13 @@ const r4 = await svc.criar({ eventoId: vazio.id, modo: "ser_previsto", resposta:
 await adm.query(`UPDATE "WorldEvent" SET "closesAt"=now()-interval '1 minute' WHERE id=$1`, [vazio.id]);
 ok((await svc.minhas(fabio, null)).find((x) => x.codigo === r4.codigo)?.estado === "sem_comparacao", "terminou sem palpite: sem comparação, não é erro de ninguém");
 try { await svc.criar({ eventoId: vazio.id, modo: "prever", nome: "Fabio" }, fabio); ok(false, "evento encerrado"); } catch { ok(true, "não dá para criar rodada de evento encerrado"); }
+// Meu placar
+const pl = await svc.placar(fabio, null);
+const marina = pl.pessoas.find((x) => x.nome === "Marina")!, bia = pl.pessoas.find((x) => x.nome === "Bia")!;
+ok(marina.sobreVoce.acertos === 1 && marina.voceSobre.acertos === 0 && marina.porCategoria.esporte?.acertos === 1, "placar: Marina acertou 1 sobre o Fabio, em Esporte");
+ok(bia.voceSobre.naoSei === 1 && bia.voceSobre.acertos === 0 && bia.sobreVoce.acertos === 0, "placar: o 'não sei' do Fabio sobre a Bia fica como abstenção, na direção certa");
+ok(pl.resumo.acertosSobreVoce === 1 && pl.resumo.pendentes === 0, "resumo: 1 acerto sobre você; rodadas canceladas e sem comparação não ficam pendentes");
+ok(!JSON.stringify(pl).includes(fabio), "o placar não expõe identificadores internos");
 const passos = Number((await adm.query(`SELECT count(*) FROM "ProductEvent" WHERE name LIKE 'mundo_%'`)).rows[0].count);
 ok(passos >= 6, `medição registrou os passos do Mundo (${passos})`);
 

@@ -205,3 +205,26 @@
 .progressoRetrato i.ok { background: linear-gradient(90deg, var(--people), var(--self)); box-shadow: 0 0 12px -2px var(--people); }
 @media (prefers-reduced-motion: reduce) { .medalha, .medalhaGira { animation: none; } }
 .btnP svg, .btnFio svg { width: 16px; height: 16px; flex: none; }
+
+/* Meu placar */
+.blocosPlacar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.blocosPlacar div { padding: 10px 12px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line); display: grid; gap: 2px; }
+.blocosPlacar small { color: var(--text-3); font-size: 12px; }
+.blocosPlacar b { font-size: 14px; }
+.tabelaCaixa { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+.tabela { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabela th { text-align: left; font-size: 12px; font-weight: 600; color: var(--text-3); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tabela td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tabela tr:last-child td { border-bottom: 0; }
+.linhaClicavel { cursor: pointer; transition: background 0.2s; }
+.linhaClicavel:hover { background: var(--panel-2); }
+.pessoaCel { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.numAcerto { color: var(--self); font-weight: 800; }
+.detalhePessoa { padding: 6px 0 4px; animation: revela 0.4s both; }
+.duasDirecoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.duasDirecoes div { padding: 12px; border-radius: 14px; background: var(--panel-2); display: grid; gap: 2px; }
+.duasDirecoes small { color: var(--text-3); font-size: 12px; }
+.duasDirecoes b { font-size: 22px; font-weight: 800; }
+.duasDirecoes span { color: var(--text-2); font-size: 13px; }
+.seletor { margin-left: 6px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--text); padding: 4px 8px; font: inherit; }
+@media (max-width: 640px) { .blocosPlacar, .duasDirecoes { grid-template-columns: 1fr; } }
