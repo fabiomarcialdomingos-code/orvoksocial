@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
+import { registrarEvento } from "@/lib/medicao";
 import { AVISO_HASH, AVISO_IDADE, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
 import { type Relacao as Contexto } from "./nucleo";
 import { NUCLEO } from "./nucleo";
@@ -94,6 +95,7 @@ export class DesafioService {
            VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$13,$8,$9,clock_timestamp(),$10,clock_timestamp()+($11::int * interval '1 day'),$12::uuid,CASE WHEN $12::uuid IS NULL THEN NULL ELSE clock_timestamp() END)`,
           [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), dados.relacao, AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE, userId, dados.tipo],
         );
+        await registrarEvento(this.pool, "desafio_criado", codigo, dono);
         return { codigo, token };
       } catch (error) {
         if ((error as { code?: string }).code !== "23505") throw error;
@@ -129,6 +131,7 @@ export class DesafioService {
   async vitrine(codigo: string, token: string | null, userId: string | null = null) {
     const d = await this.ativo(codigo);
     if (await this.bloqueadoPor(token, userId, d)) throw new AuthError("BLOCKED", 403);
+    await registrarEvento(this.pool, "convite_aberto", codigo, token ? tokenHash(token) : null);
     const jaTentou = token
       ? await this.pool.query<{ score: number; total: number }>(
           `SELECT score,total FROM "GuestChallengeAttempt" WHERE "challengeId"=$1 AND "ownerTokenHash"=$2`, [d.id, tokenHash(token)])
@@ -207,6 +210,7 @@ export class DesafioService {
        RETURNING score,total`,
       [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, d.questionKeys.length, dono, userId, dados.avisoRetrato ?? null, dados.consentimentoIdade.versao],
     );
+    await registrarEvento(this.pool, "tentativa_concluida", codigo, dono);
     return { ...r.rows[0]!, tipo: d.kind, token };
   }
 

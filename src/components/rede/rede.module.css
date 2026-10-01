@@ -204,3 +204,4 @@
 .progressoRetrato i { flex: 1; height: 10px; border-radius: 10px; background: var(--panel-3); }
 .progressoRetrato i.ok { background: linear-gradient(90deg, var(--people), var(--self)); box-shadow: 0 0 12px -2px var(--people); }
 @media (prefers-reduced-motion: reduce) { .medalha, .medalhaGira { animation: none; } }
+.btnP svg, .btnFio svg { width: 16px; height: 16px; flex: none; }

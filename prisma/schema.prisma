@@ -583,3 +583,38 @@ model GuestBlock {
   @@index([blockedOwnerTokenHash], map: "GuestBlock_blocked_token_idx")
   @@index([blockedOwnerUserId], map: "GuestBlock_blocked_user_idx")
 }
+
+/// Mundo entre pessoas: uma pessoa responde em segredo, a outra adivinha; revelação depois do evento.
+model WorldRound {
+  id                  String    @id @db.Uuid
+  code                String    @unique @db.VarChar(8)
+  eventId             String    @db.Uuid
+  mode                String    @db.VarChar(12)
+  initiatorUserId     String    @db.Uuid
+  initiatorName       String    @db.VarChar(24)
+  guestName           String?   @db.VarChar(24)
+  guestTokenHash      String?   @db.VarChar(64)
+  guestUserId         String?   @db.Uuid
+  answerOpportunityId String?   @db.Uuid
+  guessOpportunityId  String?   @db.Uuid
+  guessUnsure         Boolean   @default(false)
+  ageConsentVersion   String?   @db.VarChar(40)
+  answeredAt          DateTime? @db.Timestamptz(6)
+  guessedAt           DateTime? @db.Timestamptz(6)
+  revokedAt           DateTime? @db.Timestamptz(6)
+  createdAt           DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([initiatorUserId, createdAt], map: "WorldRound_initiator_idx")
+  @@index([guestTokenHash], map: "WorldRound_guest_idx")
+}
+
+/// Medição do caminho do usuário (sem dados pessoais).
+model ProductEvent {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @db.VarChar(40)
+  code      String?  @db.VarChar(8)
+  actorHash String?  @db.VarChar(64)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([name, createdAt], map: "ProductEvent_name_idx")
+}

@@ -76,6 +76,10 @@ try {
     await owner.query(`GRANT SELECT,INSERT,UPDATE ON "AuthIdentity","AuthProviderIdentity","AuthSession","AuthToken","AuthRateLimit","AuthMailOutbox","AuditLog" TO orvok_auth_runtime`);
     // Desafio sem cadastro: rotas públicas rodam pelo papel de autenticação.
     await owner.query(`GRANT SELECT,INSERT,UPDATE ON "GuestChallenge","GuestChallengeAttempt","GuestReport","GuestBlock" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "WorldRound" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT ON "ProductEvent" TO orvok_auth_runtime`);
+    await owner.query(`GRANT USAGE,SELECT ON SEQUENCE "ProductEvent_id_seq" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT ON "WorldEvent","WorldOpportunity","WorldResolution","WorldCategory" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "User","Question","QuestionVersion","AnswerOption","ConsentGrant",
       "ConsentRevocation","AnswerVersion","RadarInvitation","RadarInvitationAcceptance",
       "SocialPredictionSnapshot","ConsentNotice","ConsentNoticePresentation","DataRequest",

@@ -519,7 +519,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   }
   if (method === "POST" && route === "/world/events") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const body = z.strictObject({ category:z.string().trim().min(1).max(80), title:z.string().trim().min(1).max(240), description:z.string().max(4000).optional(), sourceUrl:z.string().url().max(2000).optional(), resolutionCriteria:z.string().trim().min(1).max(4000), opensAt:z.string().datetime(), closesAt:z.string().datetime(), startsAt:z.string().datetime().optional(), opportunities:z.array(z.strictObject({code:z.string().trim().min(1).max(64),label:z.string().trim().min(1).max(300)})).min(2).max(32), reason:z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));
+    const body = z.strictObject({ category:z.enum(["economia","tecnologia","esporte","entretenimento"]), title:z.string().trim().min(1).max(240), description:z.string().max(4000).optional(), sourceUrl:z.string().url().max(2000).optional(), resolutionCriteria:z.string().trim().min(1).max(4000), opensAt:z.string().datetime(), closesAt:z.string().datetime(), startsAt:z.string().datetime().optional(), opportunities:z.array(z.strictObject({code:z.string().trim().min(1).max(64),label:z.string().trim().min(1).max(300)})).min(2).max(32), reason:z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));
     return apiJson(await world.createEvent(actorId,body,body.reason),201);
   }
   if (method === "POST" && path.length===4 && path[0]==="admin" && path[1]==="events" && path[3]==="publish") {
