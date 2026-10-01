@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 export type Relacao = "familia" | "amigos" | "crush";
 export type Tentativa = { nome: string | null; em: string; score?: number; total?: number };
-export type Enviado = { codigo: string; criadoEm: string; relacao: Relacao; nome: string; tentativas: Tentativa[] };
+export type Enviado = { codigo: string; criadoEm: string; relacao: Relacao; tipo: "desafio" | "retrato"; nome: string; tentativas: Tentativa[] };
 export type Recebido = { codigo: string; nome: string; relacao: Relacao; acertos: number; total: number; em: string };
 export const ROTULO_RELACAO: Record<Relacao, string> = { familia: "Família", amigos: "Amigos", crush: "Crush" };
 

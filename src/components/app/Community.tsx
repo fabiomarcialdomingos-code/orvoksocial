@@ -207,9 +207,9 @@ export function Notifications() {
     try { await apiPost(`/notifications/${id}/${action}`, {}); await load(); } catch (e) { toast(describeError(e), "error"); }
   };
   const { dados } = useDesafios();
-  const respostas = (dados?.enviados ?? []).flatMap((d) => d.tentativas.map((t) => ({ nome: t.nome ?? "Alguém", em: t.em, score: t.score, total: t.total, codigo: d.codigo })));
+  const respostas = (dados?.enviados ?? []).flatMap((d) => d.tentativas.map((t) => ({ nome: d.tipo === "retrato" ? null : t.nome ?? "Alguém", em: t.em, score: t.score, total: t.total, codigo: d.codigo })));
   const lista = [
-    ...respostas.map((x) => ({ chave: `d-${x.codigo}-${x.em}`, em: x.em, texto: `${x.nome} respondeu o seu desafio${x.score !== undefined ? ` e acertou ${x.score} de ${x.total}` : ""}`, href: "/desafios", lida: true, id: null as string | null })),
+    ...respostas.map((x) => ({ chave: `d-${x.codigo}-${x.em}`, em: x.em, texto: x.nome === null ? "Alguém respondeu o seu Retrato" : `${x.nome} respondeu o seu desafio${x.score !== undefined ? ` e acertou ${x.score} de ${x.total}` : ""}`, href: x.nome === null ? "/retrato" : "/desafios", lida: true, id: null as string | null })),
     ...(items ?? []).map((n) => {
       const [text, href] = labels[n.eventType] ?? [n.eventType.toLowerCase().replaceAll("_", " "), "/painel"];
       return { chave: n.id, em: n.createdAt, texto: text, href, lida: n.state !== "UNREAD", id: n.id as string | null };

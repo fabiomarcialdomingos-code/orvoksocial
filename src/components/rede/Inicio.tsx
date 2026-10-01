@@ -41,7 +41,7 @@ export function Inicio() {
 
   const itens = useMemo<Item[]>(() => {
     const lista: Item[] = [];
-    for (const d of dados?.enviados ?? []) for (const t of d.tentativas)
+    for (const d of dados?.enviados ?? []) for (const t of d.tentativas) if (d.tipo !== "retrato")
       lista.push({ tipo: "resposta", em: t.em, nome: t.nome ?? "Alguém", relacao: d.relacao, acertos: t.score ?? 0, total: t.total ?? 10, codigo: d.codigo });
     for (const r of dados?.recebidos ?? []) lista.push({ tipo: "recebido", em: r.em, nome: r.nome, relacao: r.relacao, acertos: r.acertos, total: r.total, codigo: r.codigo });
     for (const p of posts) lista.push({ tipo: "post", em: p.createdAt, post: p });
@@ -51,7 +51,7 @@ export function Inicio() {
 
   const conhecidos = useMemo(() => {
     const nomes = new Set<string>();
-    for (const d of dados?.enviados ?? []) for (const t of d.tentativas) if (t.nome) nomes.add(t.nome);
+    for (const d of dados?.enviados ?? []) if (d.tipo !== "retrato") for (const t of d.tentativas) if (t.nome) nomes.add(t.nome);
     for (const r of dados?.recebidos ?? []) nomes.add(r.nome);
     return [...nomes];
   }, [dados]);
@@ -88,10 +88,10 @@ export function Inicio() {
         ) : <p>Responda 10 perguntas sobre você e desafie alguém. As perguntas mudam conforme a relação.</p>}
         <ol className={s.caminho} aria-label="Seu caminho no orvok">
           {([["familia", "Família", "casaRel"], ["amigos", "Amigos", "pessoas"], ["crush", "Crush", "coracao"]] as const).map(([rel, rotulo, icone]) => {
-            const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel);
+            const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel && d.tipo !== "retrato");
             return (
               <li key={rel} className={feito ? s.feito : ""}>
-                <Link href={`/comecar?rel=${rel}`}>
+                <Link href={`/comecar?tipo=desafio&rel=${rel}`}>
                   <span className={s.check} aria-hidden="true">{feito ? "✓" : <IconeRede nome={icone} />}</span>
                   <span><b>{feito ? `${rotulo}: desafio enviado` : `Desafie ${rotulo === "Crush" ? "o crush" : rotulo === "Família" ? "a família" : "os amigos"}`}</b><small>{feito ? "Mandar para mais alguém" : "Perguntas feitas para essa relação"}</small></span>
                 </Link>
@@ -99,6 +99,7 @@ export function Inicio() {
             );
           })}
         </ol>
+        <Link className={s.chip} href="/comecar?tipo=retrato" style={{ marginTop: 12 }}><IconeRede nome="espelho" />Fazer o Retrato: como te veem?</Link>
       </section>
 
       <div className={s.compor}>

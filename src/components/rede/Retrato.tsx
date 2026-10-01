@@ -41,8 +41,8 @@ export function Retrato() {
     <section className={s.hero}>
       <small className={s.marcador}>Seu retrato</small>
       <h2>Descubra como você se vê e como te veem.</h2>
-      <p>Responda um desafio sobre você para ver o seu perfil. Depois, quando 3 pessoas responderem, aparece como elas te enxergam e o seu selo.</p>
-      <div className={s.chips}><Link className={s.btnP} href="/comecar">Começar agora</Link></div>
+      <p>Responda 12 perguntas sobre você para ver o seu perfil. Depois, quem você convidar diz como te enxerga. Com 3 respostas, aparece o seu retrato e o seu selo.</p>
+      <div className={s.chips}><Link className={s.btnP} href="/comecar?tipo=retrato">Fazer o Retrato</Link></div>
     </section>
   );
 
@@ -91,7 +91,7 @@ export function Retrato() {
           <b>Como te veem</b>
           <div className={s.progressoRetrato} aria-label={`${d.respondentes} de 3 pessoas`}>{[0, 1, 2].map((k) => <i key={k} className={k < d.respondentes ? s.ok : ""} />)}</div>
           <p className={s.muted} style={{ margin: 0 }}>Faltam {d.faltam} {d.faltam === 1 ? "pessoa" : "pessoas"} para aparecer como te enxergam e descobrir o seu selo. Para proteger quem responde, só mostramos com pelo menos 3.</p>
-          <div className={s.chips}><Link className={s.btnP} href="/comecar">Desafiar mais gente</Link></div>
+          <div className={s.chips}><Link className={s.btnP} href="/comecar?tipo=retrato">Convidar mais gente</Link></div>
         </section>
       )}
     </>

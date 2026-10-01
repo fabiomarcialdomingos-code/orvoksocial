@@ -6,9 +6,9 @@ export type CodigoOpcao = (typeof CODIGOS)[number];
 export const CATALOGO_VERSAO = "ORVOK_DESAFIO_NUCLEO_V1";
 
 /** Aviso exibido antes do envio do convite. Mudou o texto, mude a versão. */
-export const AVISO_VERSAO = "desafio-ser-previsto-v2";
+export const AVISO_VERSAO = "desafio-convite-v3";
 export const AVISO_TEXTO =
-  "Aceito ser previsto por quem abrir este convite. A pessoa tenta adivinhar as minhas respostas, mas nunca vê o que eu respondi. Posso cancelar o convite quando quiser. Confirmo ter pelo menos 16 anos e aceito os Termos de uso e a Política de privacidade.";
+  "Aceito que quem abrir este convite responda sobre mim. A pessoa nunca vê o que eu respondi. Posso cancelar o convite quando quiser. Confirmo ter pelo menos 16 anos e aceito os Termos de uso e a Política de privacidade.";
 export const AVISO_HASH = createHash("sha256").update(`${AVISO_VERSAO}\n${AVISO_TEXTO}`).digest("hex");
 export const AVISO = { versao: AVISO_VERSAO, hash: AVISO_HASH, texto: AVISO_TEXTO };
 
@@ -24,8 +24,8 @@ export function perguntaPublica(p: { chave: string; texto: string; opcoes: [stri
 }
 
 /** Aviso a quem responde: as escolhas entram, sem nome, no retrato de quem desafiou. */
-export const AVISO_RETRATO_VERSAO = "desafio-retrato-v1";
+export const AVISO_RETRATO_VERSAO = "retrato-opiniao-v1";
 export const AVISO_RETRATO_TEXTO =
-  "Suas escolhas entram, sem o seu nome, no retrato de quem te desafiou. Cada pergunta só aparece nesse retrato quando pelo menos 3 pessoas responderam.";
+  "Você responde como enxerga essa pessoa. Suas respostas entram no retrato dela sem o seu nome, e só aparecem quando pelo menos 3 pessoas responderam.";
 /** Mínimo de pessoas por pergunta para ela aparecer no retrato. */
 export const MINIMO_RETRATO = 3;

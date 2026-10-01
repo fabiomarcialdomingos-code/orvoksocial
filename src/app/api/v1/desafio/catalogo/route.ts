@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     if (de) return Response.json({ schemaVersion: "1", ...(await servico.conjuntoDe(de.toUpperCase())), aviso: AVISO });
     const rel = new URL(request.url).searchParams.get("rel");
     const relacao = rel === "familia" || rel === "crush" ? rel : "amigos";
-    return Response.json({ schemaVersion: "1", ancoras: await servico.ancoras(relacao), aviso: AVISO });
+    const tipo = new URL(request.url).searchParams.get("tipo") === "retrato" ? "retrato" : "desafio";
+    return Response.json({ schemaVersion: "1", tipo, perguntas: await servico.conjunto(relacao, tipo), aviso: AVISO });
   });
 }

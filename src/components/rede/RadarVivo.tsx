@@ -22,7 +22,7 @@ export function RadarVivo() {
 
   const pessoas = useMemo(() => {
     const melhor = new Map<string, { nome: string; relacao: Relacao; acertos: number; total: number }>();
-    for (const d of dados?.enviados ?? []) for (const t of d.tentativas) {
+    for (const d of dados?.enviados ?? []) if (d.tipo !== "retrato") for (const t of d.tentativas) {
       const nome = t.nome ?? "Alguém", chave = `${nome}|${d.relacao}`, atual = melhor.get(chave);
       if (!atual || (t.score ?? 0) > atual.acertos) melhor.set(chave, { nome, relacao: d.relacao, acertos: t.score ?? 0, total: t.total ?? 10 });
     }

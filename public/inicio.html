@@ -138,6 +138,28 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 @media (max-width:520px){.jornada li{font-size:12px}.jornada .bola{width:38px;height:38px}.jornada .trilho{top:18px}}
 
 
+
+.fixado-globo{height:170px;margin-top:0!important}
+.portas{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.porta{position:relative;display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:20px;border:1px solid var(--fio-2);background:rgba(76,141,255,.06);transition:transform .25s,border-color .25s,box-shadow .35s;overflow:hidden}
+.porta::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:radial-gradient(120% 90% at 100% 0%,rgba(76,141,255,.22),transparent 55%);pointer-events:none}
+.porta-ambar{background:rgba(255,168,52,.05)}
+.porta-ambar::before{background:radial-gradient(120% 90% at 100% 0%,rgba(255,168,52,.2),transparent 55%)}
+.porta>*{position:relative}
+.porta:hover{transform:translateY(-3px);border-color:var(--azul);box-shadow:0 18px 44px -22px var(--azul)}
+.porta-ambar:hover{border-color:var(--ambar);box-shadow:0 18px 44px -22px var(--ambar)}
+.porta-ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--azul-sub);color:var(--azul-luz);margin-bottom:4px}
+.porta-ambar .porta-ico{background:var(--ambar-sub);color:var(--ambar)}
+.porta-ico svg{width:22px;height:22px}
+.porta b{font-size:18px;letter-spacing:-.02em}
+.porta-meta{font-size:12px;font-weight:600;color:var(--azul-luz)}
+.porta-ambar .porta-meta{color:var(--ambar)}
+.porta small{color:var(--suave);font-size:13px;line-height:1.45;flex:1}
+.porta-btn{margin-top:8px;align-self:flex-start}
+.sem-cad{margin:14px 0 0;color:var(--suave);font-size:13px;display:flex;align-items:center;gap:8px}
+.sem-cad i{width:6px;height:6px;border-radius:50%;background:var(--verde);box-shadow:0 0 8px var(--verde)}
+@media (max-width:640px){.portas{grid-template-columns:1fr}.fixado-globo{height:130px}}
+
 /* ---------- seções de produto (abaixo do cartão fixado) ---------- */
 .secao{margin:22px 18px 0;padding:22px;border-radius:24px;border:1px solid var(--fio);background:var(--sup);opacity:0;transform:translateY(18px);transition:opacity .7s,transform .8s cubic-bezier(.2,.9,.3,1)}
 .secao.visivel{opacity:1;transform:none}
@@ -313,27 +335,32 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
       <canvas class="teia-viva" id="teiaViva" aria-hidden="true"></canvas>
       <div class="fixado-globo" aria-hidden="true"><canvas id="globoFixado"></canvas></div>
       <div class="fixado-corpo">
-        <span class="marcador"><svg data-ic="pino"></svg>Fixado pelo orvok</span>
-        <h2 id="t-fixado">Quanto os seus amigos conhecem você?</h2>
-        <p>Responda 10 perguntas sobre você, desafie alguém e descubra quem acerta mais. Leva dois minutos e não precisa de cadastro.</p>
-        <ol class="jornada" id="jornada">
-          <span class="trilho" aria-hidden="true"><span class="rastro" id="rastro"></span><span class="cometa" id="cometa"></span></span>
-          <li><span class="bola"><svg data-ic="perfil"></svg></span>Responda sobre você</li>
-          <li><span class="bola"><svg data-ic="enviar"></svg></span>Desafie um amigo</li>
-          <li><span class="bola"><svg data-ic="radar"></svg></span>Ele tenta te prever</li>
-          <li><span class="bola"><svg data-ic="alvo"></svg></span>Veja quem te conhece</li>
-        </ol>
-        <div class="cta">
-          <button class="btn btn-azul" type="button" data-comecar>Começar agora</button>
-          <small><i></i>Sem cadastro para começar</small>
+        <span class="marcador"><svg data-ic="pino"></svg>Dois jeitos de descobrir</span>
+        <h2 id="t-fixado">Descubra como as pessoas que importam te enxergam.</h2>
+        <div class="portas">
+          <a class="porta" href="/comecar?tipo=desafio">
+            <span class="porta-ico"><svg data-ic="alvo"></svg></span>
+            <b>Quanto te conhecem?</b>
+            <span class="porta-meta">5 perguntas · 1 minuto</span>
+            <small>Você responde sobre você. Seu amigo tenta adivinhar e ganha um placar.</small>
+            <span class="btn btn-azul btn-p porta-btn">Jogar agora</span>
+          </a>
+          <a class="porta porta-ambar" href="/comecar?tipo=retrato">
+            <span class="porta-ico"><svg data-ic="espelho"></svg></span>
+            <b>Como te veem?</b>
+            <span class="porta-meta">12 perguntas · 3 minutos</span>
+            <small>Receba o seu perfil. Quem você convidar diz como te enxerga, sem se identificar.</small>
+            <span class="btn btn-fio btn-p porta-btn">Descobrir meu retrato</span>
+          </a>
         </div>
+        <p class="sem-cad"><i></i>Sem cadastro para começar</p>
       </div>
     </section>
 
     <section class="secao" id="s-espelho" aria-labelledby="t-espelho">
       <span class="rotulo"><svg data-ic="espelho"></svg>O que você descobre</span>
       <h2 id="t-espelho">Como você se vê <b>vs.</b> como te veem</h2>
-      <p>Suas respostas viram o seu perfil. As respostas de quem tenta te prever mostram como essas pessoas te enxergam. A diferença entre os dois é o que ninguém te conta.</p>
+      <p>Suas respostas viram o seu perfil. Quem você convidar diz como te enxerga, sem se identificar. A diferença entre os dois é o que ninguém te conta.</p>
       <span class="exemplo"><svg data-ic="olho" style="width:14px;height:14px"></svg>Exemplo ilustrativo — o seu aparece quando 3 pessoas responderem</span>
       <div class="espelho-demo">
         <svg viewBox="0 0 220 150" aria-hidden="true">
@@ -387,9 +414,9 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     </section>
 
     <section class="cta-final" aria-labelledby="t-final">
-      <h2 id="t-final">Descubra o seu em dois minutos.</h2>
-      <p>Responda sobre você, receba o seu perfil e desafie quem você quiser.</p>
-      <button class="btn btn-azul" type="button" data-comecar>Começar agora</button>
+      <h2 id="t-final">Por qual você quer começar?</h2>
+      <p>Dá para fazer os dois. Nenhum precisa de cadastro.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><a class="btn btn-azul" href="/comecar?tipo=desafio">Quanto te conhecem?</a><a class="btn btn-fio" href="/comecar?tipo=retrato">Como te veem?</a></div>
     </section>
   </main>
 
@@ -399,7 +426,7 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
       <p class="sub">O essencial, em três frases.</p>
       <ul class="confia">
         <li><svg data-ic="ok"></svg><span>Sem cadastro e sem senha para começar a responder.</span></li>
-        <li><svg data-ic="ok"></svg><span>Ninguém vê as suas respostas — só o placar de quem tentar te prever.</span></li>
+        <li><svg data-ic="ok"></svg><span>Ninguém vê as suas respostas. No retrato, quem responde sobre você também fica anônimo.</span></li>
         <li><svg data-ic="ok"></svg><span>Você escolhe quem participa. Pode cancelar um convite quando quiser.</span></li>
       </ul>
     </section>
@@ -408,7 +435,8 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
       <details><summary>Preciso criar conta?</summary><p>Não para começar. A conta só é útil depois, para acompanhar quem respondeu.</p></details>
       <details><summary>Quem vê as minhas respostas?</summary><p>Ninguém. Quem te desafia vê só o placar, e o "como te veem" só aparece com 3 pessoas ou mais, sem nomes.</p></details>
       <details><summary>É um teste psicológico?</summary><p>Não. É uma brincadeira de autoconhecimento entre pessoas que se conhecem, sem diagnóstico.</p></details>
-      <details><summary>Quanto tempo leva?</summary><p>Cerca de dois minutos: 10 perguntas sobre você.</p></details>
+      <details><summary>Qual a diferença entre os dois?</summary><p>No "Quanto te conhecem?" seu amigo tenta adivinhar o que você respondeu e ganha um placar. No "Como te veem?" ele diz como te enxerga, sem se identificar, e você recebe um retrato.</p></details>
+      <details><summary>Quanto tempo leva?</summary><p>O jogo leva cerca de 1 minuto (5 perguntas). O retrato, cerca de 3 minutos (12 perguntas).</p></details>
     </section>
     <nav class="rodape-d" aria-label="Links"><a href="/privacidade">Privacidade</a><a href="/meus-dados">Meus dados</a><a href="/entrar">Entrar</a><a href="/comecar">Como funciona</a><span>© orvok 2026</span></nav>
   </aside>
@@ -424,8 +452,8 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
 
 <aside class="empurrao" id="empurrao" aria-label="Convite para começar">
   <span class="icone-e"><svg data-ic="alvo"></svg></span>
-  <div><b>Quanto seus amigos te conhecem?</b><small>Descubra em dois minutos, sem cadastro.</small></div>
-  <button class="btn btn-azul btn-p" type="button" data-comecar>Começar</button>
+  <div><b>Quanto seus amigos te conhecem?</b><small>5 perguntas, 1 minuto, sem cadastro.</small></div>
+  <a class="btn btn-azul btn-p" href="/comecar?tipo=desafio">Jogar</a>
   <button class="fechar-e" type="button" id="fechaEmp" aria-label="Dispensar"><svg data-ic="x"></svg></button>
 </aside>
 
@@ -434,7 +462,7 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     <button class="fechar" type="button" data-fecha aria-label="Fechar"><svg data-ic="x"></svg></button>
     <svg class="orb" viewBox="0 0 32 32" aria-hidden="true"></svg>
     <h2>Primeiro, mostre quem você é</h2>
-    <p>Dez perguntas rápidas sobre você. Depois é só desafiar um amigo.</p>
+    <p>Escolha entre o jogo rápido ou o retrato completo.</p>
     <ul>
       <li><svg data-ic="ok"></svg>Sem cadastro e sem senha para começar</li>
       <li><svg data-ic="ok"></svg>Ninguém vê as suas respostas</li>
@@ -561,7 +589,7 @@ function criaGlobo(cv,o){
   requestAnimationFrame(quadro);
   return {parar(){vivo=false; io.disconnect(); removeEventListener('resize',onR);}};
 }
-criaGlobo($('#globoFixado'),{pontos:movelLeve?650:900,pessoas:18,arcos:8,escala:.36,vel:.0026,interativo:true,malha:!movelLeve,monta:1.4,yaw:2.1});
+criaGlobo($('#globoFixado'),{pontos:movelLeve?650:900,pessoas:18,arcos:8,escala:.34,vel:.0026,interativo:true,malha:!movelLeve,monta:1.4,yaw:2.1});
 
 /* ---------- abertura cinematográfica (uma vez por sessão) ---------- */
 let viuAbertura=false; try{ viuAbertura=sessionStorage.getItem('orvok-abertura')==='1'; }catch(_){}
@@ -585,13 +613,6 @@ if(!reduz && !viuAbertura){
     nos.forEach(n=>{ const perto=Math.hypot(n.x-m.x,n.y-m.y)<170; c.fillStyle=n.a?`rgba(255,168,52,${perto?.95:.55})`:`rgba(${az},${perto?.9:.4})`; c.beginPath(); c.arc(n.x,n.y,n.a?2:1.3,0,7); c.fill(); });
     requestAnimationFrame(q); }
   requestAnimationFrame(q); })();
-
-/* ---------- jornada do cartão fixado: um cometa percorre os passos ---------- */
-(function(){ const itens=$$('#jornada li'), rastro=$('#rastro'), cometa=$('#cometa'); const T=6500;
-  if(reduz){ itens.forEach(i=>i.classList.add('aceso')); rastro.style.width='100%'; cometa.style.left='100%'; return; }
-  let vis=true; new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe($('#jornada'));
-  (function q(t){ if(!vis||document.hidden){ requestAnimationFrame(q); return; } const k=(t%T)/T, p=Math.min(1,k/.78); rastro.style.width=(p*100)+'%'; cometa.style.left=(p*100)+'%'; cometa.style.opacity=k>.92?String(1-(k-.92)/.08):'1';
-    itens.forEach((li,i)=>li.classList.toggle('aceso', p>=i/3-.001 && k<.95)); requestAnimationFrame(q); })(0); })();
 
 /* ---------- teia decorativa do cartão fixado ---------- */
 function desenhaTeia(cv,cor){ const r=cv.getBoundingClientRect(); if(!r.width) return; const d=Math.min(devicePixelRatio||1,2); cv.width=r.width*d; cv.height=r.height*d; const c=cv.getContext('2d'); c.scale(d,d);

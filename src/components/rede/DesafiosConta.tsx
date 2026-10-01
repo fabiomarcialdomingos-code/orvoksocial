@@ -35,9 +35,9 @@ export function DesafiosConta() {
         <h2>Desafie mais alguém</h2>
         <p>Cada relação tem perguntas próprias. Quanto mais gente responder, mais completo fica o seu radar.</p>
         <div className={s.chips}>
-          <Link className={s.chip} href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
-          <Link className={s.chip} href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-          <Link className={s.chip} href="/comecar?rel=crush"><IconeRede nome="coracao" />Crush</Link>
+          <Link className={s.chip} href="/comecar?tipo=desafio&rel=familia"><IconeRede nome="casaRel" />Família</Link>
+          <Link className={s.chip} href="/comecar?tipo=desafio&rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
+          <Link className={s.chip} href="/comecar?tipo=desafio&rel=crush"><IconeRede nome="coracao" />Crush</Link>
         </div>
       </section>
 
@@ -46,10 +46,12 @@ export function DesafiosConta() {
         dados.enviados.map((d) => (
           <article key={d.codigo} className={s.item}>
             <div className={s.itemCab}>
-              <span className={`${s.rel} ${s[`rel_${d.relacao}`]}`}>{ROTULO_RELACAO[d.relacao]}</span>
+              <span>{d.tipo === "retrato" ? <span className={`${s.rel} ${s.rel_amigos}`} style={{ marginRight: 6 }}>Retrato</span> : null}<span className={`${s.rel} ${s[`rel_${d.relacao}`]}`}>{ROTULO_RELACAO[d.relacao]}</span></span>
               <span className={s.muted}>enviado {quando(d.criadoEm)}</span>
             </div>
-            {d.tentativas.length === 0 ? <p className={s.muted} style={{ margin: 0 }}>Ninguém respondeu ainda. Que tal mandar o link de novo?</p> : d.tentativas.map((t) => (
+            {d.tipo === "retrato" ? (
+              <p className={s.muted} style={{ margin: 0 }}>{d.tentativas.length === 0 ? "Ninguém respondeu ainda." : `${d.tentativas.length} ${d.tentativas.length === 1 ? "pessoa respondeu" : "pessoas responderam"}, sem identificação.`} <Link className="text-link" href="/retrato">Ver meu retrato</Link></p>
+            ) : d.tentativas.length === 0 ? <p className={s.muted} style={{ margin: 0 }}>Ninguém respondeu ainda. Que tal mandar o link de novo?</p> : d.tentativas.map((t) => (
               <div key={t.em} className={s.linha}>
                 <Avatar nome={t.nome ?? "?"} tamanho={36} />
                 <span className={s.nome}><b>{t.nome ?? "Alguém"}</b> <span className={s.muted}>{quando(t.em)}</span></span>

@@ -6,13 +6,14 @@ import { Anel, Icone, Inicial, Moldura, Radar, enviarJson, estilos as s, useCont
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type AvisoIdade = { versao: string; hash: string; texto: string };
-type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null; avisoIdade: AvisoIdade };
+type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; tipo: "desafio" | "retrato"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null; avisoIdade: AvisoIdade };
 const LETRAS = ["A", "B", "C", "D"] as const;
 
-function veredito(n: number, nome: string) {
-  if (n >= 9) return `Assustador. Você conhece ${nome} melhor do que ninguém.`;
-  if (n >= 7) return `Você conhece ${nome} de verdade.`;
-  if (n >= 4) return `Você conhece bem ${nome}, mas ainda há surpresas.`;
+function veredito(n: number, total: number, nome: string) {
+  const k = n / (total || 5);
+  if (k >= 1) return `Assustador. Você acertou tudo sobre ${nome}.`;
+  if (k >= 0.8) return `Você conhece ${nome} de verdade.`;
+  if (k >= 0.4) return `Você conhece bem ${nome}, mas ainda há surpresas.`;
   return `${nome} ainda tem muito para te mostrar.`;
 }
 
@@ -25,6 +26,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const [i, setI] = useState(0);
   const [prev, setPrev] = useState<(number | undefined)[]>([]);
   const [placar, setPlacar] = useState<{ acertos: number; total: number } | null>(null);
+  const [opinou, setOpinou] = useState(false);
   const [contagem, setContagem] = useState(0);
   const [meuNome, setMeuNome] = useState("");
   const [aceitoIdade, setAceitoIdade] = useState(false);
@@ -48,7 +50,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
       }
       const d = (await r.json()) as Vitrine;
       setV(d);
-      if (d.resultado) { setPlacar({ acertos: d.resultado.score, total: d.resultado.total }); setTela("placar"); }
+      if (d.resultado) { if (d.tipo === "retrato") setOpinou(true); else setPlacar({ acertos: d.resultado.score, total: d.resultado.total }); setTela("placar"); }
     }).catch(() => setFalha("Não foi possível abrir o desafio agora."));
   }, [codigo]);
 
@@ -64,11 +66,12 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const concluir = async (lista: (number | undefined)[]) => {
     if (!v) return;
     const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, {
-      nome: nomeFinal.trim(), avisoRetrato: "desafio-retrato-v1", previsoes: lista.map((x) => LETRAS[x ?? 0]),
+      nome: nomeFinal.trim(), ...(v.tipo === "retrato" ? { avisoRetrato: "retrato-opiniao-v1" } : {}), previsoes: lista.map((x) => LETRAS[x ?? 0]),
       consentimentoIdade: { aceito: true, versao: v.avisoIdade.versao, hash: v.avisoIdade.hash },
     });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este desafio é seu. Envie o link para alguém tentar te prever." : "Não foi possível registrar agora. Tente de novo."); return; }
-    setPlacar(r.dados); setTela("placar");
+    if (v.tipo === "retrato") setOpinou(true); else setPlacar(r.dados);
+    setTela("placar");
   };
   const escolher = (k: number) => {
     const novas = [...prev]; novas[i] = k; setPrev(novas);
@@ -113,21 +116,28 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
       <main className={s.tela}>
         <div className={s.globoTopo}><Globo opcoes={{ pontos: 1100, pessoas: 18, arcos: 9, escala: 0.38, velocidade: 0.003, montagem: 1.2, deslocamento: 0.02 }} /></div>
         <div style={{ display: "flex", justifyContent: "center", margin: "-66px 0 16px", position: "relative" }}><Inicial nome={v.nome} ambar tamanho={84} /></div>
-        <div className={s.centro}><span className={s.chipRelacao}>{{ familia: "Desafio de família", amigos: "Desafio de amigos", crush: "Desafio de crush" }[v.relacao]}</span></div>
-        <h1 className={`${s.titulo} ${s.centro}`}>{v.nome} <b>te desafiou.</b></h1>
-        <p className={`${s.lead} ${s.centro}`}>{v.nome} respondeu 10 perguntas sobre si. Quanto você acha que conhece essa pessoa?</p>
+        <div className={s.centro}><span className={s.chipRelacao}>{v.tipo === "retrato" ? "Retrato" : { familia: "Desafio de família", amigos: "Desafio de amigos", crush: "Desafio de crush" }[v.relacao]}</span></div>
+        {v.tipo === "retrato" ? <>
+          <h1 className={`${s.titulo} ${s.centro}`}>Como você <b>vê {v.nome}?</b></h1>
+          <p className={`${s.lead} ${s.centro}`}>{v.nome} quer saber. São {v.perguntas.length} perguntas e não há resposta certa: diga como você enxerga essa pessoa de verdade. Ninguém vai saber o que você respondeu.</p>
+        </> : <>
+          <h1 className={`${s.titulo} ${s.centro}`}>{v.nome} <b>te desafiou.</b></h1>
+          <p className={`${s.lead} ${s.centro}`}>{v.nome} respondeu {v.perguntas.length} perguntas sobre si. Você consegue adivinhar o que essa pessoa marcou?</p>
+        </>}
         {conta ? <p className={s.miudo} style={{ marginBottom: 14 }}><Icone nome="ok" />Você vai responder como <b style={{ color: "var(--tinta)", marginLeft: 4 }}>{conta.nome}</b>.</p> : <div className={s.campo}>
           <label htmlFor="meu-nome">Como {v.nome} te chama?</label>
           <input id="meu-nome" autoComplete="given-name" maxLength={24} placeholder="Seu primeiro nome" value={meuNome} onChange={(e) => setMeuNome(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && meuNome.trim().length >= 2) setTela("prever"); }} />
         </div>}
-        <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Seu nome aparece para {v.nome} junto com o placar. Suas escolhas entram, sem o seu nome, no retrato de {v.nome}, e cada pergunta só aparece lá quando pelo menos 3 pessoas responderam.</p>
+        <p className={s.miudo}><Icone nome="escudo" />{v.tipo === "retrato"
+          ? `Sem cadastro. Suas respostas entram no retrato de ${v.nome} sem o seu nome, e só aparecem quando pelo menos 3 pessoas responderam.`
+          : `Sem cadastro. Seu nome aparece para ${v.nome} junto com o placar. Você não vê as respostas de ${v.nome}, e ${v.nome} não vê as suas escolhas.`}</p>
         <label className={s.consent}>
           <input type="checkbox" checked={aceitoIdade} onChange={(e) => setAceitoIdade(e.target.checked)} />
           <span>Confirmo ter pelo menos 16 anos e aceito os <a className="text-link" href="/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a className="text-link" href="/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span>
         </label>
         <div className={s.empurra}>
-          <button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={nomeFinal.trim().length < 2 || !aceitoIdade} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button>
+          <button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={nomeFinal.trim().length < 2 || !aceitoIdade} onClick={() => setTela("prever")}>{v.tipo === "retrato" ? "Responder" : "Aceitar o desafio"}<Icone nome="seta" /></button>
         </div>
 
         {acao === "nenhuma" ? (
@@ -174,7 +184,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <main className={s.tela} key={`p${i}`}>
           <div className={`${s.progresso} ${s.progressoB}`} aria-hidden="true">{v.perguntas.map((p, k) => <i key={p.chave} className={k < feitas ? s.feito : ""} />)}</div>
           <Anel nome={v.nome} feitas={feitas} atual={i} ambar />
-          <span className={s.quemResp}>Como {v.nome} responderia?</span>
+          <span className={s.quemResp}>{v.tipo === "retrato" ? `Como você vê ${v.nome}?` : `Como ${v.nome} responderia?`}</span>
           <h2 className={s.pergunta} id={`prev-${i}`}>{q.texto}</h2>
           <div className={s.opcoes} role="radiogroup" aria-labelledby={`prev-${i}`}>
             {q.opcoes.map((o, k) => (
@@ -183,19 +193,33 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
               </button>
             ))}
           </div>
-          <p className={`${s.miudo} ${s.rodapeQ}`}><Icone nome="relogio" />Pergunta {i + 1} de {v.perguntas.length}. O placar sai no final.</p>
+          <p className={`${s.miudo} ${s.rodapeQ}`}><Icone nome="relogio" />Pergunta {i + 1} de {v.perguntas.length}. {v.tipo === "retrato" ? "Não há certo ou errado." : "O placar sai no final."}</p>
         </main>
       </Moldura>
     );
   }
 
+  if (opinou) return (
+    <Moldura>
+      <main className={`${s.tela} ${s.centro}`}>
+        <div className={s.okGrande}><Icone nome="ok" /></div>
+        <h1 className={s.titulo}>Obrigado. <b>Sua visão entrou no retrato de {v.nome}.</b></h1>
+        <p className={s.lead}>{v.nome} nunca vai saber o que você respondeu. Quando 3 pessoas responderem, aparece como elas enxergam {v.nome}.</p>
+        <div className={s.empurra}>
+          <a className={`${s.btn} ${s.btnAzul}`} href="/comecar?tipo=retrato"><Icone nome="olho" />Descobrir como te veem</a>
+          <a className={`${s.btn} ${s.btnFio}`} href="/comecar?tipo=desafio">Jogar: quanto te conhecem?</a>
+        </div>
+      </main>
+    </Moldura>
+  );
+
   const acertos = placar?.acertos ?? 0;
   return (
     <Moldura>
       <main className={`${s.tela} ${s.centro}`}>
-        <div className={s.radarGrande}><Radar acertos={acertos} visivel={contagem > 0 || acertos === 0} /><Inicial nome={v.nome} ambar tamanho={88} /></div>
-        <div className={s.placar}>{contagem}<small> de {placar?.total ?? 10}</small></div>
-        <p className={s.veredito}>{veredito(acertos, v.nome)}</p>
+        <div className={s.radarGrande}><Radar acertos={acertos} total={placar?.total ?? 5} visivel={contagem > 0 || acertos === 0} /><Inicial nome={v.nome} ambar tamanho={88} /></div>
+        <div className={s.placar}>{contagem}<small> de {placar?.total ?? 5}</small></div>
+        <p className={s.veredito}>{veredito(acertos, placar?.total ?? 5, v.nome)}</p>
         <p className={s.lead}>{v.nome} vai ver o seu placar quando entrar no orvok.</p>
         <div className={s.empurra}>
           <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => router.push(`/comecar?volta=${encodeURIComponent(v.nome)}&de=${encodeURIComponent(codigo)}`)}><Icone nome="alvo" />Agora é a sua vez</button>

@@ -8,23 +8,24 @@ import { type Relacao as Contexto } from "./nucleo";
 import { NUCLEO } from "./nucleo";
 import { media, notas, perfil, selo, type Notas } from "./perfil";
 import {
-  TOTAL_PERGUNTAS, conjuntoValido, escolherAberturaNucleo, escolherReforcoNucleo, perguntaPorChave, type Estatistica,
+  conjuntoValido, escolherDesafio, escolherRetrato, perguntaPorChave, type Estatistica, type Tipo,
 } from "./selecao";
 
-const TOTAL = TOTAL_PERGUNTAS;
 const DIAS_VALIDADE = 60;
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const nome = z.string().transform((v) => v.trim().replace(/\s+/g, " ")).pipe(z.string().min(2).max(24));
-const opcoes = z.array(z.enum(CODIGOS)).length(TOTAL);
+const opcoes = z.array(z.enum(CODIGOS)).min(5).max(12);
 const relacao = z.enum(["familia", "amigos", "crush"]);
+const tipo = z.enum(["desafio", "retrato"]);
 export const criarSchema = z.strictObject({
   nome,
   relacao,
-  perguntas: z.array(z.string().max(40)).length(TOTAL),
+  tipo,
+  perguntas: z.array(z.string().max(40)).min(5).max(12),
   respostas: opcoes,
   consentimento: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_VERSAO), hash: z.literal(AVISO_HASH) }),
-}).refine((d) => conjuntoValido(d.perguntas, d.relacao), "conjunto inválido");
+}).refine((d) => d.respostas.length === d.perguntas.length && conjuntoValido(d.perguntas, d.relacao, d.tipo), "conjunto inválido");
 export const tentativaSchema = z.strictObject({
   nome: nome.optional(),
   previsoes: opcoes,
@@ -34,12 +35,8 @@ export const tentativaSchema = z.strictObject({
 const motivoDenuncia = z.string().trim().min(1).max(1000);
 export const denunciaSchema = z.strictObject({ motivo: motivoDenuncia });
 const chavesNucleo = new Set(NUCLEO.map((p) => p.chave));
-export const selecaoSchema = z.strictObject({
-  relacao,
-  ancoras: z.array(z.strictObject({ chave: z.string().refine((c) => chavesNucleo.has(c)), opcao: z.number().int().min(0).max(3) }))
-    .length(6).refine((l) => new Set(l.map((a) => a.chave)).size === 6),
-});
-export const perfilSchema = z.strictObject({ perguntas: z.array(z.string().max(40)).length(TOTAL), respostas: opcoes }).refine((d) => conjuntoValido(d.perguntas));
+export const perfilSchema = z.strictObject({ perguntas: z.array(z.string().max(40)).length(12), respostas: z.array(z.enum(CODIGOS)).length(12) })
+  .refine((d) => d.perguntas.every((c) => chavesNucleo.has(c)) && conjuntoValido(d.perguntas, undefined, "retrato"));
 const indice = (c: string) => CODIGOS.indexOf(c as (typeof CODIGOS)[number]);
 export const codigoSchema = z.string().regex(/^[A-HJ-NP-Z2-9]{8}$/);
 
@@ -93,9 +90,9 @@ export class DesafioService {
       const codigo = novoCodigo();
       try {
         await this.pool.query(
-          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys",relation,"consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt","claimedByUserId","claimedAt")
-           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,clock_timestamp(),$10,clock_timestamp()+($11::int * interval '1 day'),$12::uuid,CASE WHEN $12::uuid IS NULL THEN NULL ELSE clock_timestamp() END)`,
-          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), dados.relacao, AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE, userId],
+          `INSERT INTO "GuestChallenge" (id,code,"creatorName","catalogVersion",answers,"questionKeys",relation,kind,"consentNoticeVersion","consentNoticeHash","consentedAt","ownerTokenHash","expiresAt","claimedByUserId","claimedAt")
+           VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$13,$8,$9,clock_timestamp(),$10,clock_timestamp()+($11::int * interval '1 day'),$12::uuid,CASE WHEN $12::uuid IS NULL THEN NULL ELSE clock_timestamp() END)`,
+          [randomUUID(), codigo, dados.nome, CATALOGO_VERSAO, JSON.stringify(dados.respostas), JSON.stringify(dados.perguntas), dados.relacao, AVISO_VERSAO, AVISO_HASH, dono, DIAS_VALIDADE, userId, dados.tipo],
         );
         return { codigo, token };
       } catch (error) {
@@ -106,8 +103,8 @@ export class DesafioService {
   }
 
   private async ativo(codigo: string) {
-    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; relation: Contexto; ownerTokenHash: string; claimedByUserId: string | null }>(
-      `SELECT id,"creatorName",answers,"questionKeys",relation,"ownerTokenHash","claimedByUserId" FROM "GuestChallenge"
+    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; relation: Contexto; kind: Tipo; ownerTokenHash: string; claimedByUserId: string | null }>(
+      `SELECT id,"creatorName",answers,"questionKeys",relation,kind,"ownerTokenHash","claimedByUserId" FROM "GuestChallenge"
         WHERE code=$1 AND "revokedAt" IS NULL AND "expiresAt">clock_timestamp()`,
       [codigoSchema.parse(codigo)],
     );
@@ -139,6 +136,7 @@ export class DesafioService {
     return {
       nome: d.creatorName,
       relacao: d.relation,
+      tipo: d.kind,
       proprio: token ? tokenHash(token) === d.ownerTokenHash : false,
       perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!, d.creatorName)),
       resultado: jaTentou?.rows[0] ?? null,
@@ -146,15 +144,10 @@ export class DesafioService {
     };
   }
 
-  /** Abertura: seis perguntas, uma de cada traço do perfil, adequadas à relação. */
-  async ancoras(rel: Contexto) {
-    return escolherAberturaNucleo(rel, await this.estatisticas()).map((p) => perguntaPublica(p));
-  }
-
-  /** Reforço: mais quatro perguntas nos traços em que a pessoa ficou mais em cima do muro. */
-  async restantes(raw: unknown) {
-    const { ancoras, relacao: rel } = selecaoSchema.parse(raw);
-    return escolherReforcoNucleo(ancoras, rel, await this.estatisticas()).map((p) => perguntaPublica(p));
+  /** Conjunto completo do produto: 5 perguntas no desafio, 12 no retrato. */
+  async conjunto(rel: Contexto, t: Tipo) {
+    const est = await this.estatisticas();
+    return (t === "retrato" ? escolherRetrato(rel, est) : escolherDesafio(rel, est)).map((p) => perguntaPublica(p));
   }
 
   /** Diagnóstico "como você se vê", logo depois das perguntas. Não grava nada. */
@@ -166,7 +159,7 @@ export class DesafioService {
   /** Mesmo conjunto de um desafio existente, para o "desafie de volta". */
   async conjuntoDe(codigo: string) {
     const d = await this.ativo(codigo);
-    return { relacao: d.relation, perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!)) };
+    return { relacao: d.relation, tipo: d.kind, perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!)) };
   }
 
   /**
@@ -203,15 +196,18 @@ export class DesafioService {
     if (await this.bloqueadoPor(token, userId, d)) throw new AuthError("BLOCKED", 403);
     await this.limite("tentar:global", 6000, 3600);
     await this.limite(`tentar:${dono}`, 60, 86400);
-    const score = dados.previsoes.reduce((n, v, i) => n + (v === d.answers[i] ? 1 : 0), 0);
+    if (dados.previsoes.length !== d.questionKeys.length) throw new AuthError("INVALID_INPUT", 400);
+    if (d.kind === "retrato" && !dados.avisoRetrato) throw new AuthError("INVALID_INPUT", 400);
+    // No retrato a pessoa opina (sem certo ou errado): não há placar.
+    const score = d.kind === "retrato" ? 0 : dados.previsoes.reduce((n, v, i) => n + (v === d.answers[i] ? 1 : 0), 0);
     const r = await this.pool.query<{ score: number; total: number }>(
       `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId","portraitNoticeVersion","ageConsentVersion")
        VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid,$9,$10)
        ON CONFLICT ("challengeId","ownerTokenHash") DO UPDATE SET "challengeId"=EXCLUDED."challengeId"
        RETURNING score,total`,
-      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono, userId, dados.avisoRetrato ?? null, dados.consentimentoIdade.versao],
+      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, d.questionKeys.length, dono, userId, dados.avisoRetrato ?? null, dados.consentimentoIdade.versao],
     );
-    return { ...r.rows[0]!, token };
+    return { ...r.rows[0]!, tipo: d.kind, token };
   }
 
   /**
@@ -255,10 +251,10 @@ export class DesafioService {
   async meus(token: string | null, userId: string | null) {
     if (!token && !userId) return { desafios: [], logado: false };
     const r = await this.pool.query<{
-      code: string; createdAt: Date; creatorName: string; relation: Contexto;
+      code: string; createdAt: Date; creatorName: string; relation: Contexto; kind: Tipo;
       tentativas: { nome: string | null; score: number; total: number; em: string }[] | null;
     }>(
-      `SELECT c.code,c."createdAt",c."creatorName",c.relation,
+      `SELECT c.code,c."createdAt",c."creatorName",c.relation,c.kind,
               (SELECT jsonb_agg(jsonb_build_object('nome',a."predictorName",'score',a.score,'total',a.total,'em',a."createdAt") ORDER BY a."createdAt" DESC)
                  FROM "GuestChallengeAttempt" a WHERE a."challengeId"=c.id) AS tentativas
          FROM "GuestChallenge" c
@@ -273,8 +269,10 @@ export class DesafioService {
         codigo: c.code,
         criadoEm: c.createdAt,
         relacao: c.relation,
+        tipo: c.kind,
         nome: c.creatorName,
-        tentativas: (c.tentativas ?? []).map((t) => (logado ? t : { nome: t.nome, em: t.em })),
+        // No retrato as respostas são anônimas: só a contagem e a data.
+        tentativas: (c.tentativas ?? []).map((t) => (c.kind === "retrato" ? { nome: null, em: t.em } : logado ? t : { nome: t.nome, em: t.em })),
       })),
     };
   }
@@ -299,7 +297,7 @@ export class DesafioService {
     const r = await this.pool.query<{ code: string; creatorName: string; relation: Contexto; score: number; total: number; createdAt: Date }>(
       `SELECT c.code,c."creatorName",c.relation,a.score,a.total,a."createdAt"
          FROM "GuestChallengeAttempt" a JOIN "GuestChallenge" c ON c.id=a."challengeId"
-        WHERE a."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND a."claimedByUserId"=$2)
+        WHERE c.kind='desafio' AND (a."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND a."claimedByUserId"=$2))
         ORDER BY a."createdAt" DESC LIMIT 50`,
       [token ? tokenHash(token) : "", userId],
     );
@@ -314,8 +312,8 @@ export class DesafioService {
   async retrato(token: string | null, userId: string | null) {
     const vazio = { eu: null, eles: null, selo: null, respondentes: 0, faltam: MINIMO_RETRATO, relacoes: [] as unknown[] };
     if (!token && !userId) return vazio;
-    const r = await this.pool.query<{ id: string; keys: string[]; answers: string[]; relation: Contexto; predictions: string[] | null; aviso: string | null }>(
-      `SELECT c.id, c."questionKeys" AS keys, c.answers, c.relation, a.predictions, a."portraitNoticeVersion" AS aviso
+    const r = await this.pool.query<{ id: string; keys: string[]; answers: string[]; relation: Contexto; kind: Tipo; predictions: string[] | null; aviso: string | null }>(
+      `SELECT c.id, c."questionKeys" AS keys, c.answers, c.relation, c.kind, a.predictions, a."portraitNoticeVersion" AS aviso
          FROM "GuestChallenge" c LEFT JOIN "GuestChallengeAttempt" a ON a."challengeId"=c.id
         WHERE c."revokedAt" IS NULL AND c."catalogVersion"=$3 AND (c."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND c."claimedByUserId"=$2))`,
       [token ? tokenHash(token) : "", userId, CATALOGO_VERSAO],
@@ -325,7 +323,8 @@ export class DesafioService {
     const deles: { relacao: Contexto; n: Notas }[] = [];
     for (const l of r.rows) {
       if (!vistos.has(l.id)) { vistos.add(l.id); l.keys.forEach((k, i) => { minhasChaves.push(k); minhasOpcoes.push(indice(l.answers[i] ?? "")); }); }
-      if (l.predictions && l.aviso === AVISO_RETRATO_VERSAO) deles.push({ relacao: l.relation, n: notas(l.keys, l.predictions.map(indice)) });
+      // Como te veem: só opiniões dadas no retrato (no desafio a pessoa adivinha, não opina).
+      if (l.kind === "retrato" && l.predictions && l.aviso === AVISO_RETRATO_VERSAO) deles.push({ relacao: l.relation, n: notas(l.keys, l.predictions.map(indice)) });
     }
     if (!minhasChaves.length) return vazio;
     const eu = notas(minhasChaves, minhasOpcoes);

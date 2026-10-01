@@ -1,5 +1,4 @@
 import { NUCLEO, ORDEM_TRACOS, type PerguntaNucleo, type Relacao as Contexto, type Traco as TracoNucleo } from "./nucleo";
-import { notas } from "./perfil";
 
 /**
  * Seleção das 10 perguntas do desafio a partir do núcleo do perfil:
@@ -7,7 +6,6 @@ import { notas } from "./perfil";
  * ficou mais em cima do muro. Perguntas de outra relação nunca entram.
  */
 export type Estatistica = { tentativas: number; acertos: number; distribuicao: [number, number, number, number] };
-export const TOTAL_PERGUNTAS = 10;
 const MIN_AMOSTRA = 15;
 const ALVO_ACERTO = 0.55;
 
@@ -30,40 +28,43 @@ export function qualidade(e: Estatistica | undefined): number {
   return equilibrio * 0.6 + entropia * 0.4;
 }
 
-/** Confere um conjunto enviado pelo navegador: 10 chaves únicas do núcleo, da relação certa. */
-export function conjuntoValido(chaves: string[], contexto?: Contexto): boolean {
-  return chaves.length === TOTAL_PERGUNTAS && new Set(chaves).size === chaves.length
+/** Confere um conjunto enviado pelo navegador: 5 (desafio) ou 12 (retrato) chaves únicas do núcleo, da relação certa. */
+export function conjuntoValido(chaves: string[], contexto?: Contexto, tipo?: "desafio" | "retrato"): boolean {
+  const tamanho = tipo === "retrato" ? 12 : tipo === "desafio" ? 5 : chaves.length;
+  return (chaves.length === 5 || chaves.length === 12) && chaves.length === tamanho && new Set(chaves).size === chaves.length
     && chaves.every((c) => { const p = porChaveNucleo.get(c); return Boolean(p) && (!contexto || !p!.contexto || p!.contexto === contexto); });
 }
 
-/* ---------- Núcleo do perfil: 6 de abertura (um por traço) + 4 de reforço ---------- */
+/* ---------- Dois produtos ----------
+ * Desafio (quanto te conhecem): 5 perguntas, de 5 traços diferentes, leves,
+ *   preferindo as da relação e as divertidas. O amigo tenta adivinhar.
+ * Retrato (como te veem): 12 perguntas, 2 de cada traço, para o perfil sair
+ *   consistente. O amigo diz como enxerga a pessoa.
+ */
+export type Tipo = "desafio" | "retrato";
+export const TOTAL_POR_TIPO: Record<Tipo, number> = { desafio: 5, retrato: 12 };
 const serveNucleo = (p: PerguntaNucleo, contexto: Contexto) => !p.contexto || p.contexto === contexto;
 
-/** Abertura: uma pergunta de cada traço, sem as divertidas, em ordem aleatória. */
-export function escolherAberturaNucleo(contexto: Contexto, estatisticas: Map<string, Estatistica>, sorte: () => number = Math.random): PerguntaNucleo[] {
-  return embaralhar(ORDEM_TRACOS, sorte).map((t) => {
-    const candidatas = NUCLEO.filter((p) => p.traco === t && !p.d && serveNucleo(p, contexto));
-    return candidatas.map((p) => ({ p, n: qualidade(estatisticas.get(p.chave)) + (p.contexto ? 0.2 : 0) + sorte() * 0.5 })).sort((a, b) => b.n - a.n)[0]!.p;
+export function escolherDesafio(contexto: Contexto, estatisticas: Map<string, Estatistica>, sorte: () => number = Math.random): PerguntaNucleo[] {
+  const tracos = embaralhar(ORDEM_TRACOS, sorte).slice(0, TOTAL_POR_TIPO.desafio);
+  const lista = tracos.map((t: TracoNucleo, i) => {
+    const ultima = i === tracos.length - 1;
+    return NUCLEO.filter((p) => p.traco === t && serveNucleo(p, contexto))
+      .map((p) => ({ p, n: qualidade(estatisticas.get(p.chave)) + (p.contexto ? 0.4 : 0) + (p.d ? (ultima ? 0.8 : 0.3) : 0) + sorte() * 0.4 }))
+      .sort((a, b) => b.n - a.n)[0]!.p;
   });
+  return lista;
 }
 
-/**
- * Reforço: depois das 6, mais 4 perguntas nos traços em que a pessoa ficou mais
- * em cima do muro, para o perfil sair mais preciso. Prefere perguntas da relação
- * escolhida e fecha com uma divertida quando houver.
- */
-export function escolherReforcoNucleo(abertura: { chave: string; opcao: number }[], contexto: Contexto, estatisticas: Map<string, Estatistica>, sorte: () => number = Math.random): PerguntaNucleo[] {
-  const n = notas(abertura.map((a) => a.chave), abertura.map((a) => a.opcao));
-  const usados = new Set(abertura.map((a) => a.chave));
-  const alvo = [...ORDEM_TRACOS].sort((a, b) => Math.abs(n[a] ?? 0) - Math.abs(n[b] ?? 0) || sorte() - 0.5).slice(0, TOTAL_PERGUNTAS - 6);
-  const escolhidas: PerguntaNucleo[] = [];
-  alvo.forEach((t: TracoNucleo, i) => {
-    const ultima = i === alvo.length - 1;
-    const candidatas = NUCLEO.filter((p) => p.traco === t && !usados.has(p.chave) && serveNucleo(p, contexto));
-    const melhor = candidatas.map((p) => ({ p, n: qualidade(estatisticas.get(p.chave)) + (p.contexto ? 0.4 : 0) + (ultima && p.d ? 0.6 : 0) + sorte() * 0.3 })).sort((a, b) => b.n - a.n)[0];
-    if (melhor) { escolhidas.push(melhor.p); usados.add(melhor.p.chave); }
-  });
-  return escolhidas;
+export function escolherRetrato(contexto: Contexto, estatisticas: Map<string, Estatistica>, sorte: () => number = Math.random): PerguntaNucleo[] {
+  const lista: PerguntaNucleo[] = [];
+  for (const t of ORDEM_TRACOS) {
+    NUCLEO.filter((p) => p.traco === t && !p.d && serveNucleo(p, contexto))
+      .map((p) => ({ p, n: qualidade(estatisticas.get(p.chave)) + (p.contexto ? 0.3 : 0) + sorte() * 0.5 }))
+      .sort((a, b) => b.n - a.n).slice(0, 2).forEach((x) => lista.push(x.p));
+  }
+  // Intercala os traços para a pessoa não responder duas perguntas iguais seguidas.
+  return [...lista.filter((_, i) => i % 2 === 0), ...lista.filter((_, i) => i % 2 === 1)];
 }
 
 /** Texto da pergunta para quem responde (`você`) ou para quem prevê (primeiro nome). */

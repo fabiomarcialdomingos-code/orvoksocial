@@ -512,6 +512,7 @@ model GuestChallenge {
   answers              Json
   questionKeys         Json                    @default("[]")
   relation             String                  @default("amigos") @db.VarChar(16)
+  kind                 String                  @default("desafio") @db.VarChar(10)
   consentNoticeVersion String                  @db.VarChar(80)
   consentNoticeHash    String                  @db.VarChar(64)
   consentedAt          DateTime                @db.Timestamptz(6)
