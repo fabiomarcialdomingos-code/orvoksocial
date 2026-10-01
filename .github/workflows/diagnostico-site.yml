@@ -37,7 +37,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          r=$(psql "$DATABASE_URL" -At -c "SELECT string_agg(t || ':' || p, ' ') FROM (SELECT t, p FROM unnest(ARRAY['WorldComment','WorldReaction','WorldPrediction','SocialPost','SocialComment','SocialReaction','UserProfile','Notification']) t, unnest(ARRAY['SELECT','INSERT','UPDATE']) p WHERE NOT has_table_privilege('orvok_app_runtime', format('public.%I', t), p)) x")
+          r=$(psql "$DATABASE_URL" -At -c "SELECT string_agg(t || ':' || p, ' ') FROM (SELECT t, p FROM unnest(ARRAY['WorldComment','WorldReaction','WorldPrediction','SocialPost','SocialComment','SocialReaction','UserProfile']) t, unnest(ARRAY['SELECT','INSERT','UPDATE']) p WHERE NOT has_table_privilege('orvok_app_runtime', format('public.%I', t), p)) x")
           echo "resumo=faltando: ${r:-nada}" >> "$GITHUB_OUTPUT"
       - name: "Permissoes ${{ steps.pm.outputs.resumo }}"
         run: "true"

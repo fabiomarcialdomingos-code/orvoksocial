@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Globo } from "./Globo";
 import { Anel, Icone, Inicial, Moldura, Radar, enviarJson, estilos as s, useConta } from "./pecas";
+import { compartilharCartao, gerarCartaoResultado } from "./cartaoResultado";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type AvisoIdade = { versao: string; hash: string; texto: string };
@@ -27,6 +28,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const [prev, setPrev] = useState<(number | undefined)[]>([]);
   const [placar, setPlacar] = useState<{ acertos: number; total: number } | null>(null);
   const [opinou, setOpinou] = useState(false);
+  const [cartao, setCartao] = useState<"" | "gerando" | "compartilhado" | "baixado">("");
   const [contagem, setContagem] = useState(0);
   const [meuNome, setMeuNome] = useState("");
   const [aceitoIdade, setAceitoIdade] = useState(false);
@@ -223,6 +225,12 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <p className={s.lead}>{v.nome} vai ver o seu placar quando entrar no orvok.</p>
         <div className={s.empurra}>
           <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => router.push(`/comecar?volta=${encodeURIComponent(v.nome)}&de=${encodeURIComponent(codigo)}`)}><Icone nome="alvo" />Agora é a sua vez</button>
+          <button className={`${s.btn} ${s.btnFio}`} type="button" disabled={cartao === "gerando"} onClick={async () => {
+            setCartao("gerando");
+            const blob = await gerarCartaoResultado({ quem: nomeFinal.trim() || "Eu", sobre: v.nome, acertos, total: placar?.total ?? 5 });
+            if (!blob) { setCartao(""); return; }
+            setCartao(await compartilharCartao(blob, `Acertei ${acertos} de ${placar?.total ?? 5} sobre ${v.nome} no orvok. Será que você consegue?`, `${window.location.origin}/d/${codigo}`));
+          }}><Icone nome="enviar" />{cartao === "gerando" ? "Preparando…" : cartao === "baixado" ? "Imagem salva. Poste nos stories!" : "Compartilhar meu resultado"}</button>
           <p className={s.miudo} style={{ justifyContent: "center" }}>Responda sobre você e veja se {v.nome} te conhece tão bem assim.</p>
           <a className={`${s.btn} ${s.btnFio}`} href="/comecar">Desafiar outra pessoa</a>
         </div>
