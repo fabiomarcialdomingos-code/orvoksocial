@@ -18,8 +18,10 @@ jobs:
             pv=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/privacidade" || echo ERR)
             tm=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/termos" || echo ERR)
             home_tem_rede=$(curl -s -m 15 "$base/" | grep -q "Rede ao vivo" && echo SIM || echo nao)
-            home_espelho=$(curl -s -m 15 "$base/" | grep -q "Como você se vê" && echo SIM || echo nao)
-            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede espelhoNaHome=$home_espelho"
+            home_espelho=$(curl -s -m 15 "$base/" | grep -q "Como te veem" && echo SIM || echo nao)
+            cat_desafio=$(curl -s -m 15 "$base/api/v1/desafio/catalogo?tipo=desafio" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
+            cat_retrato=$(curl -s -m 15 "$base/api/v1/desafio/catalogo?tipo=retrato" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede duasPortas=$home_espelho perguntasDesafio=$cat_desafio perguntasRetrato=$cat_retrato"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: Google
