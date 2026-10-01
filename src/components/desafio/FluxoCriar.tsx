@@ -254,7 +254,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null 
         <div className={s.balao}>{mensagem} <span className={s.link}>{link || "orvok.com.br/d/…"}</span></div>
         <label className={s.consent}>
           <input type="checkbox" checked={aceito} onChange={(e) => setAceito(e.target.checked)} />
-          <span><b>Aceito ser previsto por quem abrir este convite.</b> A pessoa tenta adivinhar as minhas respostas, mas nunca vê o que eu respondi. Posso cancelar o convite quando quiser.</span>
+          <span><b>Aceito ser previsto por quem abrir este convite.</b> A pessoa tenta adivinhar as minhas respostas, mas nunca vê o que eu respondi. Posso cancelar o convite quando quiser. Confirmo ter pelo menos 16 anos e aceito os <a className="text-link" href="/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a className="text-link" href="/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span>
         </label>
         {erro ? <p className={s.erro} role="alert">{erro}</p> : null}
         <div className={s.empurra}>

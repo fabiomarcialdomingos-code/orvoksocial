@@ -3,7 +3,7 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
-import { AVISO_HASH, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
+import { AVISO_HASH, AVISO_IDADE, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
 import { type Relacao as Contexto } from "./nucleo";
 import { NUCLEO } from "./nucleo";
 import { media, notas, perfil, selo, type Notas } from "./perfil";
@@ -25,7 +25,14 @@ export const criarSchema = z.strictObject({
   respostas: opcoes,
   consentimento: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_VERSAO), hash: z.literal(AVISO_HASH) }),
 }).refine((d) => conjuntoValido(d.perguntas, d.relacao), "conjunto inválido");
-export const tentativaSchema = z.strictObject({ nome: nome.optional(), previsoes: opcoes, avisoRetrato: z.literal(AVISO_RETRATO_VERSAO).optional() });
+export const tentativaSchema = z.strictObject({
+  nome: nome.optional(),
+  previsoes: opcoes,
+  avisoRetrato: z.literal(AVISO_RETRATO_VERSAO).optional(),
+  consentimentoIdade: z.strictObject({ aceito: z.literal(true), versao: z.literal(AVISO_IDADE_VERSAO), hash: z.literal(AVISO_IDADE_HASH) }),
+});
+const motivoDenuncia = z.string().trim().min(1).max(1000);
+export const denunciaSchema = z.strictObject({ motivo: motivoDenuncia });
 const chavesNucleo = new Set(NUCLEO.map((p) => p.chave));
 export const selecaoSchema = z.strictObject({
   relacao,
@@ -99,8 +106,8 @@ export class DesafioService {
   }
 
   private async ativo(codigo: string) {
-    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; relation: Contexto; ownerTokenHash: string }>(
-      `SELECT id,"creatorName",answers,"questionKeys",relation,"ownerTokenHash" FROM "GuestChallenge"
+    const r = await this.pool.query<{ id: string; creatorName: string; answers: string[]; questionKeys: string[]; relation: Contexto; ownerTokenHash: string; claimedByUserId: string | null }>(
+      `SELECT id,"creatorName",answers,"questionKeys",relation,"ownerTokenHash","claimedByUserId" FROM "GuestChallenge"
         WHERE code=$1 AND "revokedAt" IS NULL AND "expiresAt">clock_timestamp()`,
       [codigoSchema.parse(codigo)],
     );
@@ -109,9 +116,22 @@ export class DesafioService {
     return linha;
   }
 
+  /** true se quem está vendo já bloqueou a pessoa dona deste desafio. */
+  private async bloqueadoPor(token: string | null, userId: string | null, dono: { ownerTokenHash: string; claimedByUserId: string | null }): Promise<boolean> {
+    if (!token && !userId) return false;
+    const r = await this.pool.query(
+      `SELECT 1 FROM "GuestBlock"
+        WHERE "blockerTokenHash"=$1 AND (("blockedOwnerTokenHash" IS NOT NULL AND "blockedOwnerTokenHash"=$2)
+          OR ($3::uuid IS NOT NULL AND "blockedOwnerUserId"=$3)) LIMIT 1`,
+      [token ? tokenHash(token) : "", dono.ownerTokenHash, dono.claimedByUserId],
+    );
+    return (r.rowCount ?? 0) > 0;
+  }
+
   /** O que quem recebeu o convite pode ver: nome e perguntas. Nunca as respostas. */
-  async vitrine(codigo: string, token: string | null) {
+  async vitrine(codigo: string, token: string | null, userId: string | null = null) {
     const d = await this.ativo(codigo);
+    if (await this.bloqueadoPor(token, userId, d)) throw new AuthError("BLOCKED", 403);
     const jaTentou = token
       ? await this.pool.query<{ score: number; total: number }>(
           `SELECT score,total FROM "GuestChallengeAttempt" WHERE "challengeId"=$1 AND "ownerTokenHash"=$2`, [d.id, tokenHash(token)])
@@ -122,6 +142,7 @@ export class DesafioService {
       proprio: token ? tokenHash(token) === d.ownerTokenHash : false,
       perguntas: d.questionKeys.map((c) => perguntaPublica(perguntaPorChave(c)!, d.creatorName)),
       resultado: jaTentou?.rows[0] ?? null,
+      avisoIdade: AVISO_IDADE,
     };
   }
 
@@ -179,17 +200,52 @@ export class DesafioService {
     const token = tokenAtual ?? randomToken();
     const dono = tokenHash(token);
     if (dono === d.ownerTokenHash) throw new AuthError("OWN_CHALLENGE", 409);
+    if (await this.bloqueadoPor(token, userId, d)) throw new AuthError("BLOCKED", 403);
     await this.limite("tentar:global", 6000, 3600);
     await this.limite(`tentar:${dono}`, 60, 86400);
     const score = dados.previsoes.reduce((n, v, i) => n + (v === d.answers[i] ? 1 : 0), 0);
     const r = await this.pool.query<{ score: number; total: number }>(
-      `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId","portraitNoticeVersion")
-       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid,$9)
+      `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId","portraitNoticeVersion","ageConsentVersion")
+       VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid,$9,$10)
        ON CONFLICT ("challengeId","ownerTokenHash") DO UPDATE SET "challengeId"=EXCLUDED."challengeId"
        RETURNING score,total`,
-      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono, userId, dados.avisoRetrato ?? null],
+      [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, TOTAL, dono, userId, dados.avisoRetrato ?? null, dados.consentimentoIdade.versao],
     );
     return { ...r.rows[0]!, token };
+  }
+
+  /**
+   * Denúncia de um convite: fica guardada para revisão manual. O e-mail para
+   * contato@orvok.com.br é enviado pela rota da API, não por aqui.
+   */
+  async denunciar(codigo: string, raw: unknown, tokenAtual: string | null, userId: string | null): Promise<{ id: string; nome: string; motivo: string; token: string }> {
+    const { motivo } = denunciaSchema.parse(raw);
+    const d = await this.ativo(codigo);
+    const token = tokenAtual ?? randomToken();
+    await this.limite(`denunciar:${tokenHash(token)}`, 10, 86400);
+    const id = randomUUID();
+    await this.pool.query(
+      `INSERT INTO "GuestReport" (id,"challengeId","reporterTokenHash","reporterUserId",reason) VALUES ($1,$2,$3,$4::uuid,$5)`,
+      [id, d.id, tokenHash(token), userId, motivo],
+    );
+    return { id, nome: d.creatorName, motivo, token };
+  }
+
+  /**
+   * Bloqueia quem enviou este convite: essa pessoa deixa de conseguir te
+   * enviar novos convites. Não afeta quem mais recebeu o mesmo link.
+   */
+  async bloquear(codigo: string, tokenAtual: string | null, userId: string | null): Promise<{ token: string }> {
+    const d = await this.ativo(codigo);
+    const token = tokenAtual ?? randomToken();
+    if (tokenHash(token) === d.ownerTokenHash) throw new AuthError("OWN_CHALLENGE", 409);
+    await this.pool.query(
+      `INSERT INTO "GuestBlock" (id,"blockerTokenHash","blockerUserId","blockedOwnerTokenHash","blockedOwnerUserId")
+       VALUES ($1,$2,$3::uuid,$4,$5::uuid)
+       ON CONFLICT DO NOTHING`,
+      [randomUUID(), tokenHash(token), userId, d.ownerTokenHash, d.claimedByUserId],
+    );
+    return { token };
   }
 
   /**

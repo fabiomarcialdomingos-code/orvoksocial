@@ -99,6 +99,9 @@ model User {
   auditActions              AuditLog[]                  @relation("AuditActor")
   guestChallengesClaimed    GuestChallenge[]            @relation("GuestChallengeClaimer")
   guestAttemptsClaimed      GuestChallengeAttempt[]     @relation("GuestAttemptClaimer")
+  guestReportsMade          GuestReport[]
+  guestBlocksMade           GuestBlock[]                @relation("GuestBlockBlocker")
+  guestBlocksReceived       GuestBlock[]                @relation("GuestBlockBlocked")
   radarInvitationsSent      RadarInvitation[]           @relation("RadarInviter")
   radarInvitationsReceived  RadarInvitation[]           @relation("RadarInvitee")
   authIdentity              AuthIdentity?
@@ -536,6 +539,7 @@ model GuestChallengeAttempt {
   total           Int            @db.SmallInt
   ownerTokenHash  String         @db.VarChar(64)
   portraitNoticeVersion String?  @db.VarChar(40)
+  ageConsentVersion String?      @db.VarChar(40)
   claimedByUserId String?        @db.Uuid
   claimedBy       User?          @relation("GuestAttemptClaimer", fields: [claimedByUserId], references: [id], onDelete: SetNull)
   createdAt       DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
@@ -543,4 +547,38 @@ model GuestChallengeAttempt {
   @@unique([challengeId, ownerTokenHash], map: "guest_attempt_one_per_device")
   @@index([challengeId, createdAt], map: "GuestChallengeAttempt_challenge_idx")
   @@index([ownerTokenHash], map: "GuestChallengeAttempt_owner_idx")
+}
+
+/** Denúncia de um convite, revisada manualmente por e-mail. */
+model GuestReport {
+  id                String         @id @db.Uuid
+  challengeId       String         @db.Uuid
+  challenge         GuestChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  reporterTokenHash String         @db.VarChar(64)
+  reporterUserId    String?        @db.Uuid
+  reporter          User?          @relation(fields: [reporterUserId], references: [id], onDelete: SetNull)
+  reason            String         @db.VarChar(1000)
+  createdAt         DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([challengeId], map: "GuestReport_challenge_idx")
+}
+
+/**
+ * Bloqueio pessoal: quem bloqueia deixa de conseguir abrir novos convites de
+ * quem foi bloqueado. Nunca revoga o convite para as outras pessoas.
+ */
+model GuestBlock {
+  id                    String    @id @db.Uuid
+  blockerTokenHash      String    @db.VarChar(64)
+  blockerUserId         String?   @db.Uuid
+  blocker               User?     @relation("GuestBlockBlocker", fields: [blockerUserId], references: [id], onDelete: SetNull)
+  blockedOwnerTokenHash String?   @db.VarChar(64)
+  blockedOwnerUserId    String?   @db.Uuid
+  blockedOwner          User?     @relation("GuestBlockBlocked", fields: [blockedOwnerUserId], references: [id], onDelete: SetNull)
+  createdAt             DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([blockerTokenHash], map: "GuestBlock_blocker_token_idx")
+  @@index([blockerUserId], map: "GuestBlock_blocker_user_idx")
+  @@index([blockedOwnerTokenHash], map: "GuestBlock_blocked_token_idx")
+  @@index([blockedOwnerUserId], map: "GuestBlock_blocked_user_idx")
 }

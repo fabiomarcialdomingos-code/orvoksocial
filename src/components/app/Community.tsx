@@ -264,7 +264,8 @@ export function ProfileView({ mathPanel }: { mathPanel?: ReactNode }) {
       <section className={r.item}>
         <b>Conta</b>
         <div className={r.listaConta}>
-          <Link href="/meus-dados">Privacidade e meus dados <span>›</span></Link>
+          <Link href="/meus-dados">Meus dados <span>›</span></Link>
+          <Link href="/privacidade">Política de privacidade <span>›</span></Link>
           <Link href="/recuperar">Trocar senha <span>›</span></Link>
         </div>
       </section>

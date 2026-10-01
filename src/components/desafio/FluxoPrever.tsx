@@ -5,7 +5,8 @@ import { Globo } from "./Globo";
 import { Anel, Icone, Inicial, Moldura, Radar, enviarJson, estilos as s, useConta } from "./pecas";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
-type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null };
+type AvisoIdade = { versao: string; hash: string; texto: string };
+type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null; avisoIdade: AvisoIdade };
 const LETRAS = ["A", "B", "C", "D"] as const;
 
 function veredito(n: number, nome: string) {
@@ -26,12 +27,25 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const [placar, setPlacar] = useState<{ acertos: number; total: number } | null>(null);
   const [contagem, setContagem] = useState(0);
   const [meuNome, setMeuNome] = useState("");
+  const [aceitoIdade, setAceitoIdade] = useState(false);
+  const [acao, setAcao] = useState<"nenhuma" | "denunciar" | "confirmarBloqueio" | "bloqueado">("nenhuma");
+  const [motivoDenuncia, setMotivoDenuncia] = useState("");
+  const [denunciaEnviada, setDenunciaEnviada] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
   const conta = useConta();
   const nomeFinal = conta?.nome ?? meuNome;
 
   useEffect(() => {
     void fetch(`/api/v1/desafio/${encodeURIComponent(codigo)}`).then(async (r) => {
-      if (!r.ok) { setFalha(r.status === 404 ? "Este desafio não existe mais ou expirou." : "Não foi possível abrir o desafio agora."); return; }
+      if (!r.ok) {
+        const corpo = (await r.json().catch(() => null)) as { code?: string } | null;
+        setFalha(
+          r.status === 404 ? "Este desafio não existe mais ou expirou."
+            : corpo?.code === "BLOCKED" ? "Você bloqueou quem te enviou este convite."
+            : "Não foi possível abrir o desafio agora.",
+        );
+        return;
+      }
       const d = (await r.json()) as Vitrine;
       setV(d);
       if (d.resultado) { setPlacar({ acertos: d.resultado.score, total: d.resultado.total }); setTela("placar"); }
@@ -48,13 +62,31 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   }, [tela, placar]);
 
   const concluir = async (lista: (number | undefined)[]) => {
-    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, { nome: nomeFinal.trim(), avisoRetrato: "desafio-retrato-v1", previsoes: lista.map((x) => LETRAS[x ?? 0]) });
+    if (!v) return;
+    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, {
+      nome: nomeFinal.trim(), avisoRetrato: "desafio-retrato-v1", previsoes: lista.map((x) => LETRAS[x ?? 0]),
+      consentimentoIdade: { aceito: true, versao: v.avisoIdade.versao, hash: v.avisoIdade.hash },
+    });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este desafio é seu. Envie o link para alguém tentar te prever." : "Não foi possível registrar agora. Tente de novo."); return; }
     setPlacar(r.dados); setTela("placar");
   };
   const escolher = (k: number) => {
     const novas = [...prev]; novas[i] = k; setPrev(novas);
     window.setTimeout(() => { if (v && i < v.perguntas.length - 1) setI(i + 1); else void concluir(novas); }, 380);
+  };
+  const enviarDenuncia = async () => {
+    if (!motivoDenuncia.trim() || ocupado) return;
+    setOcupado(true);
+    const r = await enviarJson(`/api/v1/desafio/${encodeURIComponent(codigo)}/denunciar`, { motivo: motivoDenuncia.trim() });
+    setOcupado(false);
+    if (r.ok) setDenunciaEnviada(true);
+  };
+  const confirmarBloqueio = async () => {
+    if (ocupado) return;
+    setOcupado(true);
+    const r = await enviarJson(`/api/v1/desafio/${encodeURIComponent(codigo)}/bloquear`, {});
+    setOcupado(false);
+    if (r.ok) setAcao("bloqueado");
   };
 
   if (falha) return (
@@ -66,6 +98,14 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
     <Moldura><main className={`${s.tela} ${s.centro}`}><h1 className={s.titulo}>Este desafio <b>é seu.</b></h1>
       <p className={s.lead}>Envie o link para alguém tentar te prever. O resultado aparece em Meus desafios.</p>
       <div className={s.empurra}><a className={`${s.btn} ${s.btnAzul}`} href="/desafios">Ver meus desafios</a></div></main></Moldura>
+  );
+
+  if (acao === "bloqueado") return (
+    <Moldura><main className={`${s.tela} ${s.centro}`}>
+      <h1 className={s.titulo}><b>{v.nome}</b> foi bloqueado.</h1>
+      <p className={s.lead}>Essa pessoa não vai conseguir te enviar novos convites. Isso não muda nada para quem mais recebeu o mesmo link.</p>
+      <div className={s.empurra}><a className={`${s.btn} ${s.btnAzul}`} href="/comecar">Criar o meu desafio</a></div>
+    </main></Moldura>
   );
 
   if (tela === "desafio") return (
@@ -82,7 +122,47 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
             onKeyDown={(e) => { if (e.key === "Enter" && meuNome.trim().length >= 2) setTela("prever"); }} />
         </div>}
         <p className={s.miudo}><Icone nome="escudo" />Sem cadastro. Seu nome aparece para {v.nome} junto com o placar. Suas escolhas entram, sem o seu nome, no retrato de {v.nome}, e cada pergunta só aparece lá quando pelo menos 3 pessoas responderam.</p>
-        <div className={s.empurra}><button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={nomeFinal.trim().length < 2} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button></div>
+        <label className={s.consent}>
+          <input type="checkbox" checked={aceitoIdade} onChange={(e) => setAceitoIdade(e.target.checked)} />
+          <span>Confirmo ter pelo menos 16 anos e aceito os <a className="text-link" href="/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a className="text-link" href="/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span>
+        </label>
+        <div className={s.empurra}>
+          <button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={nomeFinal.trim().length < 2 || !aceitoIdade} onClick={() => setTela("prever")}>Aceitar o desafio<Icone nome="seta" /></button>
+        </div>
+
+        {acao === "nenhuma" ? (
+          <div className={s.acoesModeracao}>
+            <button type="button" onClick={() => setAcao("denunciar")}><Icone nome="bandeira" />Denunciar</button>
+            <button type="button" onClick={() => setAcao("confirmarBloqueio")}><Icone nome="bloqueado" />Bloquear {v.nome}</button>
+          </div>
+        ) : null}
+
+        {acao === "denunciar" ? (
+          <div className={s.painelModeracao}>
+            {denunciaEnviada ? <p className={s.miudo}><Icone nome="ok" />Denúncia enviada. Vamos revisar.</p> : (
+              <>
+                <div className={s.campo} style={{ marginBottom: 10 }}>
+                  <label htmlFor="motivo-denuncia">O que há de errado com este convite?</label>
+                  <textarea id="motivo-denuncia" rows={3} maxLength={1000} value={motivoDenuncia} onChange={(e) => setMotivoDenuncia(e.target.value)} placeholder="Conte o que aconteceu" />
+                </div>
+                <div className={s.linhaBtn}>
+                  <button className={`${s.btn} ${s.btnFio}`} type="button" disabled={!motivoDenuncia.trim() || ocupado} onClick={() => void enviarDenuncia()}>Enviar denúncia</button>
+                  <button className={`${s.btn} ${s.btnFio}`} type="button" onClick={() => setAcao("nenhuma")}>Cancelar</button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {acao === "confirmarBloqueio" ? (
+          <div className={s.painelModeracao}>
+            <p className={s.miudo}>Bloquear {v.nome}? Essa pessoa não vai conseguir te enviar novos convites. Isso não afeta quem mais recebeu este link.</p>
+            <div className={s.linhaBtn}>
+              <button className={`${s.btn} ${s.btnFio}`} type="button" disabled={ocupado} onClick={() => void confirmarBloqueio()}>Sim, bloquear</button>
+              <button className={`${s.btn} ${s.btnFio}`} type="button" onClick={() => setAcao("nenhuma")}>Cancelar</button>
+            </div>
+          </div>
+        ) : null}
       </main>
     </Moldura>
   );

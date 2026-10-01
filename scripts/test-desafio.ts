@@ -3,7 +3,7 @@
 import { Pool } from "pg";
 import { randomUUID } from "node:crypto";
 import { DesafioService } from "@/lib/desafio/service";
-import { AVISO_HASH, AVISO_VERSAO } from "@/lib/desafio/catalogo";
+import { AVISO_HASH, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO, AVISO_VERSAO } from "@/lib/desafio/catalogo";
 import { NUCLEO, ORDEM_TRACOS } from "@/lib/desafio/nucleo";
 import { notas, perfil, selo } from "@/lib/desafio/perfil";
 import { escolherAberturaNucleo, escolherReforcoNucleo } from "@/lib/desafio/selecao";
@@ -47,25 +47,40 @@ ok(selo(positivo, positivo).nivel === "autentico" && selo(positivo, negativo).ni
 const conjunto = todos.map((p) => p.chave);
 const respostas = todos.map((p) => L[p.pesos.indexOf(2)]!);
 const consent = { aceito: true, versao: AVISO_VERSAO, hash: AVISO_HASH };
+const consentIdade = { aceito: true as const, versao: AVISO_IDADE_VERSAO, hash: AVISO_IDADE_HASH };
 ok(svc.diagnostico({ perguntas: conjunto, respostas }).nome === "O Líder", "diagnóstico logo após as perguntas");
 const { codigo, token: dono } = await svc.criar({ nome: "Caio", relacao: "amigos", perguntas: conjunto, respostas, consentimento: consent }, null);
 ok(/^[A-HJ-NP-Z2-9]{8}$/.test(codigo), `desafio criado (${codigo})`);
 const v = await svc.vitrine(codigo, null);
 ok(v.perguntas.length === 10 && v.perguntas.every((p) => !p.texto.includes("{voce}")) && !("answers" in v), "vitrine com o nome no lugar de você, sem respostas");
-try { await svc.tentar(codigo, { previsoes: respostas }, dono); ok(false, "dono"); } catch (e) { ok((e as { code?: string }).code === "OWN_CHALLENGE", "dono não prevê o próprio desafio"); }
+ok(v.avisoIdade.versao === AVISO_IDADE_VERSAO, "vitrine devolve o aviso de idade para quem vai prever");
+try { await svc.tentar(codigo, { previsoes: respostas, consentimentoIdade: consentIdade }, dono); ok(false, "dono"); } catch (e) { ok((e as { code?: string }).code === "OWN_CHALLENGE", "dono não prevê o próprio desafio"); }
+try { await svc.tentar(codigo, { nome: "Sem idade", previsoes: respostas }, null); ok(false, "sem consentimento de idade"); } catch { ok(true, "tentativa sem confirmar 16 anos é recusada"); }
 const aviso = "desafio-retrato-v1" as const;
-await svc.tentar(codigo, { nome: "Ana", previsoes: respostas }, null);
+await svc.tentar(codigo, { nome: "Ana", previsoes: respostas, consentimentoIdade: consentIdade }, null);
 ok((await svc.retrato(dono, null)).eles === null, "respostas sem o aviso do retrato não contam");
-await svc.tentar(codigo, { nome: "Leo", previsoes: respostas, avisoRetrato: aviso }, null);
-await svc.tentar(codigo, { nome: "Bia", previsoes: respostas, avisoRetrato: aviso }, null);
+await svc.tentar(codigo, { nome: "Leo", previsoes: respostas, avisoRetrato: aviso, consentimentoIdade: consentIdade }, null);
+await svc.tentar(codigo, { nome: "Bia", previsoes: respostas, avisoRetrato: aviso, consentimentoIdade: consentIdade }, null);
 const dois = await svc.retrato(dono, null);
 ok(dois.eu?.nome === "O Líder" && dois.eles === null && dois.faltam === 1, "com 2 pessoas: você se vê, mas o 'como te veem' ainda não aparece");
-await svc.tentar(codigo, { nome: "Rui", previsoes: respostas, avisoRetrato: aviso }, null);
+await svc.tentar(codigo, { nome: "Rui", previsoes: respostas, avisoRetrato: aviso, consentimentoIdade: consentIdade }, null);
 const tres = await svc.retrato(dono, null);
 ok(tres.eles?.nome === "O Líder" && tres.selo?.nivel === "autentico" && tres.respondentes === 3, "com 3 pessoas: como te veem e Selo Autêntico");
 const userId = randomUUID();
 await adm.query(`INSERT INTO "User"(id,"updatedAt") VALUES ($1,now())`, [userId]);
 ok((await svc.reivindicar(dono, userId)) === 1 && (await svc.retrato(null, userId)).selo?.nivel === "autentico", "retrato acompanha a conta depois do cadastro");
+
+// Denúncia e bloqueio
+const { codigo: codigo2, token: dono2 } = await svc.criar({ nome: "Marina", relacao: "amigos", perguntas: conjunto, respostas, consentimento: consent }, null);
+const denuncia = await svc.denunciar(codigo2, { motivo: "Mensagem incômoda junto do link." }, null, null);
+ok(denuncia.nome === "Marina" && typeof denuncia.token === "string", "denúncia registrada e devolve um token de aparelho");
+const { token: bloqueador } = await svc.bloquear(codigo2, null, null);
+try { await svc.vitrine(codigo2, bloqueador, null); ok(false, "bloqueado ainda vê a vitrine"); } catch (e) { ok((e as { code?: string }).code === "BLOCKED", "quem bloqueou não abre mais o convite dessa pessoa"); }
+try { await svc.tentar(codigo2, { nome: "Bloqueado", previsoes: respostas, consentimentoIdade: consentIdade }, bloqueador); ok(false, "bloqueado ainda prevê"); } catch (e) { ok((e as { code?: string }).code === "BLOCKED", "quem bloqueou também não consegue prever essa pessoa"); }
+const outraPessoa = await svc.vitrine(codigo2, null, null);
+ok(outraPessoa.nome === "Marina", "o bloqueio não afeta quem mais recebeu o mesmo link");
+try { await svc.bloquear(codigo2, dono2, null); ok(false, "dono bloqueia a si mesmo"); } catch (e) { ok((e as { code?: string }).code === "OWN_CHALLENGE", "quem criou o desafio não pode bloquear a si mesmo"); }
+
 await svc.cancelar(codigo, dono, null);
 try { await svc.vitrine(codigo, null); ok(false, "cancelado"); } catch (e) { ok((e as { status?: number }).status === 404, "convite cancelado para de funcionar"); }
 await pool.end(); await adm.end();
