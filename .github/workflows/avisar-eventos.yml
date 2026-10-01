@@ -1,0 +1,30 @@
+# Avisa o(s) administrador(es) quando um evento pré-cadastrado (DRAFT) no
+# Mundo está a cerca de uma semana de acontecer, para decidir se publica.
+# Precisa do mesmo segredo DATABASE_URL usado pela migração do banco.
+name: Avisar eventos próximos
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # 09:00 no horário de Brasília (sem horário de verão)
+  workflow_dispatch:
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Conferir o segredo
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Segredo DATABASE_URL não configurado em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - name: Instalar o psql
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Avisar eventos a uma semana de acontecer
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/avisar-eventos.sql

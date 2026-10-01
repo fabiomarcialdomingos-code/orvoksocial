@@ -192,6 +192,7 @@ const labels: Record<string, [string, string]> = {
   RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/radar"],
   RADAR_SHARE_LINK_REDEEMED: ["Alguém aceitou o seu convite", "/desafios"],
   GROUP_INVITATION: ["Convite para um grupo", "/grupos"],
+  WORLD_EVENT_DRAFT_READY: ["Um evento pré-cadastrado está chegando. Dê uma olhada no Quartel general.", "/admin"],
 };
 
 export function Notifications() {
