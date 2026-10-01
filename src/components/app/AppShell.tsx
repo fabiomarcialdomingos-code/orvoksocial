@@ -112,6 +112,17 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
     return () => { active = false; };
   }, [router, pathname, refreshUnread]);
 
+  // Presença ambiente: o ícone do app (instalado na tela inicial) mostra um
+  // número com o que está esperando por você, sem precisar abrir nada nem
+  // mandar notificação. Funciona enquanto o app está aberto; atualizar o
+  // selo com o app fechado pede push, que ainda não temos.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("setAppBadge" in navigator)) return;
+    const total = unread + novas;
+    const nav = navigator as Navigator & { setAppBadge: (n?: number) => Promise<void>; clearAppBadge: () => Promise<void> };
+    void (total > 0 ? nav.setAppBadge(total) : nav.clearAppBadge()).catch(() => undefined);
+  }, [unread, novas]);
+
   const logout = async () => {
     await apiPost("/auth/logout").catch(() => undefined);
     router.replace("/");
