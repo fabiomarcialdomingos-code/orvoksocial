@@ -53,12 +53,15 @@ try { await svc.tentar(codigo, { nome: "Sem idade", previsoes: respostas, avisoR
 try { await svc.tentar(codigo, { nome: "Sem aviso", previsoes: respostas, consentimentoIdade: consentIdade }, null); ok(false, "sem aviso"); } catch { ok(true, "no retrato, quem responde precisa aceitar o aviso de opinião anônima"); }
 // Opiniões: todos enxergam o Caio do jeito oposto ao que ele se vê.
 const opostas = todos.map((p) => L[p.pesos.indexOf(-2)]!);
-await svc.tentar(codigo, { nome: "Leo", previsoes: opostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
-await svc.tentar(codigo, { nome: "Bia", previsoes: opostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+const op1 = await svc.tentar(codigo, { nome: "Leo", previsoes: opostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+ok(op1.miniResultado.tipo === "retrato" && op1.miniResultado.poucosDados, "1ª opinião: poucos dados ainda para comparar");
+const op2 = await svc.tentar(codigo, { nome: "Bia", previsoes: opostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+ok(op2.miniResultado.tipo === "retrato" && op2.miniResultado.poucosDados, "2ª opinião: ainda poucos dados (só 1 outra pessoa)");
 const dois = await svc.retrato(dono, null);
 ok(dois.eu?.nome === "O Líder" && dois.eles === null && dois.faltam === 1, "com 2 opiniões: você se vê, mas o 'como te veem' ainda não aparece");
 const r3 = await svc.tentar(codigo, { nome: "Rui", previsoes: opostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
 ok(r3.score === 0 && r3.tipo === "retrato", "no retrato não há placar");
+ok(r3.miniResultado.tipo === "retrato" && !r3.miniResultado.poucosDados && r3.miniResultado.bateram === r3.miniResultado.deTotal, "3ª opinião: com 2 outras já dá para comparar, e bateu em tudo (todos opinaram igual)");
 const tres = await svc.retrato(dono, null);
 ok(tres.eles?.nome === "O Sonhador" && tres.selo?.nivel === null && tres.respondentes === 3, "com 3 opiniões: te veem como O Sonhador (o oposto) e sem selo");
 const meus = await svc.meus(dono, null);
@@ -70,6 +73,10 @@ const resp5 = cinco.map((p) => L[p.pesos.indexOf(2)]!);
 const des = await svc.criar({ nome: "Caio", relacao: "amigos", tipo: "desafio", perguntas: cinco.map((p) => p.chave), respostas: resp5, consentimento: consent }, dono);
 const placar = await svc.tentar(des.codigo, { nome: "Ana", previsoes: resp5, consentimentoIdade: consentIdade }, null);
 ok(placar.score === 5 && placar.total === 5, "desafio de 5 perguntas devolve o placar (5 de 5)");
+ok(placar.miniResultado.tipo === "desafio" && placar.miniResultado.primeira, "1º palpite do desafio: 'você foi a primeira pessoa'");
+const resp5Errados = resp5.map((c) => L[(L.indexOf(c) + 1) % 4]!);
+const placarBia = await svc.tentar(des.codigo, { nome: "Bia", previsoes: resp5Errados, consentimentoIdade: consentIdade }, null);
+ok(placarBia.miniResultado.tipo === "desafio" && !placarBia.miniResultado.primeira && placarBia.miniResultado.percentil === 0 && placarBia.miniResultado.total === 1, "2º palpite, pior que o 1º: supera 0% de quem já tentou");
 ok((await svc.retrato(dono, null)).respondentes === 3, "palpites do desafio não entram no 'como te veem'");
 try { await svc.criar({ nome: "X", relacao: "amigos", tipo: "desafio", perguntas: conjunto, respostas, consentimento: consent }, null); ok(false, "12 num desafio"); } catch { ok(true, "desafio com 12 perguntas é recusado"); }
 

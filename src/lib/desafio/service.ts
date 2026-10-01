@@ -6,7 +6,7 @@ import { AuthError } from "@/lib/auth/session";
 import { registrarEvento } from "@/lib/medicao";
 import { AVISO_HASH, AVISO_IDADE, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO, AVISO_RETRATO_VERSAO, AVISO_VERSAO, CATALOGO_VERSAO, CODIGOS, MINIMO_RETRATO, perguntaPublica } from "./catalogo";
 import { type Relacao as Contexto } from "./nucleo";
-import { NUCLEO } from "./nucleo";
+import { NUCLEO, ORDEM_TRACOS } from "./nucleo";
 import { media, notas, perfil, selo, type Notas } from "./perfil";
 import {
   conjuntoValido, escolherDesafio, escolherRetrato, perguntaPorChave, type Estatistica, type Tipo,
@@ -203,6 +203,10 @@ export class DesafioService {
     if (d.kind === "retrato" && !dados.avisoRetrato) throw new AuthError("INVALID_INPUT", 400);
     // No retrato a pessoa opina (sem certo ou errado): não há placar.
     const score = d.kind === "retrato" ? 0 : dados.previsoes.reduce((n, v, i) => n + (v === d.answers[i] ? 1 : 0), 0);
+    // Mini-resultado para quem responde (antes de gravar, para contar só os outros).
+    const miniResultado = d.kind === "retrato"
+      ? await this.alinhamentoComOutros(d.id, dono, d.questionKeys, dados.previsoes)
+      : await this.percentilDoPlacar(d.id, dono, score);
     const r = await this.pool.query<{ score: number; total: number }>(
       `INSERT INTO "GuestChallengeAttempt" (id,"challengeId","predictorName",predictions,score,total,"ownerTokenHash","claimedByUserId","portraitNoticeVersion","ageConsentVersion")
        VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,$8::uuid,$9,$10)
@@ -211,7 +215,29 @@ export class DesafioService {
       [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, d.questionKeys.length, dono, userId, dados.avisoRetrato ?? null, dados.consentimentoIdade.versao],
     );
     await registrarEvento(this.pool, "tentativa_concluida", codigo, dono);
-    return { ...r.rows[0]!, tipo: d.kind, token };
+    return { ...r.rows[0]!, tipo: d.kind, token, miniResultado };
+  }
+
+  /** Desafio: quantos % de quem já tentou essa pessoa este respondente superou. */
+  private async percentilDoPlacar(challengeId: string, dono: string, meuScore: number): Promise<{ tipo: "desafio"; primeira: true } | { tipo: "desafio"; primeira: false; percentil: number; total: number }> {
+    const r = await this.pool.query<{ score: number }>(
+      `SELECT score FROM "GuestChallengeAttempt" WHERE "challengeId"=$1 AND "ownerTokenHash"<>$2`, [challengeId, dono]);
+    if (!r.rows.length) return { tipo: "desafio", primeira: true };
+    const menores = r.rows.filter((x) => x.score < meuScore).length;
+    return { tipo: "desafio", primeira: false, percentil: Math.round((menores / r.rows.length) * 100), total: r.rows.length };
+  }
+
+  /** Retrato: em quantos dos 6 traços esta opinião bate com a maioria de quem já opinou. */
+  private async alinhamentoComOutros(challengeId: string, dono: string, chaves: string[], previsoes: string[]): Promise<{ tipo: "retrato"; poucosDados: true } | { tipo: "retrato"; poucosDados: false; bateram: number; deTotal: number }> {
+    const r = await this.pool.query<{ predictions: string[] }>(
+      `SELECT predictions FROM "GuestChallengeAttempt" WHERE "challengeId"=$1 AND "ownerTokenHash"<>$2 AND "portraitNoticeVersion"=$3 AND predictions IS NOT NULL`,
+      [challengeId, dono, AVISO_RETRATO_VERSAO]);
+    if (r.rows.length < 2) return { tipo: "retrato", poucosDados: true };
+    const outros = media(r.rows.map((x) => notas(chaves, x.predictions.map(indice))));
+    const minha = notas(chaves, previsoes.map(indice));
+    const comparaveis = ORDEM_TRACOS.filter((t) => minha[t] !== null && outros[t] !== null);
+    const bateram = comparaveis.filter((t) => (minha[t]! >= 0) === (outros[t]! >= 0)).length;
+    return { tipo: "retrato", poucosDados: false, bateram, deTotal: comparaveis.length };
   }
 
   /**

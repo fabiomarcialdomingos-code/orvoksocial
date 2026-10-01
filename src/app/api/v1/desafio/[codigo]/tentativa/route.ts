@@ -9,8 +9,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   const { codigo } = await params;
   return authEndpoint(request, async (body) => {
     const atual = lerTokenConvidado(request);
-    const { score, total, token } = await new DesafioService(authPool()).tentar(codigo, body, atual, await principalOpcional(request));
-    const response = Response.json({ schemaVersion: "1", acertos: score, total });
+    const { score, total, token, miniResultado } = await new DesafioService(authPool()).tentar(codigo, body, atual, await principalOpcional(request));
+    const response = Response.json({ schemaVersion: "1", acertos: score, total, miniResultado });
     if (token !== atual) gravarTokenConvidado(response, token);
     return response;
   });

@@ -8,6 +8,11 @@ import { compartilharCartao, gerarCartaoResultado } from "./cartaoResultado";
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type AvisoIdade = { versao: string; hash: string; texto: string };
 type Vitrine = { nome: string; relacao: "familia" | "amigos" | "crush"; tipo: "desafio" | "retrato"; proprio: boolean; perguntas: Pergunta[]; resultado: { score: number; total: number } | null; avisoIdade: AvisoIdade };
+type MiniResultado =
+  | { tipo: "desafio"; primeira: true }
+  | { tipo: "desafio"; primeira: false; percentil: number; total: number }
+  | { tipo: "retrato"; poucosDados: true }
+  | { tipo: "retrato"; poucosDados: false; bateram: number; deTotal: number };
 const LETRAS = ["A", "B", "C", "D"] as const;
 
 function veredito(n: number, total: number, nome: string) {
@@ -28,6 +33,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
   const [prev, setPrev] = useState<(number | undefined)[]>([]);
   const [placar, setPlacar] = useState<{ acertos: number; total: number } | null>(null);
   const [opinou, setOpinou] = useState(false);
+  const [mini, setMini] = useState<MiniResultado | null>(null);
   const [cartao, setCartao] = useState<"" | "gerando" | "compartilhado" | "baixado">("");
   const [contagem, setContagem] = useState(0);
   const [meuNome, setMeuNome] = useState("");
@@ -67,11 +73,12 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
 
   const concluir = async (lista: (number | undefined)[]) => {
     if (!v) return;
-    const r = await enviarJson<{ acertos: number; total: number }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, {
+    const r = await enviarJson<{ acertos: number; total: number; miniResultado: MiniResultado }>(`/api/v1/desafio/${encodeURIComponent(codigo)}/tentativa`, {
       nome: nomeFinal.trim(), ...(v.tipo === "retrato" ? { avisoRetrato: "retrato-opiniao-v1" } : {}), previsoes: lista.map((x) => LETRAS[x ?? 0]),
       consentimentoIdade: { aceito: true, versao: v.avisoIdade.versao, hash: v.avisoIdade.hash },
     });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este desafio é seu. Envie o link para alguém tentar te prever." : "Não foi possível registrar agora. Tente de novo."); return; }
+    setMini(r.dados.miniResultado);
     if (v.tipo === "retrato") setOpinou(true); else setPlacar(r.dados);
     setTela("placar");
   };
@@ -118,7 +125,7 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
       <main className={s.tela}>
         <div className={s.globoTopo}><Globo opcoes={{ pontos: 1100, pessoas: 18, arcos: 9, escala: 0.38, velocidade: 0.003, montagem: 1.2, deslocamento: 0.02 }} /></div>
         <div style={{ display: "flex", justifyContent: "center", margin: "-66px 0 16px", position: "relative" }}><Inicial nome={v.nome} ambar tamanho={84} /></div>
-        <div className={s.centro}><span className={s.chipRelacao}>{v.tipo === "retrato" ? "Retrato" : { familia: "Desafio de família", amigos: "Desafio de amigos", crush: "Desafio de crush" }[v.relacao]}</span></div>
+        <div className={s.centro}><span className={s.chipRelacao}>{v.tipo === "retrato" ? "Retrato" : "Desafio"}</span></div>
         {v.tipo === "retrato" ? <>
           <h1 className={`${s.titulo} ${s.centro}`}>Como você <b>vê {v.nome}?</b></h1>
           <p className={`${s.lead} ${s.centro}`}>{v.nome} quer saber. São {v.perguntas.length} perguntas e não há resposta certa: diga como você enxerga essa pessoa de verdade. Ninguém vai saber o que você respondeu.</p>
@@ -207,6 +214,15 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <div className={s.okGrande}><Icone nome="ok" /></div>
         <h1 className={s.titulo}>Obrigado. <b>Sua visão entrou no retrato de {v.nome}.</b></h1>
         <p className={s.lead}>{v.nome} nunca vai saber o que você respondeu. Quando 3 pessoas responderem, aparece como elas enxergam {v.nome}.</p>
+        {mini?.tipo === "retrato" ? (
+          <div className={s.oferta}>
+            {mini.poucosDados ? (
+              <><h2>Você foi uma das primeiras opiniões</h2><p>Quando mais gente responder, a gente te mostra o quanto sua visão parece com a dos outros.</p></>
+            ) : (
+              <><h2>Sua visão bateu com a maioria em {mini.bateram} de {mini.deTotal} traços</h2><p>Comparado com quem mais já deu a opinião sobre {v.nome}.</p></>
+            )}
+          </div>
+        ) : null}
         <div className={s.empurra}>
           <a className={`${s.btn} ${s.btnAzul}`} href="/comecar?tipo=retrato"><Icone nome="olho" />Descobrir como te veem</a>
           <a className={`${s.btn} ${s.btnFio}`} href="/comecar?tipo=desafio">Jogar: quanto te conhecem?</a>
@@ -223,6 +239,12 @@ export function FluxoPrever({ codigo }: { codigo: string }) {
         <div className={s.placar}>{contagem}<small> de {placar?.total ?? 5}</small></div>
         <p className={s.veredito}>{veredito(acertos, placar?.total ?? 5, v.nome)}</p>
         <p className={s.lead}>{v.nome} vai ver o seu placar quando entrar no orvok.</p>
+        {mini?.tipo === "desafio" ? (
+          <p className={s.miudo} style={{ justifyContent: "center" }}>
+            <Icone nome="alvo" />
+            {mini.primeira ? `Você foi a primeira pessoa a tentar prever ${v.nome}.` : `Você superou ${mini.percentil}% de quem já tentou prever ${v.nome} (${mini.total} ${mini.total === 1 ? "pessoa" : "pessoas"}).`}
+          </p>
+        ) : null}
         <div className={s.empurra}>
           <button className={`${s.btn} ${s.btnAzul}`} type="button" onClick={() => router.push(`/comecar?volta=${encodeURIComponent(v.nome)}&de=${encodeURIComponent(codigo)}`)}><Icone nome="alvo" />Agora é a sua vez</button>
           <button className={`${s.btn} ${s.btnFio}`} type="button" disabled={cartao === "gerando"} onClick={async () => {
