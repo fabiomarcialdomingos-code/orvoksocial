@@ -137,6 +137,67 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 .fixado .cta small i{width:6px;height:6px;border-radius:50%;background:var(--verde);box-shadow:0 0 8px var(--verde)}
 @media (max-width:520px){.jornada li{font-size:12px}.jornada .bola{width:38px;height:38px}.jornada .trilho{top:18px}}
 
+
+/* ---------- seções de produto (abaixo do cartão fixado) ---------- */
+.secao{margin:22px 18px 0;padding:22px;border-radius:24px;border:1px solid var(--fio);background:var(--sup);opacity:0;transform:translateY(18px);transition:opacity .7s,transform .8s cubic-bezier(.2,.9,.3,1)}
+.secao.visivel{opacity:1;transform:none}
+.secao .rotulo svg{width:15px;height:15px;flex:none}
+.secao .rotulo{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--azul-luz);margin-bottom:10px}
+.secao h2{margin:0 0 8px;font-size:clamp(22px,2.8vw,28px);font-weight:300;letter-spacing:-.03em;line-height:1.15}
+.secao h2 b{font-weight:700}
+.secao>p{margin:0 0 18px;color:var(--suave)}
+.exemplo svg{flex:none}
+.exemplo{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;border:1px dashed var(--fio-2);color:var(--suave);font-size:12px;margin-bottom:14px}
+.espelho-demo{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:center}
+.espelho-demo svg{width:100%;height:auto;overflow:visible}
+.espelho-demo .circ{transition:transform 1.4s cubic-bezier(.2,.9,.3,1)}
+.secao:not(.visivel) .circ-voce{transform:translateX(-26px)}
+.secao:not(.visivel) .circ-eles{transform:translateX(26px)}
+.perfil-demo{margin-bottom:12px}
+.perfil-demo small{color:var(--suave);font-size:13px}
+.perfil-demo strong{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.marcas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.marcas span{padding:3px 10px;border-radius:999px;background:var(--ambar-sub);color:var(--ambar);font-size:12px;font-weight:700}
+.tracos-demo{display:grid;gap:6px;margin-top:6px}
+.traco{display:grid;grid-template-columns:78px 1fr 20px 1fr;gap:8px;align-items:center;padding:7px 10px;border-radius:12px;background:var(--sup-2);font-size:13px;opacity:0;transform:translateX(10px);transition:opacity .5s,transform .5s}
+.secao.visivel .traco{opacity:1;transform:none}
+.traco i{font-style:normal;color:var(--suave);font-size:12px}
+.traco .v{color:#FFD39A;font-weight:700}
+.traco .e{color:#BFD7FF;font-weight:700;text-align:right}
+.traco .s{text-align:center;font-weight:800;color:var(--verde)}
+.traco.diverge{background:rgba(255,79,130,.09);box-shadow:inset 0 0 0 1px rgba(255,79,130,.3)}
+.traco.diverge .s{color:#FF8FB1}
+:root[data-theme="light"] .traco .v{color:#B35F00}:root[data-theme="light"] .traco .e{color:#1F5CFF}
+.selo-demo{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:16px;border:1px solid rgba(215,227,244,.35);background:radial-gradient(90% 120% at 0% 50%,rgba(215,227,244,.12),transparent 60%),var(--sup-2)}
+.selo-demo svg{width:46px;height:46px;flex:none}
+.selo-demo b{display:block}
+.selo-demo span{color:var(--suave);font-size:13px}
+.relacoes-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rel-card{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:18px;border:1px solid var(--fio-2);background:var(--sup-2);transition:border-color .25s,transform .25s,box-shadow .3s}
+.rel-card:hover{border-color:var(--azul);transform:translateY(-3px);box-shadow:0 16px 40px -22px var(--azul)}
+.rel-card .ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ambar-sub);color:var(--ambar)}
+.rel-card .ico svg{width:20px;height:20px}
+.rel-card b{font-size:16px}
+.rel-card small{color:var(--suave);font-size:13px;line-height:1.4}
+.selos-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.selo-c{text-align:center;padding:16px 10px;border-radius:18px;border:1px solid var(--fio-2);background:var(--sup-2)}
+.selo-c svg{width:58px;height:58px;margin:0 auto 8px}
+.selo-c .gira{transform-origin:30px 30px;animation:gira 14s linear infinite}
+.selo-c b{display:block;font-size:15px}
+.selo-c small{color:var(--suave);font-size:12px}
+.cta-final{margin:22px 18px 32px;padding:26px 22px;border-radius:24px;text-align:center;border:1px solid var(--fio-2);background:radial-gradient(100% 140% at 50% 0%,rgba(76,141,255,.22),transparent 60%),var(--sup)}
+.cta-final h2{margin:0 0 8px;font-size:clamp(22px,2.8vw,28px);font-weight:300;letter-spacing:-.03em}
+.cta-final p{margin:0 0 18px;color:var(--suave)}
+.faq details{border-top:1px solid var(--fio);padding:12px 18px}
+.faq details:first-of-type{border-top:0}
+.faq summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--suave);font-weight:400;transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{margin:8px 0 2px;color:var(--suave);font-size:13px;line-height:1.5}
+.faq{padding-bottom:6px}
+@media (max-width:640px){.secao{margin:16px 12px 0;padding:18px 16px}.espelho-demo{grid-template-columns:1fr}.espelho-demo svg{max-width:220px;margin:0 auto}.relacoes-g,.selos-g{grid-template-columns:1fr}.rel-card{flex-direction:row;align-items:center}.cta-final{margin:16px 12px 24px}}
+
 /* ---------- direita ---------- */
 .caixa{background:var(--sup);border:1px solid var(--fio);border-radius:22px;overflow:hidden}
 .caixa h3{margin:0;padding:16px 18px 10px;font-size:19px;font-weight:800;letter-spacing:-.02em}
@@ -268,6 +329,68 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
         </div>
       </div>
     </section>
+
+    <section class="secao" id="s-espelho" aria-labelledby="t-espelho">
+      <span class="rotulo"><svg data-ic="espelho"></svg>O que você descobre</span>
+      <h2 id="t-espelho">Como você se vê <b>vs.</b> como te veem</h2>
+      <p>Suas respostas viram o seu perfil. As respostas de quem tenta te prever mostram como essas pessoas te enxergam. A diferença entre os dois é o que ninguém te conta.</p>
+      <span class="exemplo"><svg data-ic="olho" style="width:14px;height:14px"></svg>Exemplo ilustrativo — o seu aparece quando 3 pessoas responderem</span>
+      <div class="espelho-demo">
+        <svg viewBox="0 0 220 150" aria-hidden="true">
+          <defs>
+            <radialGradient id="gv"><stop offset="0" stop-color="#FFC46B" stop-opacity=".55"/><stop offset="1" stop-color="#FFA834" stop-opacity=".08"/></radialGradient>
+            <radialGradient id="ge"><stop offset="0" stop-color="#7FB2FF" stop-opacity=".55"/><stop offset="1" stop-color="#4C8DFF" stop-opacity=".08"/></radialGradient>
+          </defs>
+          <g class="circ circ-voce"><circle cx="82" cy="70" r="58" fill="url(#gv)" stroke="#FFA834" stroke-opacity=".75"/><text x="58" y="142" fill="#FFD39A" font-size="12" font-weight="700" text-anchor="middle">Você</text></g>
+          <g class="circ circ-eles"><circle cx="138" cy="70" r="58" fill="url(#ge)" stroke="#4C8DFF" stroke-opacity=".85"/><text x="164" y="142" fill="#BFD7FF" font-size="12" font-weight="700" text-anchor="middle">Quem te conhece</text></g>
+          <text x="110" y="78" fill="currentColor" font-size="22" font-weight="800" text-anchor="middle">83%</text>
+        </svg>
+        <div>
+          <div class="perfil-demo"><small>Você se vê como</small><strong>O Aventureiro</strong>
+            <div class="marcas"><span>Intenso</span><span>Explorador</span><span>Cuidador</span></div></div>
+          <div class="tracos-demo">
+            <div class="traco" style="transition-delay:.05s"><i>Social</i><span class="v">Expansivo</span><span class="s">=</span><span class="e">Expansivo</span></div>
+            <div class="traco" style="transition-delay:.12s"><i>Ritmo</i><span class="v">Espontâneo</span><span class="s">=</span><span class="e">Espontâneo</span></div>
+            <div class="traco diverge" style="transition-delay:.19s"><i>Decisão</i><span class="v">Razão</span><span class="s">≠</span><span class="e">Coração</span></div>
+            <div class="traco" style="transition-delay:.26s"><i>Reação</i><span class="v">Intenso</span><span class="s">=</span><span class="e">Intenso</span></div>
+            <div class="traco" style="transition-delay:.33s"><i>Novidade</i><span class="v">Explorador</span><span class="s">=</span><span class="e">Explorador</span></div>
+            <div class="traco" style="transition-delay:.40s"><i>Foco</i><span class="v">Cuidador</span><span class="s">=</span><span class="e">Cuidador</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="selo-demo">
+        <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="26" fill="none" stroke="#D7E3F4" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#D7E3F4" fill-opacity=".16" stroke="#D7E3F4"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#D7E3F4">5/6</text></svg>
+        <div><b>Selo Prata</b><span>Quase transparente. O ponto cego: você acha que decide pela razão, mas te veem decidindo pelo coração.</span></div>
+      </div>
+    </section>
+
+    <section class="secao" aria-labelledby="t-rel">
+      <span class="rotulo"><svg data-ic="pessoas"></svg>Escolha quem desafiar</span>
+      <h2 id="t-rel">Cada relação tem <b>perguntas próprias</b></h2>
+      <p>Família, amigos e crush conhecem lados diferentes de você. Descubra qual deles te conhece melhor.</p>
+      <div class="relacoes-g">
+        <a class="rel-card" href="/comecar?rel=familia"><span class="ico"><svg data-ic="casa"></svg></span><span><b>Família</b><br><small>Quem cresceu com você ainda te reconhece?</small></span></a>
+        <a class="rel-card" href="/comecar?rel=amigos"><span class="ico"><svg data-ic="pessoas"></svg></span><span><b>Amigos</b><br><small>Quem está sempre por perto e acha que te conhece.</small></span></a>
+        <a class="rel-card" href="/comecar?rel=crush"><span class="ico"><svg data-ic="coracao"></svg></span><span><b>Crush</b><br><small>Será que te conhece mesmo, ou só acha?</small></span></a>
+      </div>
+    </section>
+
+    <section class="secao" aria-labelledby="t-selos">
+      <span class="rotulo"><svg data-ic="alvo"></svg>O selo</span>
+      <h2 id="t-selos">Você é quem <b>acha que é?</b></h2>
+      <p>São 6 traços. Quanto mais deles batem entre como você se vê e como te veem, maior o selo.</p>
+      <div class="selos-g">
+        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#FFD166" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#FFD166" fill-opacity=".18" stroke="#FFD166"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#FFD166">6/6</text></svg><b>Autêntico</b><small>Exatamente quem acha que é</small></div>
+        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#D7E3F4" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#D7E3F4" fill-opacity=".16" stroke="#D7E3F4"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#D7E3F4">5/6</text></svg><b>Prata</b><small>Quase transparente</small></div>
+        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#E0A06A" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#E0A06A" fill-opacity=".18" stroke="#E0A06A"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#E0A06A">4/6</text></svg><b>Bronze</b><small>Te conhecem bem</small></div>
+      </div>
+    </section>
+
+    <section class="cta-final" aria-labelledby="t-final">
+      <h2 id="t-final">Descubra o seu em dois minutos.</h2>
+      <p>Responda sobre você, receba o seu perfil e desafie quem você quiser.</p>
+      <button class="btn btn-azul" type="button" data-comecar>Começar agora</button>
+    </section>
   </main>
 
   <aside class="direita" aria-label="Sobre o orvok">
@@ -279,6 +402,13 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
         <li><svg data-ic="ok"></svg><span>Ninguém vê as suas respostas — só o placar de quem tentar te prever.</span></li>
         <li><svg data-ic="ok"></svg><span>Você escolhe quem participa. Pode cancelar um convite quando quiser.</span></li>
       </ul>
+    </section>
+    <section class="caixa faq" aria-labelledby="t-faq">
+      <h3 id="t-faq">Perguntas rápidas</h3>
+      <details><summary>Preciso criar conta?</summary><p>Não para começar. A conta só é útil depois, para acompanhar quem respondeu.</p></details>
+      <details><summary>Quem vê as minhas respostas?</summary><p>Ninguém. Quem te desafia vê só o placar, e o "como te veem" só aparece com 3 pessoas ou mais, sem nomes.</p></details>
+      <details><summary>É um teste psicológico?</summary><p>Não. É uma brincadeira de autoconhecimento entre pessoas que se conhecem, sem diagnóstico.</p></details>
+      <details><summary>Quanto tempo leva?</summary><p>Cerca de dois minutos: 10 perguntas sobre você.</p></details>
     </section>
     <nav class="rodape-d" aria-label="Links"><a href="/privacidade">Privacidade</a><a href="/meus-dados">Meus dados</a><a href="/entrar">Entrar</a><a href="/comecar">Como funciona</a><span>© orvok 2026</span></nav>
   </aside>
@@ -341,7 +471,10 @@ const IC = {
   x:'<path d="M6 6l12 12M18 6 6 18"/>',
   ok:'<path d="m5 12 5 5 9-10"/>',
   pino:'<path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/>',
-  alvo:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>'
+  alvo:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>',
+  espelho:'<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>',
+  olho:'<path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/>',
+  coracao:'<path d="M12 20s-7.5-4.4-9-9.2C2 7.4 4.2 4.5 7.4 4.5c2 0 3.5 1.1 4.6 2.7 1.1-1.6 2.6-2.7 4.6-2.7 3.2 0 5.4 2.9 4.4 6.3-1.5 4.8-9 9.2-9 9.2z"/>'
 };
 const ic = (n,extra='') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra} aria-hidden="true">${IC[n]}</svg>`;
 function pintaIcones(root=document){ $$('svg[data-ic]',root).forEach(s=>{ s.outerHTML = ic(s.dataset.ic, s.getAttribute('style')?`style="${s.getAttribute('style')}"`:''); }); }
@@ -364,7 +497,7 @@ document.addEventListener('pointermove', e=>{ const el=e.target.closest?.('.luz'
 /* empurrão depois da primeira olhada */
 const emp=$('#empurrao'); let empFeito=false;
 function mostraEmp(){ if(empFeito) return; empFeito=true; emp.classList.add('mostra'); }
-addEventListener('scroll',()=>{ if(scrollY>400) mostraEmp(); },{passive:true});
+addEventListener('scroll',()=>{ if(scrollY>900) mostraEmp(); },{passive:true});
 setTimeout(mostraEmp, 16000);
 $('#fechaEmp').addEventListener('click',()=>emp.classList.remove('mostra'));
 
@@ -473,6 +606,8 @@ const btnTema=$('#tema');
 function iconeTema(){ btnTema.querySelector('svg').outerHTML=ic(escuro()?'sol':'lua'); }
 btnTema.addEventListener('click',()=>{ const n=escuro()?'light':'dark'; document.documentElement.dataset.theme=n; try{localStorage.setItem('orvok-tema',n)}catch(_){ } iconeTema(); teias(); });
 
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visivel'); io.unobserve(e.target);} }),{threshold:.18});
+$$('.secao').forEach(el=> reduz ? el.classList.add('visivel') : io.observe(el));
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 pintaIcones(); iconeTema();
 })();
