@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { apiGet, apiPost, type Profile, type Session } from "../../lib/client/api";
-import { Globo } from "../desafio/Globo";
 import { BrandMark } from "../ui/Brand";
 import s from "./rede.module.css";
 
@@ -157,11 +156,6 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
         {largo ? null : (
           <aside className={s.direita} aria-label="Descobrir">
             {lateral}
-            <section className={`${s.caixa} ${s.caixaRede}`}>
-              <h3>Rede ao vivo</h3>
-              <p className={s.sub}>Cada arco é alguém tentando prever alguém.</p>
-              <div className={s.rede}><Globo opcoes={{ pontos: 900, pessoas: 22, arcos: 9, escala: 0.36, velocidade: 0.0022, montagem: 1.4, malha: true, giroInicial: 2.1 }} /></div>
-            </section>
             <section className={s.caixa}>
               <h3>Quem te conhece melhor?</h3>
               <p className={s.sub}>Cada relação tem perguntas próprias.</p>
@@ -171,7 +165,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
                 <Link href="/comecar?rel=crush"><IconeRede nome="coracao" />Crush</Link>
               </div>
             </section>
-            <nav className={s.rodape} aria-label="Links"><Link href="/meus-dados">Meus dados</Link><Link href="/perfil">Perfil</Link><span>© orvok 2026</span></nav>
+            <nav className={s.rodape} aria-label="Links"><Link href="/privacidade">Privacidade</Link><Link href="/meus-dados">Meus dados</Link><Link href="/perfil">Perfil</Link><span>© orvok 2026</span></nav>
           </aside>
         )}
       </div>

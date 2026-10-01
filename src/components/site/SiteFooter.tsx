@@ -7,10 +7,11 @@ export function SiteFooter() {
       <div className="container site-footer-inner">
         <span className="row"><BrandMark size={20} /> ORVOK · perspectivas com consentimento</span>
         <nav aria-label="Rodapé">
-          <Link href="/#como-funciona">Como funciona</Link>
-          <Link href="/#consentimento">Privacidade e consentimento</Link>
+          <Link href="/comecar">Como funciona</Link>
+          <Link href="/privacidade">Privacidade</Link>
+          <Link href="/termos">Termos de uso</Link>
+          <Link href="/meus-dados">Meus dados</Link>
           <Link href="/entrar">Entrar</Link>
-          <Link href="/cadastro">Criar conta</Link>
         </nav>
       </div>
     </footer>

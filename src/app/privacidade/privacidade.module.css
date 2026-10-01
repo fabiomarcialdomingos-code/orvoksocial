@@ -1,0 +1,32 @@
+.pagina { padding-block: var(--s8) var(--s9); }
+.cabecalho { max-width: var(--measure); margin-bottom: var(--s7); }
+.selo {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: 4px var(--s3); border-radius: var(--r-pill);
+  background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--text-2); font-size: 0.8rem; margin-bottom: var(--s4);
+}
+.selo i { width: 6px; height: 6px; border-radius: 50%; background: var(--self); }
+.cabecalho h1 { margin-bottom: var(--s3); }
+.cabecalho p { color: var(--text-2); font-size: 1.05rem; }
+.atualizado { color: var(--text-3); font-size: 0.85rem; margin-top: var(--s4); }
+
+.corpo { max-width: var(--measure); display: grid; gap: var(--s7); }
+.secao h2 { margin-bottom: var(--s3); }
+.secao p, .secao li { color: var(--text-2); line-height: 1.7; }
+.secao p + p { margin-top: var(--s3); }
+.secao ul { margin: var(--s3) 0 0; padding-left: 1.2em; display: grid; gap: var(--s2); }
+.secao strong { color: var(--text); }
+
+.destaque {
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--panel); padding: var(--s5);
+}
+.destaque p { color: var(--text-2); }
+
+.contato {
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--panel-2); padding: var(--s5);
+  display: flex; flex-wrap: wrap; gap: var(--s4); align-items: center; justify-content: space-between;
+}
+.contato div p { color: var(--text-2); }
