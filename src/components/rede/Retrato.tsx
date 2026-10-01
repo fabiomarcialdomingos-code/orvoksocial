@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ROTULO_RELACAO, type Relacao } from "./dados";
+import { notaSobrePercepcao } from "../../lib/desafio/soka";
+import type { Traco } from "../../lib/desafio/nucleo";
 import s from "./rede.module.css";
 
 type Perfil = { nome: string; frase: string; descricao: string; marcantes: string[]; tracos: { traco: string; nome: string; polo: string; forca: number }[] };
@@ -74,6 +76,8 @@ export function Retrato() {
               })}
             </div>
             <p className={s.muted} style={{ margin: 0 }}>À esquerda, como você se vê. À direita, a média de quem te respondeu. Ninguém é identificado.</p>
+            {[...new Set(d.eu.tracos.map((t, k) => notaSobrePercepcao(t.traco as Traco, d.eles!.tracos[k]!.polo === t.polo)).filter((x): x is string => x !== null))]
+              .map((nota) => <p key={nota} className={s.notaSoka}>{nota}</p>)}
           </section>
           <section className={s.item}>
             <b>Selo por relação</b>

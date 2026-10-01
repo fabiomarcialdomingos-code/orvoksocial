@@ -228,3 +228,6 @@
 .duasDirecoes span { color: var(--text-2); font-size: 13px; }
 .seletor { margin-left: 6px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--text); padding: 4px 8px; font: inherit; }
 @media (max-width: 640px) { .blocosPlacar, .duasDirecoes { grid-template-columns: 1fr; } }
+
+/* Nota inspirada no modelo SOKA, sobre traços que divergem no retrato */
+.notaSoka { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px dashed var(--line-strong); color: var(--text-2); font-size: 12.5px; line-height: 1.5; }
