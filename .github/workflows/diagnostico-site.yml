@@ -15,7 +15,10 @@ jobs:
             c=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/desafio/catalogo" || echo ERR)
             p=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/auth/providers" || echo ERR)
             l=$(curl -s -m 20 -X POST "$base/api/v1/auth/login" -H "Content-Type: application/json" -H "Origin: $base" -d '{"email":"diagnostico@example.com","password":"senha-errada-123"}' -w " %{http_code}" | tr -d '\n' | sed -E 's/.*"code":"([A-Z_]+)".* ([0-9]+)$/\1 \2/;s/^(.{0,40}).* ([0-9]+)$/\1 \2/' | tr -cd 'A-Za-z0-9_ <>' )
-            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l"
+            pv=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/privacidade" || echo ERR)
+            tm=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/termos" || echo ERR)
+            home_tem_rede=$(curl -s -m 15 "$base/" | grep -q "Rede ao vivo" && echo SIM || echo nao)
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: Google
