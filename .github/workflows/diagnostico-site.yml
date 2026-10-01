@@ -18,7 +18,8 @@ jobs:
             pv=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/privacidade" || echo ERR)
             tm=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/termos" || echo ERR)
             home_tem_rede=$(curl -s -m 15 "$base/" | grep -q "Rede ao vivo" && echo SIM || echo nao)
-            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede"
+            home_espelho=$(curl -s -m 15 "$base/" | grep -q "Como você se vê" && echo SIM || echo nao)
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede espelhoNaHome=$home_espelho"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: Google
