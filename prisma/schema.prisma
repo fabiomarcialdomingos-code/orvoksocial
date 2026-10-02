@@ -527,6 +527,7 @@ model GuestChallenge {
   expiresAt            DateTime                @db.Timestamptz(6)
   createdAt            DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
   attempts             GuestChallengeAttempt[]
+  reports              GuestReport[]
 
   @@index([ownerTokenHash], map: "GuestChallenge_owner_idx")
   @@index([claimedByUserId], map: "GuestChallenge_claimed_idx")

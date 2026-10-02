@@ -95,7 +95,6 @@
 .cartaoConv small { color: var(--suave); }
 .cartaoConv .url { position: absolute; right: 16px; top: 14px; font-size: 12px; color: var(--suave); }
 .balao { background: #16315E; border-radius: 18px 18px 4px 18px; padding: 12px 14px; margin: 0 0 16px 36px; font-size: 15px; line-height: 1.45; }
-.balaoDele { background: var(--sup-2); border-radius: 18px 18px 18px 4px; margin: 0 36px 16px 0; }
 .balao .link { color: #9CC2FF; text-decoration: underline; word-break: break-all; }
 .consent { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; border: 1px solid var(--fio-2); background: var(--sup); cursor: pointer; font-size: 14px; color: var(--suave); margin-bottom: 6px; }
 .consent input { width: 22px; height: 22px; accent-color: var(--azul); flex: none; margin: 1px 0 0; }
