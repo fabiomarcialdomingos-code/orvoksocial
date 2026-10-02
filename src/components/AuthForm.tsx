@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { trackMetaEvent } from "@/lib/client/pixel";
 
 const PASSWORD_RULE = "A senha precisa ter pelo menos 8 caracteres, com uma letra minúscula, uma maiúscula e um caractere especial (por exemplo: ! @ # $).";
 function passwordOk(value: string): boolean {
@@ -118,6 +119,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
       setMessage({ kind: "success", text: config[mode].success });
       if (needsToken && tokenInputRef.current) tokenInputRef.current.value = "";
+      if (mode === "register") trackMetaEvent("CompleteRegistration");
       if (mode === "login") {
         const requested = new URLSearchParams(window.location.search).get("returnTo");
         const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/painel";

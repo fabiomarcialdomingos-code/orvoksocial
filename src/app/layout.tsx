@@ -3,6 +3,7 @@ import "@fontsource-variable/onest";
 import "./globals.css";
 import { RegistrarApp } from "../components/RegistrarApp";
 import { Spotlight } from "../components/ui/Spotlight";
+import { MetaPixel } from "../components/MetaPixel";
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <RegistrarApp />
         <Spotlight />
+        <MetaPixel />
       </body>
     </html>
   );

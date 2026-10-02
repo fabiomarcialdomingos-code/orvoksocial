@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Globo } from "./Globo";
 import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, Radar, enviarJson, estilos as s, useConta } from "./pecas";
+import { trackMetaEvent, trackMetaCustomEvent } from "@/lib/client/pixel";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Aviso = { versao: string; hash: string; texto: string };
@@ -73,6 +74,8 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null,
       })
       .catch(() => setErro("Não foi possível carregar as perguntas. Tente de novo em instantes."));
   }, [conjuntoDe, relacao, escolheu, tipo]);
+  // Quem chega aqui está vendo a experiência principal do orvok (campanha Meta Ads, seção 6 do briefing).
+  useEffect(() => { trackMetaEvent("ViewContent", { content_name: "comecar" }); }, []);
   const total = perguntas.length || (tipo === "retrato" ? 12 : 5);
   useEffect(() => {
     if (tela !== "pronto") return;
@@ -113,6 +116,7 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null,
     setOcupado(false);
     if (!r.ok) { setErro(r.status === 429 ? "Muitos desafios criados agora. Tente de novo mais tarde." : "Não foi possível criar o desafio. Tente de novo."); return null; }
     setCodigo(r.dados.codigo);
+    trackMetaCustomEvent("Convite", { content_name: tipo }); // "compartilhamento ou convite" (briefing, seção 6)
     return r.dados.codigo;
   };
   const enviar = async (canal: "whatsapp" | "copiar" | "outros") => {
@@ -132,12 +136,12 @@ export function FluxoCriar({ desafiarDeVolta, conjuntoDe, relacaoInicial = null,
         <p className={s.lead}>São dois jogos diferentes. Dá para fazer os dois.</p>
         <div className={s.opcoes} role="radiogroup" aria-label="O que você quer descobrir">
           <button className={`${s.op} ${s.relacao}`} type="button" role="radio" aria-checked={false}
-            onClick={() => { setTipo("desafio"); setPerguntas([]); setRespostas([]); setTela(relacaoInicial ? (logado ? "pergunta" : "nome") : "relacao"); if (relacaoInicial) setEscolheu(true); }}>
+            onClick={() => { trackMetaEvent("Lead", { content_name: "desafio" }); setTipo("desafio"); setPerguntas([]); setRespostas([]); setTela(relacaoInicial ? (logado ? "pergunta" : "nome") : "relacao"); if (relacaoInicial) setEscolheu(true); }}>
             <span className={s.letra}><Icone nome="alvo" /></span>
             <span><b>Quanto te conhecem?</b><small>5 perguntas · 1 minuto. Seu amigo tenta adivinhar o que você respondeu e ganha um placar.</small></span>
           </button>
           <button className={`${s.op} ${s.relacao}`} type="button" role="radio" aria-checked={false}
-            onClick={() => { setTipo("retrato"); setPerguntas([]); setRespostas([]); setTela(relacaoInicial ? (logado ? "pergunta" : "nome") : "relacao"); if (relacaoInicial) setEscolheu(true); }}>
+            onClick={() => { trackMetaEvent("Lead", { content_name: "retrato" }); setTipo("retrato"); setPerguntas([]); setRespostas([]); setTela(relacaoInicial ? (logado ? "pergunta" : "nome") : "relacao"); if (relacaoInicial) setEscolheu(true); }}>
             <span className={s.letra}><Icone nome="olho" /></span>
             <span><b>Como te veem?</b><small>12 perguntas · 3 minutos. Você recebe seu perfil, e quem você convidar diz como te enxerga, sem se identificar.</small></span>
           </button>

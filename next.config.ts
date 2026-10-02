@@ -14,7 +14,9 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-      { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
+      // script-src/connect-src/img-src abrem exceção só para o Meta Pixel (connect.facebook.net
+      // carrega o script, www.facebook.com recebe os eventos e serve o fallback <img> do noscript).
+      { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' https://connect.facebook.net; connect-src 'self' https://www.facebook.com; img-src 'self' https://www.facebook.com; style-src 'self' 'unsafe-inline'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
     ];
     if (process.env.APP_ENV === "production")
       common.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });
