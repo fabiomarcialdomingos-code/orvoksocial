@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Veja-se pelos olhos de quem te conhece, e preveja o mundo junto com eles.",
 };
 
-export const viewport: Viewport = { themeColor: "#040811", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#040811", colorScheme: "dark", viewportFit: "cover" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

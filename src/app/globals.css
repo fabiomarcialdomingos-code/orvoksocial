@@ -26,6 +26,13 @@
   --world-ink: #06142e;
   --danger: #ff8a8a;
   --focus: #7fb2ff;
+  --success: #2dd4a0;
+  --like: #ff4f82;
+  /* Categorias de relação (família/amigos/crush): tokens próprios, separados de --self/--people/--world,
+     que identificam a perspectiva (eu/pessoas/mundo) e não devem ser reaproveitados como cor decorativa. */
+  --rel-familia: #ffa834;
+  --rel-amigos: #9cc2ff;
+  --rel-crush: #ff8fb1;
 
   --font-display: "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-ui: "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -154,7 +161,7 @@ code { font-size: 0.85em; color: var(--text-2); background: var(--panel-2); padd
   position: relative;
   background: radial-gradient(120% 90% at 100% 0%, rgb(76 141 255 / 0.07), transparent 55%), var(--panel);
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   padding: var(--s5);
   transition: border-color 200ms var(--ease);
 }
@@ -191,7 +198,7 @@ a.lit { text-decoration: none; }
 .field textarea, textarea.input { min-height: 96px; resize: vertical; }
 .field input::placeholder, .field textarea::placeholder, .input::placeholder { color: var(--text-3); }
 .field input:focus, .field select:focus, .field textarea:focus, .input:focus {
-  outline: none; border-color: var(--people); box-shadow: 0 0 0 3px rgb(127 179 163 / 0.18);
+  outline: none; border-color: var(--people); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
 }
 .field-hint { font-size: 0.8125rem; color: var(--text-3); }
 .form-stack { display: grid; gap: var(--s4); }
@@ -200,7 +207,7 @@ a.lit { text-decoration: none; }
 .checkbox-row input { margin-top: 4px; accent-color: var(--people); }
 .form-message {
   margin: var(--s3) 0 0; padding: 10px 14px; border-radius: var(--r-sm);
-  background: rgb(127 179 163 / 0.08); border: 1px solid rgb(127 179 163 / 0.25); color: var(--text);
+  background: color-mix(in srgb, var(--success) 8%, transparent); border: 1px solid color-mix(in srgb, var(--success) 25%, transparent); color: var(--text);
   font-size: 0.925rem;
 }
 .form-message[data-kind="error"] { background: rgb(224 119 111 / 0.08); border-color: rgb(224 119 111 / 0.3); }
@@ -414,7 +421,7 @@ ul.list, ol.list { margin: 0; padding: 0; }
 .align-row.head { color: var(--text-3); font-size: 0.8125rem; padding-top: 0; }
 .cell-hit, .cell-miss { display: inline-flex; align-items: center; gap: 8px; }
 .cell-hit::before, .cell-miss::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex: none; }
-.cell-hit::before { background: var(--people); box-shadow: 0 0 0 4px rgb(127 179 163 / 0.14); }
+.cell-hit::before { background: var(--people); box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 14%, transparent); }
 .cell-miss::before { border: 1px solid var(--text-3); }
 
 /* Feed */
@@ -554,7 +561,7 @@ td .text-link + .text-link { margin-left: var(--s3); }
 .studio-qr div { width: 180px; margin-top: var(--s3); padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--deep); }
 .swatch { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: transparent; color: var(--text-2); font-size: 0.875rem; }
 .swatch span { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-strong); }
-.swatch[aria-pressed="true"] { color: var(--text); border-color: var(--people); box-shadow: 0 0 0 3px rgb(127 179 163 / 0.15); }
+.swatch[aria-pressed="true"] { color: var(--text); border-color: var(--people); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 15%, transparent); }
 .channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s2); }
 .channel {
   --p: var(--ch); position: relative; display: flex; align-items: center; gap: 10px;
