@@ -104,6 +104,7 @@ model User {
   guestBlocksReceived       GuestBlock[]                @relation("GuestBlockBlocked")
   hiddenTraits              HiddenTrait[]               @relation("HiddenTraitClaimer")
   retratoSnapshots          RetratoSnapshot[]           @relation("RetratoSnapshotClaimer")
+  pushSubscriptions         PushSubscription[]          @relation("PushSubscriptionOwner")
   radarInvitationsSent      RadarInvitation[]           @relation("RadarInviter")
   radarInvitationsReceived  RadarInvitation[]           @relation("RadarInvitee")
   authIdentity              AuthIdentity?
@@ -648,4 +649,17 @@ model RetratoSnapshot {
 
   @@index([ownerTokenHash, createdAt], map: "RetratoSnapshot_token_idx")
   @@index([claimedByUserId, createdAt], map: "RetratoSnapshot_conta_idx")
+}
+
+/// Avisos push: inscrição de um aparelho, só para quem está logado e aceitou.
+model PushSubscription {
+  id        String   @id @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation("PushSubscriptionOwner", fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String   @db.VarChar(255)
+  auth      String   @db.VarChar(255)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([userId], map: "PushSubscription_user_idx")
 }

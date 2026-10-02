@@ -43,6 +43,8 @@ const filme = await evento("O filme vai ganhar o Oscar?", 60 * 24);
 const r2 = await svc.criar({ eventoId: filme.id, modo: "prever", nome: "Fabio" }, fabio);
 const g = await svc.participar(r2.codigo, { nome: "Bia", opcao: filme.nao, consentimentoIdade: idade }, null, null);
 ok(g.estado === "aguardando_palpite" && g.minhaResposta === "Não", "Bia respondeu a própria opinião; agora é a vez do Fabio");
+const avisoFabio = await adm.query(`SELECT 1 FROM "Notification" WHERE "recipientId"=$1 AND "eventType"='MUNDO_SUA_VEZ'`, [fabio]);
+ok((avisoFabio.rowCount ?? 0) === 1, "Fabio recebe um aviso de que é a vez dele de adivinhar");
 try { await svc.participar(r2.codigo, { nome: "Bia", opcao: null, consentimentoIdade: idade }, g.token, null); ok(false, "nao sei como opiniao"); } catch { ok(true, "a própria opinião não pode ser 'não sei' nem ser trocada"); }
 const pal = await svc.palpitar(r2.codigo, { opcao: null }, fabio);
 ok(pal.estado === "aguardando_revelacao", "Fabio escolheu 'não sei'");

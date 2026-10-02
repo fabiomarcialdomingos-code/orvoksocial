@@ -5,6 +5,14 @@ import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
 import { AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
 import { registrarEvento } from "@/lib/medicao";
+import { enviarPush } from "@/lib/push";
+
+/** Notifica e, se a pessoa ativou, manda um aviso push com o selo atualizado. */
+async function avisar(pool: Pool, recipientId: string, eventType: string, sourceId: string, aviso: { titulo: string; corpo: string; url: string }): Promise<void> {
+  await pool.query(`SELECT orvok_social_notify($1,$2,$3::uuid)`, [recipientId, eventType, sourceId]).catch(() => undefined);
+  const n = await pool.query<{ n: string }>(`SELECT count(*) AS n FROM "Notification" WHERE "recipientId"=$1 AND state='UNREAD'`, [recipientId]).catch(() => null);
+  await enviarPush(pool, recipientId, { ...aviso, selo: n ? Number(n.rows[0]!.n) : undefined }).catch(() => undefined);
+}
 
 /**
  * Mundo entre pessoas. O evento externo é só o assunto: uma pessoa responde
@@ -152,6 +160,12 @@ export class MundoService {
         [rodada.id, d.nome, hash, userId, d.opcao, d.opcao === null, AVISO_IDADE_VERSAO]);
     }
     await registrarEvento(this.pool, "mundo_convidado_participou", cod, hash);
+    // No modo "prever", a resposta do convidado libera a vez de quem criou adivinhar.
+    if (rodada.mode === "prever") {
+      await avisar(this.pool, rodada.initiatorUserId, "MUNDO_SUA_VEZ", rodada.id, {
+        titulo: "É sua vez no Mundo", corpo: `${d.nome} respondeu sobre "${e.title}". Você consegue adivinhar?`, url: "/eventos",
+      });
+    }
     const atual = await this.rodadaPorCodigo(cod);
     return { ...this.visao(atual.rodada, atual.e, "convidado"), token };
   }
