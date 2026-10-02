@@ -215,6 +215,7 @@ export class DesafioService {
       [randomUUID(), d.id, dados.nome ?? null, JSON.stringify(dados.previsoes), score, d.questionKeys.length, dono, userId, dados.avisoRetrato ?? null, dados.consentimentoIdade.versao],
     );
     await registrarEvento(this.pool, "tentativa_concluida", codigo, dono);
+    if (d.kind === "retrato") await this.registrarEvolucao(d.ownerTokenHash, d.claimedByUserId);
     return { ...r.rows[0]!, tipo: d.kind, token, miniResultado };
   }
 
@@ -340,13 +341,22 @@ export class DesafioService {
    * com pelo menos MINIMO_RETRATO pessoas. Nenhum nome sai daqui.
    */
   async retrato(token: string | null, userId: string | null) {
-    const vazio = { eu: null, eles: null, selo: null, respondentes: 0, faltam: MINIMO_RETRATO, relacoes: [] as unknown[], ocultos: [] as string[], apareceram: [] as string[] };
-    if (!token && !userId) return vazio;
+    if (!token && !userId) return this.retratoVazio();
+    return this.retratoPorHash(token ? tokenHash(token) : "", userId);
+  }
+
+  private retratoVazio() {
+    return { eu: null, eles: null, selo: null, respondentes: 0, faltam: MINIMO_RETRATO, relacoes: [] as unknown[], ocultos: [] as string[], apareceram: [] as string[] };
+  }
+
+  /** Núcleo do retrato, a partir do hash do dono (não de um token bruto) — usado também para tirar o marco de evolução depois de uma nova opinião. */
+  private async retratoPorHash(donoHash: string, userId: string | null) {
+    const vazio = this.retratoVazio();
     const r = await this.pool.query<{ id: string; keys: string[]; answers: string[]; relation: Contexto; kind: Tipo; predictions: string[] | null; aviso: string | null }>(
       `SELECT c.id, c."questionKeys" AS keys, c.answers, c.relation, c.kind, a.predictions, a."portraitNoticeVersion" AS aviso
          FROM "GuestChallenge" c LEFT JOIN "GuestChallengeAttempt" a ON a."challengeId"=c.id
         WHERE c."revokedAt" IS NULL AND c."catalogVersion"=$3 AND (c."ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND c."claimedByUserId"=$2))`,
-      [token ? tokenHash(token) : "", userId, CATALOGO_VERSAO],
+      [donoHash, userId, CATALOGO_VERSAO],
     );
     // Como você se vê: todas as suas respostas somadas (mais perguntas, perfil mais preciso).
     const vistos = new Set<string>(); const minhasChaves: string[] = []; const minhasOpcoes: number[] = [];
@@ -370,7 +380,7 @@ export class DesafioService {
     // Nunca aparece pra mais ninguém; nunca entra na comparação nem no selo.
     const oc = await this.pool.query<{ traco: string }>(
       `SELECT traco FROM "HiddenTrait" WHERE "ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND "claimedByUserId"=$2)`,
-      [token ? tokenHash(token) : "", userId]);
+      [donoHash, userId]);
     const ocultos = oc.rows.map((x) => x.traco as (typeof ORDEM_TRACOS)[number]).filter((t) => ORDEM_TRACOS.includes(t));
     // Quando um traço guardado passa a bater com a média de quem respondeu, é sinal de que começou a aparecer sozinho.
     const apareceram = eles ? ocultos.filter((t) => ((eu[t] ?? 0) >= 0) === ((eles[t] ?? 0) >= 0)) : [];
@@ -378,6 +388,35 @@ export class DesafioService {
       eu: perfil(eu), eles: eles ? perfil(eles) : null, selo: eles ? selo(eu, eles) : null,
       respondentes: deles.length, faltam: Math.max(0, MINIMO_RETRATO - deles.length), relacoes, ocultos, apareceram,
     };
+  }
+
+  /**
+   * Depois de uma nova opinião no retrato de alguém, confere se o selo dessa
+   * pessoa mudou desde o último marco e, se mudou, grava um novo. Não grava
+   * a cada opinião — só quando o selo realmente muda — para a linha do
+   * tempo mostrar evolução de verdade, não ruído.
+   */
+  private async registrarEvolucao(donoHash: string, claimedByUserId: string | null): Promise<void> {
+    const d = await this.retratoPorHash(donoHash, claimedByUserId);
+    if (!d.eles || !d.selo) return;
+    const ultimo = await this.pool.query<{ nivel: string | null }>(
+      `SELECT nivel FROM "RetratoSnapshot" WHERE "ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND "claimedByUserId"=$2)
+        ORDER BY "createdAt" DESC LIMIT 1`,
+      [donoHash, claimedByUserId]);
+    if (ultimo.rows[0] && ultimo.rows[0].nivel === d.selo.nivel) return;
+    await this.pool.query(
+      `INSERT INTO "RetratoSnapshot" (id,"ownerTokenHash","claimedByUserId",respondentes,batem,nivel) VALUES ($1,$2,$3::uuid,$4,$5,$6)`,
+      [randomUUID(), donoHash, claimedByUserId, d.respondentes, d.selo.batem, d.selo.nivel]);
+  }
+
+  /** A evolução do selo ao longo do tempo (só os marcos em que ele mudou). */
+  async linhaDoTempo(token: string | null, userId: string | null): Promise<{ em: Date; respondentes: number; batem: number; nivel: string | null }[]> {
+    if (!token && !userId) return [];
+    const r = await this.pool.query<{ em: Date; respondentes: number; batem: number; nivel: string | null }>(
+      `SELECT "createdAt" AS em, respondentes, batem, nivel FROM "RetratoSnapshot"
+        WHERE "ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND "claimedByUserId"=$2) ORDER BY "createdAt" ASC`,
+      [token ? tokenHash(token) : "", userId]);
+    return r.rows;
   }
 
   /** Marca ou desmarca, só para a própria pessoa, um traço que ela sabe de si e escolhe não mostrar. */
@@ -407,6 +446,8 @@ export class DesafioService {
     await this.pool.query(
       `UPDATE "HiddenTrait" SET "claimedByUserId"=$2 WHERE "ownerTokenHash"=$1 AND "claimedByUserId" IS NULL
          AND NOT EXISTS (SELECT 1 FROM "HiddenTrait" h2 WHERE h2."claimedByUserId"=$2 AND h2.traco="HiddenTrait".traco)`, [dono, userId]);
+    await this.pool.query(
+      `UPDATE "RetratoSnapshot" SET "claimedByUserId"=$2 WHERE "ownerTokenHash"=$1 AND "claimedByUserId" IS NULL`, [dono, userId]);
     return a.rowCount ?? 0;
   }
 }

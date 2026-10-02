@@ -73,6 +73,19 @@ await svc.marcarOculto({ traco: "reacao", oculto: false }, dono, null);
 ok((await svc.retrato(dono, null)).ocultos.length === 0, "desmarcar o oculto remove da lista");
 try { await svc.marcarOculto({ traco: "reacao", oculto: true }, null, null); ok(false, "oculto sem identidade"); } catch (e) { ok((e as { code?: string }).code === "FORBIDDEN", "sem token nem conta, não dá para marcar oculto"); }
 
+// Linha do tempo: só grava um marco novo quando o selo realmente muda.
+const linha1 = await svc.linhaDoTempo(dono, null);
+ok(linha1.length === 1 && linha1[0]!.nivel === null, "a 3ª opinião (sem selo) já grava o 1º marco da linha do tempo");
+await svc.tentar(codigo, { nome: "Duda", previsoes: opostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+ok((await svc.linhaDoTempo(dono, null)).length === 1, "4ª opinião igual às outras: selo não muda, não grava marco novo");
+await svc.tentar(codigo, { nome: "Zeca", previsoes: respostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+await svc.tentar(codigo, { nome: "Tom", previsoes: respostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+await svc.tentar(codigo, { nome: "Lia2", previsoes: respostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+await svc.tentar(codigo, { nome: "Pedro", previsoes: respostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
+const linha2 = await svc.linhaDoTempo(dono, null);
+ok(linha2.length === 2 && linha2[1]!.nivel === "autentico" && linha2[1]!.batem === 6, "quando o selo muda de verdade (virou Ouro), grava um 2º marco");
+ok(new Date(linha2[0]!.em).getTime() <= new Date(linha2[1]!.em).getTime(), "os marcos vêm em ordem cronológica");
+
 const meus = await svc.meus(dono, null);
 ok(meus.desafios[0]!.tipo === "retrato" && meus.desafios[0]!.tentativas.every((t) => t.nome === null && !("score" in t)), "na lista do dono, o retrato não mostra nomes nem placar");
 
@@ -86,12 +99,13 @@ ok(placar.miniResultado.tipo === "desafio" && placar.miniResultado.primeira, "1�
 const resp5Errados = resp5.map((c) => L[(L.indexOf(c) + 1) % 4]!);
 const placarBia = await svc.tentar(des.codigo, { nome: "Bia", previsoes: resp5Errados, consentimentoIdade: consentIdade }, null);
 ok(placarBia.miniResultado.tipo === "desafio" && !placarBia.miniResultado.primeira && placarBia.miniResultado.percentil === 0 && placarBia.miniResultado.total === 1, "2º palpite, pior que o 1º: supera 0% de quem já tentou");
-ok((await svc.retrato(dono, null)).respondentes === 3, "palpites do desafio não entram no 'como te veem'");
+ok((await svc.retrato(dono, null)).respondentes === 8, "palpites do desafio não entram no 'como te veem' (só as 8 opiniões reais do retrato)");
 try { await svc.criar({ nome: "X", relacao: "amigos", tipo: "desafio", perguntas: conjunto, respostas, consentimento: consent }, null); ok(false, "12 num desafio"); } catch { ok(true, "desafio com 12 perguntas é recusado"); }
 
 const userId = randomUUID();
 await adm.query(`INSERT INTO "User"(id,"updatedAt") VALUES ($1,now())`, [userId]);
-ok((await svc.reivindicar(dono, userId)) === 2 && (await svc.retrato(null, userId)).respondentes === 3, "retrato e desafio acompanham a conta depois do cadastro");
+ok((await svc.reivindicar(dono, userId)) === 2 && (await svc.retrato(null, userId)).respondentes === 8, "retrato e desafio acompanham a conta depois do cadastro");
+ok((await svc.linhaDoTempo(null, userId)).length === 2, "a linha do tempo também acompanha a conta depois do cadastro");
 
 // Denúncia e bloqueio
 const { codigo: codigo2, token: dono2 } = await svc.criar({ nome: "Marina", relacao: "amigos", tipo: "desafio", perguntas: cinco.map((p) => p.chave), respostas: resp5, consentimento: consent }, null);

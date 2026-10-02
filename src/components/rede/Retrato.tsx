@@ -10,6 +10,8 @@ import s from "./rede.module.css";
 type Perfil = { nome: string; frase: string; descricao: string; marcantes: string[]; tracos: { traco: string; nome: string; polo: string; forca: number }[] };
 type Selo = { batem: number; nivel: "autentico" | "prata" | "bronze" | null; titulo: string | null; frase: string };
 type Dados = { eu: Perfil | null; eles: Perfil | null; selo: Selo | null; respondentes: number; faltam: number; relacoes: { relacao: Relacao; respondentes: number; selo: Selo | null }[]; ocultos: Traco[]; apareceram: Traco[] };
+type Marco = { em: string; respondentes: number; batem: number; nivel: "autentico" | "prata" | "bronze" | null };
+const NIVEL_NOME = { autentico: "Ouro", prata: "Prata", bronze: "Bronze" } as const;
 const VAZIO: Dados = { eu: null, eles: null, selo: null, respondentes: 0, faltam: 3, relacoes: [], ocultos: [], apareceram: [] };
 
 const COR_SELO = { autentico: "#FFD166", prata: "#D7E3F4", bronze: "#E0A06A" } as const;
@@ -32,11 +34,15 @@ function Medalha({ selo }: { selo: Selo }) {
 /** Meu retrato: como você se vê, como te veem e o selo. */
 export function Retrato() {
   const [d, setD] = useState<Dados | null>(null);
+  const [linha, setLinha] = useState<Marco[] | null>(null);
   useEffect(() => {
     let ativo = true;
     fetch("/api/v1/desafio/retrato", { credentials: "same-origin", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null)).then((x: Dados | null) => { if (ativo) setD(x ?? VAZIO); })
       .catch(() => { if (ativo) setD(VAZIO); });
+    fetch("/api/v1/desafio/linha-do-tempo", { credentials: "same-origin", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null)).then((x: { marcos: Marco[] } | null) => { if (ativo) setLinha(x?.marcos ?? []); })
+      .catch(() => { if (ativo) setLinha([]); });
     return () => { ativo = false; };
   }, []);
   if (!d) return <p className={s.muted} aria-busy="true">Montando seu retrato…</p>;
@@ -93,6 +99,23 @@ export function Retrato() {
       {d.eles && d.selo ? (
         <>
           <Medalha selo={d.selo} />
+          {linha && linha.length >= 2 ? (
+            <section className={s.item}>
+              <div className={s.itemCab}><b>Sua evolução</b><span className={s.muted}>desde {new Date(linha[0]!.em).toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span></div>
+              <div className={s.linhaTempo}>
+                {linha.map((m, k) => (
+                  <div key={m.em} className={s.marco}>
+                    <span className={s.marcoPonto} style={{ background: m.nivel ? COR_SELO[m.nivel] : "#8E9AB0" }} />
+                    <div>
+                      <b>{m.nivel ? `Selo ${NIVEL_NOME[m.nivel]}` : "Ainda sem selo"}</b>
+                      <span className={s.muted}> · {new Date(m.em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} · {m.respondentes} {m.respondentes === 1 ? "pessoa" : "pessoas"}</span>
+                      {k > 0 ? <small className={s.muted} style={{ display: "block" }}>{m.batem > linha[k - 1]!.batem ? "Ficou mais parecido com quem te conhece." : "Ficou mais diferente de quem te conhece."}</small> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
           <section className={s.item}>
             <div className={s.itemCab}><b>Como te veem: {d.eles.nome}</b><span className={s.muted}>{d.respondentes} pessoas</span></div>
             <div className={s.comparacao}>

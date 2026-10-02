@@ -103,6 +103,7 @@ model User {
   guestBlocksMade           GuestBlock[]                @relation("GuestBlockBlocker")
   guestBlocksReceived       GuestBlock[]                @relation("GuestBlockBlocked")
   hiddenTraits              HiddenTrait[]               @relation("HiddenTraitClaimer")
+  retratoSnapshots          RetratoSnapshot[]           @relation("RetratoSnapshotClaimer")
   radarInvitationsSent      RadarInvitation[]           @relation("RadarInviter")
   radarInvitationsReceived  RadarInvitation[]           @relation("RadarInvitee")
   authIdentity              AuthIdentity?
@@ -632,4 +633,19 @@ model HiddenTrait {
   createdAt       DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
 
   @@index([claimedByUserId], map: "HiddenTrait_conta_idx")
+}
+
+/// Marco salvo quando o selo do retrato muda, para a pessoa ver sua evolução.
+model RetratoSnapshot {
+  id              String   @id @db.Uuid
+  ownerTokenHash  String?  @db.VarChar(64)
+  claimedByUserId String?  @db.Uuid
+  claimedBy       User?    @relation("RetratoSnapshotClaimer", fields: [claimedByUserId], references: [id], onDelete: Cascade)
+  respondentes    Int
+  batem           Int
+  nivel           String?  @db.VarChar(10)
+  createdAt       DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([ownerTokenHash, createdAt], map: "RetratoSnapshot_token_idx")
+  @@index([claimedByUserId, createdAt], map: "RetratoSnapshot_conta_idx")
 }
