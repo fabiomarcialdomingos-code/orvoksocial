@@ -64,6 +64,15 @@ ok(r3.score === 0 && r3.tipo === "retrato", "no retrato não há placar");
 ok(r3.miniResultado.tipo === "retrato" && !r3.miniResultado.poucosDados && r3.miniResultado.bateram === r3.miniResultado.deTotal, "3ª opinião: com 2 outras já dá para comparar, e bateu em tudo (todos opinaram igual)");
 const tres = await svc.retrato(dono, null);
 ok(tres.eles?.nome === "O Sonhador" && tres.selo?.nivel === null && tres.respondentes === 3, "com 3 opiniões: te veem como O Sonhador (o oposto) e sem selo");
+// Oculto: traço marcado é privado, não entra no selo, e some quando desmarcado.
+await svc.marcarOculto({ traco: "reacao", oculto: true }, dono, null);
+const comOculto = await svc.retrato(dono, null);
+ok(comOculto.ocultos.includes("reacao") && comOculto.selo?.batem === tres.selo?.batem, "marcar 'reação' como oculto não muda o selo nem a comparação");
+ok(comOculto.apareceram.includes("reacao") === (((comOculto.eu!.tracos.find((t) => t.traco === "reacao")!.polo) === (comOculto.eles!.tracos.find((t) => t.traco === "reacao")!.polo))), "'apareceram' só lista o traço oculto quando ele bate com a média de quem respondeu");
+await svc.marcarOculto({ traco: "reacao", oculto: false }, dono, null);
+ok((await svc.retrato(dono, null)).ocultos.length === 0, "desmarcar o oculto remove da lista");
+try { await svc.marcarOculto({ traco: "reacao", oculto: true }, null, null); ok(false, "oculto sem identidade"); } catch (e) { ok((e as { code?: string }).code === "FORBIDDEN", "sem token nem conta, não dá para marcar oculto"); }
+
 const meus = await svc.meus(dono, null);
 ok(meus.desafios[0]!.tipo === "retrato" && meus.desafios[0]!.tentativas.every((t) => t.nome === null && !("score" in t)), "na lista do dono, o retrato não mostra nomes nem placar");
 

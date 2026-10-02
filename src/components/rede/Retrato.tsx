@@ -3,12 +3,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ROTULO_RELACAO, type Relacao } from "./dados";
 import { notaSobrePercepcao } from "../../lib/desafio/soka";
-import type { Traco } from "../../lib/desafio/nucleo";
+import { ORDEM_TRACOS, TRACOS, type Traco } from "../../lib/desafio/nucleo";
+import { apiPost } from "../../lib/client/api";
 import s from "./rede.module.css";
 
 type Perfil = { nome: string; frase: string; descricao: string; marcantes: string[]; tracos: { traco: string; nome: string; polo: string; forca: number }[] };
 type Selo = { batem: number; nivel: "autentico" | "prata" | "bronze" | null; titulo: string | null; frase: string };
-type Dados = { eu: Perfil | null; eles: Perfil | null; selo: Selo | null; respondentes: number; faltam: number; relacoes: { relacao: Relacao; respondentes: number; selo: Selo | null }[] };
+type Dados = { eu: Perfil | null; eles: Perfil | null; selo: Selo | null; respondentes: number; faltam: number; relacoes: { relacao: Relacao; respondentes: number; selo: Selo | null }[]; ocultos: Traco[]; apareceram: Traco[] };
+const VAZIO: Dados = { eu: null, eles: null, selo: null, respondentes: 0, faltam: 3, relacoes: [], ocultos: [], apareceram: [] };
 
 const COR_SELO = { autentico: "#FFD166", prata: "#D7E3F4", bronze: "#E0A06A" } as const;
 
@@ -33,11 +35,16 @@ export function Retrato() {
   useEffect(() => {
     let ativo = true;
     fetch("/api/v1/desafio/retrato", { credentials: "same-origin", cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null)).then((x: Dados | null) => { if (ativo) setD(x ?? { eu: null, eles: null, selo: null, respondentes: 0, faltam: 3, relacoes: [] }); })
-      .catch(() => { if (ativo) setD({ eu: null, eles: null, selo: null, respondentes: 0, faltam: 3, relacoes: [] }); });
+      .then((r) => (r.ok ? r.json() : null)).then((x: Dados | null) => { if (ativo) setD(x ?? VAZIO); })
+      .catch(() => { if (ativo) setD(VAZIO); });
     return () => { ativo = false; };
   }, []);
   if (!d) return <p className={s.muted} aria-busy="true">Montando seu retrato…</p>;
+  const alternarOculto = async (traco: Traco) => {
+    const ligar = !d.ocultos.includes(traco);
+    setD({ ...d, ocultos: ligar ? [...d.ocultos, traco] : d.ocultos.filter((t) => t !== traco) });
+    await apiPost("/desafio/oculto", { traco, oculto: ligar }).catch(() => undefined);
+  };
 
   if (!d.eu) return (
     <section className={s.hero}>
@@ -55,6 +62,32 @@ export function Retrato() {
         <h2>{d.eu.nome}</h2>
         <p style={{ marginBottom: 10 }}>{d.eu.descricao}</p>
         <div className={s.chips}>{d.eu.marcantes.map((m) => <span key={m} className={`${s.rel} ${s.rel_familia}`} style={{ fontSize: 13, padding: "4px 12px" }}>{m}</span>)}</div>
+      </section>
+
+      {d.apareceram.length > 0 ? (
+        <section className={s.item} style={{ borderColor: "var(--people)" }}>
+          <b>Algo que você guarda começou a aparecer</b>
+          <p className={s.muted} style={{ margin: "4px 0 0" }}>
+            {d.apareceram.map((t) => TRACOS[t].nome).join(", ")}: {d.apareceram.length === 1 ? "você marcou como algo que não mostra, mas" : "você marcou como coisas que não mostra, mas"} quem te responde já está te enxergando assim mesmo sem você contar.
+          </p>
+        </section>
+      ) : null}
+
+      <section className={s.item}>
+        <div className={s.itemCab}><b>O que você guarda só para você</b></div>
+        <p className={s.muted} style={{ margin: "0 0 10px" }}>Marque um traço que você sabe de si, mas não costuma mostrar. Isso é só seu — ninguém mais vê, e não entra na comparação nem no selo.</p>
+        <div className={s.chips}>
+          {ORDEM_TRACOS.map((t) => {
+            const ativo = d.ocultos.includes(t);
+            return (
+              <button key={t} type="button" className={s.chip} aria-pressed={ativo}
+                style={ativo ? { borderColor: "var(--people)", background: "rgb(76 141 255 / .16)" } : undefined}
+                onClick={() => void alternarOculto(t)}>
+                {ativo ? "🔒 " : ""}{TRACOS[t].nome}
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {d.eles && d.selo ? (

@@ -340,7 +340,7 @@ export class DesafioService {
    * com pelo menos MINIMO_RETRATO pessoas. Nenhum nome sai daqui.
    */
   async retrato(token: string | null, userId: string | null) {
-    const vazio = { eu: null, eles: null, selo: null, respondentes: 0, faltam: MINIMO_RETRATO, relacoes: [] as unknown[] };
+    const vazio = { eu: null, eles: null, selo: null, respondentes: 0, faltam: MINIMO_RETRATO, relacoes: [] as unknown[], ocultos: [] as string[], apareceram: [] as string[] };
     if (!token && !userId) return vazio;
     const r = await this.pool.query<{ id: string; keys: string[]; answers: string[]; relation: Contexto; kind: Tipo; predictions: string[] | null; aviso: string | null }>(
       `SELECT c.id, c."questionKeys" AS keys, c.answers, c.relation, c.kind, a.predictions, a."portraitNoticeVersion" AS aviso
@@ -366,10 +366,35 @@ export class DesafioService {
       const m = media(lista.map((x) => x.n));
       return { relacao: rel, respondentes: lista.length, selo: selo(eu, m), perfil: perfil(m) };
     });
+    // Oculto: traços que a própria pessoa marcou como "eu sei, mas não mostro".
+    // Nunca aparece pra mais ninguém; nunca entra na comparação nem no selo.
+    const oc = await this.pool.query<{ traco: string }>(
+      `SELECT traco FROM "HiddenTrait" WHERE "ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND "claimedByUserId"=$2)`,
+      [token ? tokenHash(token) : "", userId]);
+    const ocultos = oc.rows.map((x) => x.traco as (typeof ORDEM_TRACOS)[number]).filter((t) => ORDEM_TRACOS.includes(t));
+    // Quando um traço guardado passa a bater com a média de quem respondeu, é sinal de que começou a aparecer sozinho.
+    const apareceram = eles ? ocultos.filter((t) => ((eu[t] ?? 0) >= 0) === ((eles[t] ?? 0) >= 0)) : [];
     return {
       eu: perfil(eu), eles: eles ? perfil(eles) : null, selo: eles ? selo(eu, eles) : null,
-      respondentes: deles.length, faltam: Math.max(0, MINIMO_RETRATO - deles.length), relacoes,
+      respondentes: deles.length, faltam: Math.max(0, MINIMO_RETRATO - deles.length), relacoes, ocultos, apareceram,
     };
+  }
+
+  /** Marca ou desmarca, só para a própria pessoa, um traço que ela sabe de si e escolhe não mostrar. */
+  async marcarOculto(raw: unknown, token: string | null, userId: string | null): Promise<{ ocultos: string[] }> {
+    if (!token && !userId) throw new AuthError("FORBIDDEN", 403);
+    const { traco, oculto } = z.strictObject({ traco: z.enum(ORDEM_TRACOS as [string, ...string[]]), oculto: z.boolean() }).parse(raw);
+    const dono = token ? tokenHash(token) : null;
+    if (oculto) {
+      await this.pool.query(
+        `INSERT INTO "HiddenTrait" (id,"ownerTokenHash","claimedByUserId",traco) VALUES ($1,$2,$3::uuid,$4) ON CONFLICT DO NOTHING`,
+        [randomUUID(), dono, userId, traco]);
+    } else {
+      await this.pool.query(`DELETE FROM "HiddenTrait" WHERE (("ownerTokenHash"=$1 AND $1 IS NOT NULL) OR ($2::uuid IS NOT NULL AND "claimedByUserId"=$2)) AND traco=$3`, [dono, userId, traco]);
+    }
+    const r = await this.pool.query<{ traco: string }>(
+      `SELECT traco FROM "HiddenTrait" WHERE "ownerTokenHash"=$1 OR ($2::uuid IS NOT NULL AND "claimedByUserId"=$2)`, [dono ?? "", userId]);
+    return { ocultos: r.rows.map((x) => x.traco) };
   }
 
   /** Liga à conta tudo o que este aparelho fez antes do cadastro. */
@@ -379,6 +404,9 @@ export class DesafioService {
       `UPDATE "GuestChallenge" SET "claimedByUserId"=$2,"claimedAt"=clock_timestamp() WHERE "ownerTokenHash"=$1 AND "claimedByUserId" IS NULL`, [dono, userId]);
     await this.pool.query(
       `UPDATE "GuestChallengeAttempt" SET "claimedByUserId"=$2 WHERE "ownerTokenHash"=$1 AND "claimedByUserId" IS NULL`, [dono, userId]);
+    await this.pool.query(
+      `UPDATE "HiddenTrait" SET "claimedByUserId"=$2 WHERE "ownerTokenHash"=$1 AND "claimedByUserId" IS NULL
+         AND NOT EXISTS (SELECT 1 FROM "HiddenTrait" h2 WHERE h2."claimedByUserId"=$2 AND h2.traco="HiddenTrait".traco)`, [dono, userId]);
     return a.rowCount ?? 0;
   }
 }

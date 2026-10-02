@@ -102,6 +102,7 @@ model User {
   guestReportsMade          GuestReport[]
   guestBlocksMade           GuestBlock[]                @relation("GuestBlockBlocker")
   guestBlocksReceived       GuestBlock[]                @relation("GuestBlockBlocked")
+  hiddenTraits              HiddenTrait[]               @relation("HiddenTraitClaimer")
   radarInvitationsSent      RadarInvitation[]           @relation("RadarInviter")
   radarInvitationsReceived  RadarInvitation[]           @relation("RadarInvitee")
   authIdentity              AuthIdentity?
@@ -617,4 +618,18 @@ model ProductEvent {
   createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
 
   @@index([name, createdAt], map: "ProductEvent_name_idx")
+}
+
+/// O quarto quadrante da Janela de Johari: o que a pessoa sabe de si e
+/// escolhe não mostrar. Guarda só o traço, nunca texto livre; privado,
+/// nunca entra na comparação "como te veem" nem no selo.
+model HiddenTrait {
+  id              String   @id @db.Uuid
+  ownerTokenHash  String?  @db.VarChar(64)
+  claimedByUserId String?  @db.Uuid
+  claimedBy       User?    @relation("HiddenTraitClaimer", fields: [claimedByUserId], references: [id], onDelete: Cascade)
+  traco           String   @db.VarChar(10)
+  createdAt       DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([claimedByUserId], map: "HiddenTrait_conta_idx")
 }
