@@ -303,6 +303,35 @@ export class AuthService {
     });
   }
 
+  /** Admin-triggered incident response: revoke every active session immediately.
+   * Lives here (not on the operational pool) because only orvok_auth_runtime has
+   * grants on "AuthSession" — the operational/app role never touches session rows.
+   * Used both standalone (TEMPORARY_BLOCK, called after the operational pool flips
+   * User.status — that column grant belongs to orvok_app_runtime, not this role)
+   * and as part of adminForcePasswordReset. */
+  async adminRevokeSessions(userId: string): Promise<void> {
+    await this.tx(async (client) => {
+      await client.query(`UPDATE "AuthSession" SET "revokedAt"=clock_timestamp() WHERE "userId"=$1 AND "revokedAt" IS NULL`, [userId]);
+      await this.audit(client, userId, "ADMIN_SESSIONS_REVOKED");
+    });
+  }
+
+  /** Admin "PASSWORD_RESET" action: kick out whoever is currently signed in and
+   * queue a real reset-password email, mirroring requestReset() but admin-initiated
+   * (no rate limit — the caller is already gated to ADMIN via access-control). */
+  async adminForcePasswordReset(userId: string): Promise<void> {
+    await this.tx(async (client) => {
+      const found = await client.query<{ email: string }>(
+        `SELECT email FROM "AuthIdentity" WHERE "userId"=$1`, [userId],
+      );
+      const row = found.rows[0];
+      if (!row) throw new AuthError("NOT_FOUND", 404);
+      await client.query(`UPDATE "AuthSession" SET "revokedAt"=clock_timestamp() WHERE "userId"=$1 AND "revokedAt" IS NULL`, [userId]);
+      await this.queueMail(client, userId, row.email, "RESET_PASSWORD", 30);
+      await this.audit(client, userId, "ADMIN_PASSWORD_RESET");
+    });
+  }
+
   async changePassword(userId: string, raw: unknown): Promise<void> {
     const { currentPassword, password } = changePasswordSchema.parse(raw);
     await this.limit(`change-password:${userId}`, 5, 3600);
