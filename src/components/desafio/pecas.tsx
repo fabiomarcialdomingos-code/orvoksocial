@@ -44,8 +44,8 @@ export function Moldura({ children, aoVoltar, modoB }: { children: ReactNode; ao
       <div className={`${s.app} ${modoB ? s.modoB : ""}`}>
         <header className={s.topo}>
           {aoVoltar ? <button className={s.iconeBtn} type="button" onClick={aoVoltar} aria-label="Voltar"><Icone nome="voltar" /></button> : null}
-          <Link className={s.marca} href="/"><Orbe />orvok</Link>
-          <Link className={s.iconeBtn} href="/" aria-label="Sair do desafio"><Icone nome="fechar" /></Link>
+          <Link prefetch={false} className={s.marca} href="/"><Orbe />orvok</Link>
+          <Link prefetch={false} className={s.iconeBtn} href="/" aria-label="Sair do desafio"><Icone nome="fechar" /></Link>
         </header>
         {children}
       </div>

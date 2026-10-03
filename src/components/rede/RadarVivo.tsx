@@ -69,7 +69,7 @@ export function RadarVivo() {
       </div>
 
       {dados && nos.length === 0 ? (
-        <div className={`${s.vazio} ${s.radarVazio}`}><strong>Seu radar ainda está vazio.</strong><span>Cada pessoa que responder um desafio seu aparece aqui, mais perto quanto mais ela acertar.</span><Link className={s.btnP} href="/comecar">Desafiar alguém</Link></div>
+        <div className={`${s.vazio} ${s.radarVazio}`}><strong>Seu radar ainda está vazio.</strong><span>Cada pessoa que responder um desafio seu aparece aqui, mais perto quanto mais ela acertar.</span><Link className={s.btnP} prefetch={false} href="/comecar">Desafiar alguém</Link></div>
       ) : (
         <section aria-labelledby="t-ranking">
           <h2 id="t-ranking" style={{ fontSize: 17, fontWeight: 800, margin: "0 0 2px" }}>Quem mais te conhece</h2>

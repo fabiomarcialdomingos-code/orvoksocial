@@ -17,7 +17,7 @@ export function AuthLayout({ title, text, children, footer }: { title: string; t
           <div className={s.texto}>
             <h1 id="auth-title">{title}</h1>
             <p>{text}</p>
-            <Link className={s.atalho} href="/comecar">Ainda sem conta? Comece sem cadastro, respondendo sobre você.</Link>
+            <Link className={s.atalho} prefetch={false} href="/comecar">Ainda sem conta? Comece sem cadastro, respondendo sobre você.</Link>
           </div>
         </section>
         <section className={s.painel}>

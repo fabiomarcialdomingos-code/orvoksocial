@@ -35,9 +35,9 @@ export function DesafiosConta() {
         <h2>Desafie mais alguém</h2>
         <p>Cada relação tem perguntas próprias. Quanto mais gente responder, mais completo fica o seu radar.</p>
         <div className={s.chips}>
-          <Link className={s.chip} href="/comecar?tipo=desafio&rel=familia"><IconeRede nome="casaRel" />Família</Link>
-          <Link className={s.chip} href="/comecar?tipo=desafio&rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-          <Link className={s.chip} href="/comecar?tipo=desafio&rel=crush"><IconeRede nome="coracao" />Crush</Link>
+          <Link className={s.chip} prefetch={false} href="/comecar?tipo=desafio&rel=familia"><IconeRede nome="casaRel" />Família</Link>
+          <Link className={s.chip} prefetch={false} href="/comecar?tipo=desafio&rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
+          <Link className={s.chip} prefetch={false} href="/comecar?tipo=desafio&rel=crush"><IconeRede nome="coracao" />Crush</Link>
         </div>
       </section>
 
@@ -76,7 +76,7 @@ export function DesafiosConta() {
               <span className={s.nome}>Você acertou sobre <b>{r.nome}</b></span>
               <strong>{r.acertos} de {r.total}</strong>
             </div>
-            <div className={s.chips}><Link className={s.btnP} href={`/comecar?volta=${encodeURIComponent(r.nome)}&de=${r.codigo}`}>Desafiar {r.nome} de volta</Link></div>
+            <div className={s.chips}><Link className={s.btnP} prefetch={false} href={`/comecar?volta=${encodeURIComponent(r.nome)}&de=${r.codigo}`}>Desafiar {r.nome} de volta</Link></div>
           </article>
         ))
       )}

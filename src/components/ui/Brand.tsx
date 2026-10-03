@@ -14,7 +14,7 @@ export function BrandMark({ size = 28 }: { size?: number }) {
 
 export function Brand({ href = "/" }: { href?: string }) {
   return (
-    <Link href={href} className="brand" aria-label="orvok, página inicial">
+    <Link prefetch={false} href={href} className="brand" aria-label="orvok, página inicial">
       <BrandMark />
       <span className="brand-name">orvok</span>
     </Link>

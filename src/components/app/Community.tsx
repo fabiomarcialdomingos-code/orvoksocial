@@ -220,7 +220,7 @@ export function Notifications() {
   return (
     <>
       {!items || !dados ? <p className={r.muted} aria-busy="true">Carregando…</p> : lista.length === 0 ? (
-        <div className={r.vazio}><strong>Tudo em dia.</strong><span>Quando alguém responder um desafio seu, o aviso aparece aqui.</span><Link className={r.btnP} href="/comecar">Desafiar alguém</Link></div>
+        <div className={r.vazio}><strong>Tudo em dia.</strong><span>Quando alguém responder um desafio seu, o aviso aparece aqui.</span><Link className={r.btnP} prefetch={false} href="/comecar">Desafiar alguém</Link></div>
       ) : lista.map((n) => (
         <div key={n.chave} className={`${r.aviso} ${n.lida ? "" : r.naoLido}`}>
           <span className={r.iconeAviso}><IconeRede nome={n.href === "/desafios" ? "alvo" : "sino"} /></span>

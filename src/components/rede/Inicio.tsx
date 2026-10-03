@@ -72,7 +72,7 @@ export function Inicio() {
   return (
     <>
       <div className={s.stories} aria-label="Pessoas">
-        <Link className={s.story} href="/comecar"><span className={`${s.anel} ${s.anelVoce}`}><Avatar nome={nome} tamanho={58} voce /><span className={s.mais}>+</span></span><b>Você</b></Link>
+        <Link className={s.story} prefetch={false} href="/comecar"><span className={`${s.anel} ${s.anelVoce}`}><Avatar nome={nome} tamanho={58} voce /><span className={s.mais}>+</span></span><b>Você</b></Link>
         {conhecidos.map((n) => <Link key={n} className={s.story} href="/radar"><span className={s.anel}><Avatar nome={n} tamanho={58} /></span><b>{n}</b></Link>)}
       </div>
 
@@ -91,7 +91,7 @@ export function Inicio() {
             const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel && d.tipo !== "retrato");
             return (
               <li key={rel} className={feito ? s.feito : ""}>
-                <Link href={`/comecar?tipo=desafio&rel=${rel}`}>
+                <Link prefetch={false} href={`/comecar?tipo=desafio&rel=${rel}`}>
                   <span className={s.check} aria-hidden="true">{feito ? "✓" : <IconeRede nome={icone} />}</span>
                   <span><b>{feito ? `${rotulo}: desafio enviado` : `Desafie ${rotulo === "Crush" ? "o crush" : rotulo === "Família" ? "a família" : "os amigos"}`}</b><small>{feito ? "Mandar para mais alguém" : "Perguntas feitas para essa relação"}</small></span>
                 </Link>
@@ -99,7 +99,7 @@ export function Inicio() {
             );
           })}
         </ol>
-        <Link className={s.chip} href="/comecar?tipo=retrato" style={{ marginTop: 12 }}><IconeRede nome="espelho" />Fazer o Retrato: como te veem?</Link>
+        <Link className={s.chip} prefetch={false} href="/comecar?tipo=retrato" style={{ marginTop: 12 }}><IconeRede nome="espelho" />Fazer o Retrato: como te veem?</Link>
       </section>
 
       <div className={s.compor}>
@@ -111,7 +111,7 @@ export function Inicio() {
       </div>
 
       {dados && itens.length === 0 ? (
-        <div className={s.vazio}><strong>Sua rede começa com um desafio.</strong><span>Quando alguém responder, o placar aparece aqui.</span><Link className={s.btnP} href="/comecar">Desafiar alguém</Link></div>
+        <div className={s.vazio}><strong>Sua rede começa com um desafio.</strong><span>Quando alguém responder, o placar aparece aqui.</span><Link className={s.btnP} prefetch={false} href="/comecar">Desafiar alguém</Link></div>
       ) : null}
 
       {itens.map((it) => {
@@ -131,7 +131,7 @@ export function Inicio() {
                     <div className={s.acertos} aria-label={`${it.acertos} acertos de ${it.total}`}>{Array.from({ length: it.total }, (_, i) => <i key={i} className={i < it.acertos ? s.ok : ""} />)}</div>
                   </div>
                 </div>
-                {it.tipo === "recebido" ? <Link className={s.btnFio} href={`/comecar?volta=${encodeURIComponent(it.nome)}&de=${it.codigo}`}>Desafiar {it.nome} de volta</Link> : null}
+                {it.tipo === "recebido" ? <Link className={s.btnFio} prefetch={false} href={`/comecar?volta=${encodeURIComponent(it.nome)}&de=${it.codigo}`}>Desafiar {it.nome} de volta</Link> : null}
               </div>
             </article>
           );
