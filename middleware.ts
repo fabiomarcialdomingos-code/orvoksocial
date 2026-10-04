@@ -7,10 +7,13 @@ import { NextRequest, NextResponse } from "next/server";
  * página renderiza no servidor mas nunca hidrata, e nenhum clique funciona
  * (sem erro visível além de "Minified React error #412 / Connection closed"
  * no console, já que o bloqueio do CSP não passa por try/catch).
+ *
+ * Imagens embutidas (data:) são liberadas só em img-src: o grão do fundo e o
+ * ícone da home usam isso, e uma imagem SVG carregada assim nunca executa script.
  */
 export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://connect.facebook.net; connect-src 'self' https://www.facebook.com; img-src 'self' https://www.facebook.com; style-src 'self' 'unsafe-inline'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'`;
+  const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://connect.facebook.net; connect-src 'self' https://www.facebook.com; img-src 'self' data: https://www.facebook.com; style-src 'self' 'unsafe-inline'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'`;
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
