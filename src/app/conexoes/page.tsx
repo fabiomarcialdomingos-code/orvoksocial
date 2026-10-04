@@ -1,4 +1,4 @@
 import { AppShell } from "../../components/app/AppShell";
-import { MeuPlacar } from "../../components/rede/MeuPlacar";
-export const metadata = { title: "Meu placar" };
-export default function PlacarPage() { return <AppShell title="Meu placar"><MeuPlacar /></AppShell>; }
+import { MinhasConexoes } from "../../components/rede/MinhasConexoes";
+export const metadata = { title: "Minhas conexões" };
+export default function ConexoesPage() { return <AppShell title="Minhas conexões"><MinhasConexoes /></AppShell>; }

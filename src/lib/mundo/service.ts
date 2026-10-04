@@ -15,11 +15,14 @@ async function avisar(pool: Pool, recipientId: string, eventType: string, source
 }
 
 /**
- * Mundo entre pessoas. O evento externo é só o assunto: uma pessoa responde
- * em segredo e a outra tenta adivinhar essa resposta. Nada é revelado antes
- * do encerramento do evento.
- *   ser_previsto: quem criou responde; o convidado adivinha.
- *   prever:       o convidado responde; quem criou adivinha.
+ * Mundo entre pessoas. O evento externo é só o assunto: cada uma das duas
+ * pessoas diz, em segredo, o que acha que vai acontecer. Nada é revelado antes
+ * do encerramento do evento; depois, as duas descobrem se pensaram igual.
+ * O modo só define quem responde primeiro (os valores guardados no banco
+ * continuam os mesmos desde o começo):
+ *   ser_previsto: quem criou responde agora e depois convida.
+ *   prever:       quem criou convida primeiro; o convidado responde e, em seguida, quem criou.
+ * "answer*" guarda a opinião de quem responde primeiro e "guess*" a de quem responde depois.
  */
 export const CATEGORIAS = { economia: "Economia", tecnologia: "Tecnologia", esporte: "Esporte", entretenimento: "Entretenimento" } as const;
 export type Categoria = keyof typeof CATEGORIAS;
@@ -39,7 +42,7 @@ type Rodada = {
 };
 
 /** Estado da rodada, do jeito que as duas pessoas podem ver. */
-export type Estado = "aguardando_convidado" | "aguardando_palpite" | "aguardando_revelacao" | "revelada" | "sem_comparacao" | "cancelada";
+export type Estado = "aguardando_convidado" | "aguardando_criador" | "aguardando_revelacao" | "revelada" | "sem_comparacao" | "cancelada";
 
 export class MundoService {
   constructor(private readonly pool: Pool) {}
@@ -71,31 +74,31 @@ export class MundoService {
     const completa = Boolean(r.answerOpportunityId) && (Boolean(r.guessOpportunityId) || r.guessUnsure);
     if (encerrou) return completa ? "revelada" : "sem_comparacao";
     if (!r.answerOpportunityId) return "aguardando_convidado";
-    if (!r.guessOpportunityId && !r.guessUnsure) return r.mode === "ser_previsto" ? "aguardando_convidado" : "aguardando_palpite";
+    if (!r.guessOpportunityId && !r.guessUnsure) return r.mode === "ser_previsto" ? "aguardando_convidado" : "aguardando_criador";
     return "aguardando_revelacao";
   }
 
-  /** Visão de uma rodada para um dos dois lados. Só revela respostas quando o estado é "revelada". */
+  /** Visão de uma conversa para um dos dois lados. Só revela as opiniões quando o estado é "revelada". */
   private visao(r: Rodada, e: Evento, lado: "criador" | "convidado") {
     const est = this.estado(r, e);
     const rotulo = (id: string | null) => e.opps.find((o) => o.id === id)?.label ?? null;
-    const quemResponde = r.mode === "ser_previsto" ? r.initiatorName : r.guestName;
-    const quemAdivinha = r.mode === "ser_previsto" ? r.guestName : r.initiatorName;
+    const ladoPrimeiro = r.mode === "ser_previsto" ? "criador" : "convidado";
+    const primeiro = r.mode === "ser_previsto" ? r.initiatorName : r.guestName;
+    const segundo = r.mode === "ser_previsto" ? r.guestName : r.initiatorName;
     const revelada = est === "revelada";
     return {
       codigo: r.code, modo: r.mode, estado: est, lado,
       evento: { titulo: e.title, categoria: e.category, encerraEm: e.closesAt, opcoes: e.opps.map((o) => ({ id: o.id, rotulo: o.label })), resultado: revelada ? e.resultado : null },
-      criador: r.initiatorName, convidado: r.guestName, quemResponde, quemAdivinha,
+      criador: r.initiatorName, convidado: r.guestName, primeiro, segundo,
       // O que esta pessoa ainda precisa fazer.
       minhaVez: est !== "revelada" && est !== "sem_comparacao" && est !== "cancelada" && (
         lado === "convidado" ? (r.mode === "prever" ? !r.answerOpportunityId : !r.guessOpportunityId && !r.guessUnsure)
           : (r.mode === "prever" && Boolean(r.answerOpportunityId) && !r.guessOpportunityId && !r.guessUnsure)),
-      // A própria resposta de cada um pode ser vista por ele mesmo; a do outro só depois.
-      minhaResposta: lado === (r.mode === "ser_previsto" ? "criador" : "convidado") ? rotulo(r.answerOpportunityId) : null,
-      meuPalpite: lado === (r.mode === "ser_previsto" ? "convidado" : "criador") ? (r.guessUnsure ? "Não sei" : rotulo(r.guessOpportunityId)) : null,
+      // A própria opinião cada um vê; a da outra pessoa só aparece depois do evento.
+      minhaOpiniao: lado === ladoPrimeiro ? rotulo(r.answerOpportunityId) : (r.guessUnsure ? "Prefiro não opinar" : rotulo(r.guessOpportunityId)),
       revelacao: revelada ? {
-        resposta: rotulo(r.answerOpportunityId), palpite: r.guessUnsure ? null : rotulo(r.guessOpportunityId), naoSei: r.guessUnsure,
-        acertou: !r.guessUnsure && r.guessOpportunityId === r.answerOpportunityId,
+        primeiraOpiniao: rotulo(r.answerOpportunityId), segundaOpiniao: r.guessUnsure ? null : rotulo(r.guessOpportunityId), semOpiniao: r.guessUnsure,
+        igual: !r.guessUnsure && r.guessOpportunityId === r.answerOpportunityId,
       } : null,
     };
   }
@@ -113,7 +116,7 @@ export class MundoService {
     if (e.status !== "PUBLISHED" || e.closesAt.getTime() - TRAVA_MS <= Date.now()) throw new AuthError("CONFLICT", 409);
   }
 
-  /** Quem está logado cria uma rodada. Em "ser_previsto" já manda a própria resposta, em segredo. */
+  /** Quem está logado abre uma conversa. Em "ser_previsto" já registra a própria opinião, em segredo. */
   async criar(raw: unknown, userId: string) {
     const d = z.strictObject({ eventoId: z.uuid(), modo: z.enum(["ser_previsto", "prever"]), resposta: z.uuid().optional(), nome: nomeSchema }).parse(raw);
     const nome = d.nome;
@@ -139,7 +142,7 @@ export class MundoService {
     return this.visao(rodada, e, "convidado");
   }
 
-  /** O convidado responde (modo prever) ou adivinha (modo ser_previsto). O primeiro aparelho fica com a vaga. */
+  /** O convidado dá a sua opinião, em segredo. O primeiro aparelho fica com a vaga. */
   async participar(cod: string, raw: unknown, tokenAtual: string | null, userId: string | null) {
     const d = z.strictObject({ nome: nomeSchema, opcao: z.uuid().nullable(), consentimentoIdade: idadeSchema }).parse(raw);
     const { rodada, e } = await this.rodadaPorCodigo(cod);
@@ -160,18 +163,18 @@ export class MundoService {
         [rodada.id, d.nome, hash, userId, d.opcao, d.opcao === null, AVISO_IDADE_VERSAO]);
     }
     await registrarEvento(this.pool, "mundo_convidado_participou", cod, hash);
-    // No modo "prever", a resposta do convidado libera a vez de quem criou adivinhar.
+    // No modo "prever", a opinião do convidado libera a vez de quem criou responder.
     if (rodada.mode === "prever") {
       await avisar(this.pool, rodada.initiatorUserId, "MUNDO_SUA_VEZ", rodada.id, {
-        titulo: "É sua vez no Mundo", corpo: `${d.nome} respondeu sobre "${e.title}". Você consegue adivinhar?`, url: "/eventos",
+        titulo: "É a sua vez no Mundo", corpo: `${d.nome} já compartilhou o que acha sobre "${e.title}". Agora é a sua vez.`, url: "/eventos",
       });
     }
     const atual = await this.rodadaPorCodigo(cod);
     return { ...this.visao(atual.rodada, atual.e, "convidado"), token };
   }
 
-  /** Quem criou adivinha a resposta do convidado (modo prever). */
-  async palpitar(cod: string, raw: unknown, userId: string) {
+  /** Quem criou dá a sua opinião depois do convidado (modo prever). */
+  async opinar(cod: string, raw: unknown, userId: string) {
     const d = z.strictObject({ opcao: z.uuid().nullable() }).parse(raw);
     const { rodada, e } = await this.rodadaPorCodigo(cod);
     if (rodada.initiatorUserId !== userId || rodada.mode !== "prever") throw new AuthError("FORBIDDEN", 403);
@@ -179,75 +182,66 @@ export class MundoService {
     if (!rodada.answerOpportunityId || rodada.guessOpportunityId || rodada.guessUnsure) throw new AuthError("CONFLICT", 409);
     if (d.opcao && !e.opps.some((o) => o.id === d.opcao)) throw new AuthError("INVALID_INPUT", 400);
     await this.pool.query(`UPDATE "WorldRound" SET "guessOpportunityId"=$2::uuid,"guessUnsure"=$3,"guessedAt"=clock_timestamp() WHERE id=$1`, [rodada.id, d.opcao, d.opcao === null]);
-    await registrarEvento(this.pool, "mundo_palpite", cod, userId);
+    await registrarEvento(this.pool, "mundo_opiniao", cod, userId);
     const atual = await this.rodadaPorCodigo(cod);
     return this.visao(atual.rodada, atual.e, "criador");
   }
 
   /**
-   * Meu placar: cada rodada revelada é uma partida. Para cada pessoa, conta
-   * separadamente quanto ela acertou sobre você e quanto você acertou sobre ela.
-   * "Não sei" vira abstenção; rodadas canceladas ou sem comparação não entram.
+   * Minhas conexões: para cada pessoa com quem a conta já conversou no Mundo,
+   * em quantos assuntos vocês pensaram igual e em quantos pensaram diferente.
+   * É simétrico (pensar igual vale para os dois lados), não há pontuação nem
+   * ordem de "melhor": quem escolheu não opinar e eventos cancelados ou sem
+   * as duas opiniões não entram na conta.
    */
-  async placar(userId: string, token: string | null) {
+  async conexoes(userId: string, token: string | null) {
     const meuHash = token ? tokenHash(token) : "";
     const r = await this.pool.query<Rodada>(
       `SELECT * FROM "WorldRound" WHERE "revokedAt" IS NULL AND ("initiatorUserId"=$1 OR "guestUserId"=$1 OR "guestTokenHash"=$2) ORDER BY "createdAt" ASC`,
       [userId, meuHash],
     );
     const evs = new Map((await this.eventos([...new Set(r.rows.map((x) => x.eventId))])).map((e) => [e.id, e]));
-    type Conta = { acertos: number; erros: number; naoSei: number };
     type Pessoa = {
-      chave: string; nome: string; sobreVoce: Conta; voceSobre: Conta; pendentes: number; ultima: Date;
-      porCategoria: Record<string, { acertos: number; total: number }>; sequencia: number;
-      historico: { data: Date; categoria: string; evento: string; quemRespondeu: string; resposta: string | null; palpite: string | null; resultado: "acertou" | "errou" | "nao_sei"; direcao: "sobre_voce" | "voce_sobre" }[];
+      chave: string; nome: string; igual: number; diferente: number; semOpiniao: number; pendentes: number; ultima: Date;
+      porCategoria: Record<string, { iguais: number; total: number }>;
+      historico: { data: Date; categoria: string; evento: string; suaOpiniao: string | null; opiniaoDela: string | null; resultado: "igual" | "diferente" | "sem_opiniao" }[];
     };
     const pessoas = new Map<string, Pessoa>();
     const andamento = [];
-    const vazio = (): Conta => ({ acertos: 0, erros: 0, naoSei: 0 });
+    const aberto = (est: Estado) => ["aguardando_convidado", "aguardando_criador", "aguardando_revelacao"].includes(est);
     for (const x of r.rows) {
       const e = evs.get(x.eventId);
       if (!e) continue;
       const souCriador = x.initiatorUserId === userId;
-      const outroChave = souCriador ? (x.guestUserId ?? x.guestTokenHash) : x.initiatorUserId;
-      const outroNome = souCriador ? x.guestName : x.initiatorName;
+      const outraChave = souCriador ? (x.guestUserId ?? x.guestTokenHash) : x.initiatorUserId;
+      const outraNome = souCriador ? x.guestName : x.initiatorName;
       const est = this.estado(x, e);
-      if (["aguardando_convidado", "aguardando_palpite", "aguardando_revelacao"].includes(est)) andamento.push(this.visao(x, e, souCriador ? "criador" : "convidado"));
-      if (!outroChave || !outroNome) continue;
-      const p = pessoas.get(outroChave) ?? { chave: outroChave, nome: outroNome, sobreVoce: vazio(), voceSobre: vazio(), pendentes: 0, ultima: x.createdAt, porCategoria: {}, sequencia: 0, historico: [] };
-      p.nome = outroNome; if (x.createdAt > p.ultima) p.ultima = x.createdAt;
-      if (["aguardando_convidado", "aguardando_palpite", "aguardando_revelacao"].includes(est)) p.pendentes++;
+      if (aberto(est)) andamento.push(this.visao(x, e, souCriador ? "criador" : "convidado"));
+      if (!outraChave || !outraNome) continue;
+      const p = pessoas.get(outraChave) ?? { chave: outraChave, nome: outraNome, igual: 0, diferente: 0, semOpiniao: 0, pendentes: 0, ultima: x.createdAt, porCategoria: {}, historico: [] };
+      p.nome = outraNome; if (x.createdAt > p.ultima) p.ultima = x.createdAt;
+      if (aberto(est)) p.pendentes++;
       if (est === "revelada") {
-        // Quem respondeu foi você? Então o outro tentou te prever.
-        const euRespondi = (x.mode === "ser_previsto") === souCriador;
-        const conta = euRespondi ? p.sobreVoce : p.voceSobre;
-        const resultado = x.guessUnsure ? "nao_sei" : x.guessOpportunityId === x.answerOpportunityId ? "acertou" : "errou";
-        if (resultado === "nao_sei") conta.naoSei++; else if (resultado === "acertou") conta.acertos++; else conta.erros++;
+        const resultado = x.guessUnsure ? "sem_opiniao" : x.guessOpportunityId === x.answerOpportunityId ? "igual" : "diferente";
+        if (resultado === "sem_opiniao") p.semOpiniao++; else if (resultado === "igual") p.igual++; else p.diferente++;
         const cat = e.category in CATEGORIAS ? e.category : "entretenimento";
-        if (euRespondi && resultado !== "nao_sei") {
-          const c = p.porCategoria[cat] ?? { acertos: 0, total: 0 };
-          c.total++; if (resultado === "acertou") c.acertos++;
+        if (resultado !== "sem_opiniao") {
+          const c = p.porCategoria[cat] ?? { iguais: 0, total: 0 };
+          c.total++; if (resultado === "igual") c.iguais++;
           p.porCategoria[cat] = c;
-          p.sequencia = resultado === "acertou" ? p.sequencia + 1 : 0;
         }
         const rotulo = (id: string | null) => e.opps.find((o) => o.id === id)?.label ?? null;
-        p.historico.unshift({ data: e.closesAt, categoria: cat, evento: e.title, quemRespondeu: euRespondi ? "Você" : outroNome,
-          resposta: rotulo(x.answerOpportunityId), palpite: x.guessUnsure ? null : rotulo(x.guessOpportunityId), resultado, direcao: euRespondi ? "sobre_voce" : "voce_sobre" });
+        const euPrimeiro = (x.mode === "ser_previsto") === souCriador;
+        const primeira = rotulo(x.answerOpportunityId), segunda = x.guessUnsure ? null : rotulo(x.guessOpportunityId);
+        p.historico.unshift({ data: e.closesAt, categoria: cat, evento: e.title, suaOpiniao: euPrimeiro ? primeira : segunda, opiniaoDela: euPrimeiro ? segunda : primeira, resultado });
       }
-      pessoas.set(outroChave, p);
+      pessoas.set(outraChave, p);
     }
-    const lista = [...pessoas.values()].map((p) => {
-      const tot = p.sobreVoce.acertos + p.sobreVoce.erros;
-      return { ...p, rodadas: tot + p.sobreVoce.naoSei + p.voceSobre.acertos + p.voceSobre.erros + p.voceSobre.naoSei, aproveitamento: tot ? p.sobreVoce.acertos / tot : null };
-    }).sort((a, b) => b.sobreVoce.acertos - a.sobreVoce.acertos || (b.sobreVoce.acertos + b.sobreVoce.erros) - (a.sobreVoce.acertos + a.sobreVoce.erros) || +b.ultima - +a.ultima);
+    const lista = [...pessoas.values()].map((p) => ({ ...p, conversas: p.igual + p.diferente + p.semOpiniao }))
+      .sort((a, b) => b.igual - a.igual || b.conversas - a.conversas || +b.ultima - +a.ultima);
     const soma = (f: (p: (typeof lista)[number]) => number) => lista.reduce((n, p) => n + f(p), 0);
     return {
-      resumo: {
-        concluidas: soma((p) => p.rodadas),
-        previsoesRecebidas: soma((p) => p.sobreVoce.acertos + p.sobreVoce.erros + p.sobreVoce.naoSei),
-        acertosSobreVoce: soma((p) => p.sobreVoce.acertos),
-        pendentes: andamento.length,
-      },
+      resumo: { conversas: soma((p) => p.conversas), pensaramIgual: soma((p) => p.igual), pendentes: andamento.length },
       pessoas: lista.map(({ chave, ...p }) => ({ id: tokenHash(chave).slice(0, 12), ...p })),
       andamento,
     };

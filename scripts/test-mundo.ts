@@ -25,32 +25,32 @@ async function evento(titulo: string, minutos: number) {
 const jogo = await evento("O Palmeiras será campeão?", 60 * 24);
 ok((await svc.eventosAbertos()).some((e) => e.id === jogo.id && e.categoria === "esporte"), "evento aberto aparece com a categoria");
 
-// Quero ser previsto
+// Responder primeiro: quem abre a conversa dá a sua opinião agora e convida
 const { codigo } = await svc.criar({ eventoId: jogo.id, modo: "ser_previsto", resposta: jogo.sim, nome: "Fabio" }, fabio);
 const v1 = await svc.verComoConvidado(codigo, null);
-ok(v1.minhaVez && v1.revelacao === null && v1.minhaResposta === null, "convidado vê a pergunta, mas não a resposta do Fabio");
+ok(v1.minhaVez && v1.revelacao === null && v1.minhaOpiniao === null, "convidado vê o assunto, mas não a opinião do Fabio");
 const p = await svc.participar(codigo, { nome: "Marina", opcao: jogo.sim, consentimentoIdade: idade }, null, null);
-ok(p.estado === "aguardando_revelacao" && p.revelacao === null && p.meuPalpite === "Sim", "palpite registrado e nada revelado antes do evento");
+ok(p.estado === "aguardando_revelacao" && p.revelacao === null && p.minhaOpiniao === "Sim", "opinião registrada e nada revelado antes do evento");
 try { await svc.participar(codigo, { nome: "Outra", opcao: jogo.nao, consentimentoIdade: idade }, null, null); ok(false, "segunda pessoa"); } catch { ok(true, "a rodada fica com o primeiro aparelho que respondeu"); }
 const lista = await svc.minhas(fabio, null);
-ok(lista[0]!.estado === "aguardando_revelacao" && lista[0]!.revelacao === null && lista[0]!.minhaResposta === "Sim", "Fabio vê a própria resposta, mas não o palpite da Marina");
+ok(lista[0]!.estado === "aguardando_revelacao" && lista[0]!.revelacao === null && lista[0]!.minhaOpiniao === "Sim", "Fabio vê a própria opinião, mas não a da Marina");
 await adm.query(`UPDATE "WorldEvent" SET "closesAt"=now()-interval '1 minute' WHERE id=$1`, [jogo.id]);
 const rev = await svc.verComoConvidado(codigo, p.token);
-ok(rev.estado === "revelada" && rev.revelacao?.acertou === true && rev.revelacao.resposta === "Sim", "depois do evento: Marina acertou o que Fabio respondeu");
+ok(rev.estado === "revelada" && rev.revelacao?.igual === true && rev.revelacao.primeiraOpiniao === "Sim", "depois do evento: Fabio e Marina pensaram igual");
 
 // Quero prever alguém + "não sei"
 const filme = await evento("O filme vai ganhar o Oscar?", 60 * 24);
 const r2 = await svc.criar({ eventoId: filme.id, modo: "prever", nome: "Fabio" }, fabio);
 const g = await svc.participar(r2.codigo, { nome: "Bia", opcao: filme.nao, consentimentoIdade: idade }, null, null);
-ok(g.estado === "aguardando_palpite" && g.minhaResposta === "Não", "Bia respondeu a própria opinião; agora é a vez do Fabio");
+ok(g.estado === "aguardando_criador" && g.minhaOpiniao === "Não", "Bia compartilhou a opinião dela; agora é a vez do Fabio");
 const avisoFabio = await adm.query(`SELECT 1 FROM "Notification" WHERE "recipientId"=$1 AND "eventType"='MUNDO_SUA_VEZ'`, [fabio]);
-ok((avisoFabio.rowCount ?? 0) === 1, "Fabio recebe um aviso de que é a vez dele de adivinhar");
+ok((avisoFabio.rowCount ?? 0) === 1, "Fabio recebe um aviso de que é a vez dele de responder");
 try { await svc.participar(r2.codigo, { nome: "Bia", opcao: null, consentimentoIdade: idade }, g.token, null); ok(false, "nao sei como opiniao"); } catch { ok(true, "a própria opinião não pode ser 'não sei' nem ser trocada"); }
-const pal = await svc.palpitar(r2.codigo, { opcao: null }, fabio);
+const pal = await svc.opinar(r2.codigo, { opcao: null }, fabio);
 ok(pal.estado === "aguardando_revelacao", "Fabio escolheu 'não sei'");
 await adm.query(`UPDATE "WorldEvent" SET "closesAt"=now()-interval '1 minute' WHERE id=$1`, [filme.id]);
 const rev2 = (await svc.minhas(fabio, null)).find((x) => x.codigo === r2.codigo)!;
-ok(rev2.revelacao?.naoSei === true && rev2.revelacao.acertou === false && rev2.revelacao.resposta === "Não", "'não sei' aparece separado, sem contar como acerto");
+ok(rev2.revelacao?.semOpiniao === true && rev2.revelacao.igual === false && rev2.revelacao.primeiraOpiniao === "Não", "'prefiro não opinar' aparece separado, sem contar como igual nem diferente");
 
 // Evento cancelado e evento que terminou sem os dois responderem
 const cancelado = await evento("Evento cancelado", 60 * 24);
@@ -60,17 +60,16 @@ ok((await svc.minhas(fabio, null)).find((x) => x.codigo === r3.codigo)?.estado =
 const vazio = await evento("Ninguém respondeu", 60 * 24);
 const r4 = await svc.criar({ eventoId: vazio.id, modo: "ser_previsto", resposta: vazio.sim, nome: "Fabio" }, fabio);
 await adm.query(`UPDATE "WorldEvent" SET "closesAt"=now()-interval '1 minute' WHERE id=$1`, [vazio.id]);
-ok((await svc.minhas(fabio, null)).find((x) => x.codigo === r4.codigo)?.estado === "sem_comparacao", "terminou sem palpite: sem comparação, não é erro de ninguém");
+ok((await svc.minhas(fabio, null)).find((x) => x.codigo === r4.codigo)?.estado === "sem_comparacao", "terminou sem a segunda opinião: sem comparação, não entra na conta");
 try { await svc.criar({ eventoId: vazio.id, modo: "prever", nome: "Fabio" }, fabio); ok(false, "evento encerrado"); } catch { ok(true, "não dá para criar rodada de evento encerrado"); }
-// Meu placar
-const pl = await svc.placar(fabio, null);
-const marina = pl.pessoas.find((x) => x.nome === "Marina")!, bia = pl.pessoas.find((x) => x.nome === "Bia")!;
-ok(marina.sobreVoce.acertos === 1 && marina.voceSobre.acertos === 0 && marina.porCategoria.esporte?.acertos === 1, "placar: Marina acertou 1 sobre o Fabio, em Esporte");
-ok(bia.voceSobre.naoSei === 1 && bia.voceSobre.acertos === 0 && bia.sobreVoce.acertos === 0, "placar: o 'não sei' do Fabio sobre a Bia fica como abstenção, na direção certa");
-ok(pl.resumo.acertosSobreVoce === 1 && pl.resumo.pendentes === 0, "resumo: 1 acerto sobre você; rodadas canceladas e sem comparação não ficam pendentes");
-ok(!JSON.stringify(pl).includes(fabio), "o placar não expõe identificadores internos");
-const passos = Number((await adm.query(`SELECT count(*) FROM "ProductEvent" WHERE name LIKE 'mundo_%'`)).rows[0].count);
-ok(passos >= 6, `medição registrou os passos do Mundo (${passos})`);
+// Minhas conexões: simétrico, sem pontuação
+const cx = await svc.conexoes(fabio, null);
+const marina = cx.pessoas.find((x) => x.nome === "Marina")!, bia = cx.pessoas.find((x) => x.nome === "Bia")!;
+ok(marina.igual === 1 && marina.diferente === 0 && marina.porCategoria.esporte?.iguais === 1, "conexões: Fabio e Marina pensaram igual em 1 assunto, de Esporte");
+ok(bia.semOpiniao === 1 && bia.igual === 0 && bia.diferente === 0, "conexões: 'prefiro não opinar' não conta como igual nem como diferente");
+ok(cx.resumo.pensaramIgual === 1 && cx.resumo.pendentes === 0, "resumo: 1 vez em que pensaram igual; canceladas e sem comparação não ficam em aberto");
+ok(!JSON.stringify(cx).includes(fabio), "as conexões não expõem identificadores internos");
+ok(!["acertos", "erros", "aproveitamento", "sequencia"].some((k) => JSON.stringify(cx).includes(k)), "não existe pontuação, aproveitamento nem sequência");
 
 await pool.end(); await adm.end();
 console.log("TODOS OS TESTES PASSARAM");
