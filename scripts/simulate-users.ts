@@ -229,14 +229,11 @@ async function main() {
   check("comentário em evento do mundo", comment.status === 201, comment);
 
   // Social
-  const post = await carla.post<{ id: string }>("/api/v1/social/posts", { body: "Acertei 8 de 12 sobre a Ana. Ela me surpreendeu nas manhãs." });
-  check("post no feed", post.status === 201, post);
-  await ana.post(`/api/v1/social/posts/${post.data.id}/reactions`, { kind: "insight" });
-  const reply = await ana.post(`/api/v1/social/posts/${post.data.id}/comments`, { body: "As manhãs são meu segredo." });
-  check("comentário no post", reply.status === 201, reply);
-  const feed = await bruno.get<{ items: { id: string; reactionCount: number; commentCount: number }[] }>("/api/v1/social/feed");
-  const inFeed = feed.data.items?.find((item) => item.id === post.data.id);
-  check("feed agrega reações e comentários", inFeed?.reactionCount === 1 && inFeed.commentCount === 1, inFeed);
+  // Não existe mais feed aberto: publicar, comentar, curtir e ler o feed respondem 404.
+  const postAberto = await carla.post("/api/v1/social/posts", { body: "Isto não deve ser aceito." });
+  check("publicação aberta não existe mais", postAberto.status === 404, postAberto);
+  const feedAberto = await bruno.get("/api/v1/social/feed");
+  check("feed aberto não existe mais", feedAberto.status === 404, feedAberto);
   const group = await ana.post<{ id: string }>("/api/v1/social/groups", { name: "Turma do café", description: "Previsões entre amigos de longa data." });
   check("grupo criado", group.status === 201, group);
   const gInvite = await ana.post<{ id: string }>(`/api/v1/social/groups/${group.data.id}/invites`, { inviteeId: bruno.userId });

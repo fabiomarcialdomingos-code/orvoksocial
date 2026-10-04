@@ -73,7 +73,6 @@ export type WorldEvent = {
   opensAt: string; closesAt: string; status: string; category: string;
   opportunities: { id: string; code: string; label: string; position: number }[];
 };
-export type Post = { id: string; authorId: string; body: string; createdAt: string; commentCount: number; reactionCount: number };
 export type Group = { id: string; ownerId: string; name: string; description?: string | null; createdAt: string };
 
 /* ---------- Helpers ---------- */

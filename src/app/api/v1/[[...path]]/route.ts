@@ -504,10 +504,6 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     const result = await pool.query(`SELECT id,"reporterId","targetUserId","postId",reason,state,"createdAt","resolvedAt" FROM "SocialReport" ORDER BY "createdAt" DESC LIMIT 100`);
     return apiJson({ items: result.rows });
   }
-  if (method === "GET" && route === "/social/feed") {
-    const result = await pool.query(`SELECT p.id,p."authorId",p."groupId",p."eventId",p.body,p."createdAt",COALESCE((SELECT count(*) FROM "SocialComment" c WHERE c."postId"=p.id),0)::int AS "commentCount",COALESCE((SELECT count(*) FROM "SocialReaction" r WHERE r."postId"=p.id),0)::int AS "reactionCount" FROM "SocialPost" p WHERE p."groupId" IS NULL OR EXISTS (SELECT 1 FROM "SocialGroupMember" m WHERE m."groupId"=p."groupId" AND m."userId"=$1 AND m.state='ACTIVE') ORDER BY p."createdAt" DESC,p.id DESC LIMIT 50`, [actorId]);
-    return apiJson({ items: result.rows });
-  }
   if (method === "GET" && route === "/world/events") {
     const params = new URL(request.url).searchParams;
     const cursor = params.get("cursor");
@@ -576,24 +572,12 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     const body = z.strictObject({ state: z.enum(["FROZEN", "RESOLVED_TEST", "CANCELLED"]) }).parse(await readJsonBody(request));
     return apiJson(await social.setEventState(actorId, path[2]!, body.state));
   }
-  if (method === "POST" && route === "/social/posts") {
-    const body = z.strictObject({ body: z.string().trim().min(1).max(5000), groupId: uuid.optional(), eventId: uuid.optional() }).parse(await readJsonBody(request));
-    return apiJson(await social.post(actorId, body), 201);
-  }
-  if (method === "POST" && path.length === 4 && path[0] === "social" && path[1] === "posts" && path[3] === "comments") {
-    const body = z.strictObject({ body: z.string().trim().min(1).max(2000) }).parse(await readJsonBody(request));
-    return apiJson(await social.comment(actorId, path[2]!, body.body), 201);
-  }
-  if (method === "POST" && path.length === 4 && path[0] === "social" && path[1] === "posts" && path[3] === "reactions") {
-    const body = z.strictObject({ kind: z.string().trim().min(1).max(32) }).parse(await readJsonBody(request));
-    return apiJson(await social.react(actorId, path[2]!, body.kind), 201);
-  }
   if (method === "POST" && route === "/social/messages") {
     const body = z.strictObject({ recipientId: uuid, body: z.string().trim().min(1).max(2000), predictionId: uuid.optional() }).parse(await readJsonBody(request));
     return apiJson(await social.message(actorId, body.recipientId, body.body, body.predictionId), 201);
   }
   if (method === "POST" && route === "/social/blocks") { const body = z.strictObject({ userId: uuid }).parse(await readJsonBody(request)); return apiJson(await social.block(actorId, body.userId), 201); }
-  if (method === "POST" && route === "/social/reports") { const body = z.strictObject({ targetUserId: uuid.optional(), postId: uuid.optional(), reason: z.string().trim().min(1).max(500) }).parse(await readJsonBody(request)); return apiJson(await social.report(actorId, body), 201); }
+  if (method === "POST" && route === "/social/reports") { const body = z.strictObject({ targetUserId: uuid, reason: z.string().trim().min(1).max(500) }).parse(await readJsonBody(request)); return apiJson(await social.report(actorId, body), 201); }
   if (method === "POST" && path.length === 4 && path[0] === "admin" && path[1] === "users" && path[3] === "action") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
     const body = z.strictObject({ action: z.enum(["SUSPEND", "UNSUSPEND", "TEMPORARY_BLOCK", "PASSWORD_RESET" ]), reason: z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));

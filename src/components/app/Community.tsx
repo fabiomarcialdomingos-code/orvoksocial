@@ -3,104 +3,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { apiGet, apiPost, describeError, initials, loadPeople, personName, relativeTime, type Group, type Post, type Profile } from "../../lib/client/api";
+import { apiGet, apiPost, describeError, initials, loadPeople, personName, relativeTime, type Group, type Profile } from "../../lib/client/api";
 import { Avatar, IconeRede, useShell } from "./AppShell";
 import r from "../rede/rede.module.css";
 import { useDesafios } from "../rede/dados";
 
 function Head({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
   return <div className="page-head"><div><h1 className="display">{title}</h1><p>{text}</p></div>{children}</div>;
-}
-
-/* ---------- Feed ---------- */
-export function Feed() {
-  const { toast, profile } = useShell();
-  const [posts, setPosts] = useState<Post[] | null>(null);
-  const [people, setPeople] = useState<Map<string, Profile>>(new Map());
-  const [body, setBody] = useState("");
-  const [reacted, setReacted] = useState<Set<string>>(new Set());
-  const [openComments, setOpenComments] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    const r = await apiGet<{ items: Post[] }>("/social/feed");
-    setPeople(new Map(await loadPeople(r.items.map((p) => p.authorId))));
-    setPosts(r.items);
-  }, []);
-  useEffect(() => { void load().catch((e) => { toast(describeError(e), "error"); setPosts([]); }); }, [load, toast]);
-
-  const publish = async () => {
-    try { await apiPost("/social/posts", { body: body.trim() }); setBody(""); await load(); toast("Publicado."); } catch (e) { toast(describeError(e), "error"); }
-  };
-  const react = async (id: string) => {
-    if (reacted.has(id)) return;
-    try { await apiPost(`/social/posts/${id}/reactions`, { kind: "insight" }); setReacted(new Set(reacted).add(id)); await load(); } catch (e) { toast(describeError(e), "error"); }
-  };
-  const report = async (id: string) => {
-    try { await apiPost("/social/reports", { postId: id, reason: "Denúncia enviada pelo feed" }); toast("Denúncia enviada para a moderação."); } catch (e) { toast(describeError(e), "error"); }
-  };
-
-  return (
-    <>
-      <Head title="Feed" text="O que as pessoas estão percebendo sobre si, sobre os outros e sobre o mundo. Posts de grupos aparecem só para quem é membro." />
-      <div className="grid-main">
-        <section className="card" aria-label="Publicações">
-          <form className="post" style={{ paddingTop: 0 }} onSubmit={(e) => { e.preventDefault(); void publish(); }}>
-            <span className="avatar">{initials(profile?.displayName)}</span>
-            <div className="form-stack">
-              <textarea className="input" value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} placeholder="Uma percepção, uma surpresa…" aria-label="Nova publicação" />
-              <div className="row-between"><span className="faint" style={{ fontSize: 13 }}>{body.length}/5000</span><button className="button button-small" disabled={!body.trim()}>Publicar</button></div>
-            </div>
-          </form>
-          {!posts ? <div className="skeleton" style={{ height: 160 }} /> : posts.length === 0 ? (
-            <div className="empty"><strong>O feed está silencioso.</strong><span>Seja a primeira pessoa a publicar uma percepção.</span></div>
-          ) : posts.map((p) => (
-            <article className="post" key={p.id}>
-              <span className="avatar" data-p="people">{initials(personName(people, p.authorId))}</span>
-              <div>
-                <div><strong style={{ fontWeight: 500 }}>{personName(people, p.authorId)}</strong> <span className="faint" style={{ fontSize: 13 }}>{relativeTime(p.createdAt)}</span></div>
-                <p className="post-body">{p.body}</p>
-                <div className="post-actions">
-                  <button aria-pressed={reacted.has(p.id)} onClick={() => void react(p.id)}>Faz sentido · {p.reactionCount}</button>
-                  <button onClick={() => setOpenComments(openComments === p.id ? null : p.id)}>Comentários · {p.commentCount}</button>
-                  <button onClick={() => void report(p.id)}>Denunciar</button>
-                </div>
-                {openComments === p.id && <Comments postId={p.id} onChange={load} />}
-              </div>
-            </article>
-          ))}
-        </section>
-        <aside className="stack">
-          <div className="card" data-p="people"><h3>Boas práticas</h3><p className="muted" style={{ marginTop: 8 }}>Fale das suas percepções. Não publique as respostas de outra pessoa sem que ela concorde.</p></div>
-          <div className="card"><h3>Grupos</h3><p className="muted" style={{ marginTop: 8 }}>Para conversar só com quem você escolher.</p><Link className="text-link" href="/grupos" style={{ marginTop: 10 }}>Ver grupos</Link></div>
-        </aside>
-      </div>
-    </>
-  );
-}
-
-function Comments({ postId, onChange }: { postId: string; onChange: () => Promise<void> }) {
-  const { toast } = useShell();
-  const [items, setItems] = useState<{ id: string; authorId: string; body: string; createdAt: string }[] | null>(null);
-  const [people, setPeople] = useState<Map<string, Profile>>(new Map());
-  const [body, setBody] = useState("");
-  const load = useCallback(async () => {
-    const r = await apiGet<{ items: { id: string; authorId: string; body: string; createdAt: string }[] }>(`/social/posts/${postId}/comments`);
-    setPeople(new Map(await loadPeople(r.items.map((c) => c.authorId))));
-    setItems(r.items);
-  }, [postId]);
-  useEffect(() => { void load().catch(() => setItems([])); }, [load]);
-  return (
-    <div className="comments">
-      {items?.map((c) => <div key={c.id}><strong style={{ fontWeight: 500 }}>{personName(people, c.authorId)}</strong> <span className="muted">{c.body}</span></div>)}
-      <form className="row" onSubmit={async (e) => {
-        e.preventDefault();
-        try { await apiPost(`/social/posts/${postId}/comments`, { body: body.trim() }); setBody(""); await load(); await onChange(); } catch (err) { toast(describeError(err), "error"); }
-      }}>
-        <input className="input" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Responder…" aria-label="Comentário" maxLength={2000} />
-        <button className="button button-small button-secondary" disabled={!body.trim()}>Enviar</button>
-      </form>
-    </div>
-  );
 }
 
 /* ---------- Groups ---------- */

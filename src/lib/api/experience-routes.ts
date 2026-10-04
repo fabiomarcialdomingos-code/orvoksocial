@@ -103,16 +103,6 @@ export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Res
     return apiJson({ items: result.rows });
   }
 
-  // Comments of a feed post.
-  if (method === "GET" && path.length === 4 && path[0] === "social" && path[1] === "posts" && path[3] === "comments") {
-    const postId = uuid.parse(path[2]);
-    const result = await pool.query(
-      `SELECT id,"authorId",body,"createdAt" FROM "SocialComment" WHERE "postId"=$1 ORDER BY "createdAt" ASC LIMIT 100`,
-      [postId],
-    );
-    return apiJson({ items: result.rows });
-  }
-
   // Group invitations addressed to the actor that are still open.
   if (method === "GET" && route === "/social/group-invites") {
     const result = await pool.query(
