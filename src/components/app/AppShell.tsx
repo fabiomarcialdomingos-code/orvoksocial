@@ -149,7 +149,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
             ))}
             {session?.role === "ADMIN" ? <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined}><IconeRede nome="escudo" /><span>Quartel general</span></Link> : null}
           </nav>
-          <Link className={`${s.btn} ${s.btnAzul} ${s.desafiar}`} href="/comecar"><IconeRede nome="mais" /><span>Convidar alguém</span></Link>
+          <Link prefetch={false} className={`${s.btn} ${s.btnAzul} ${s.desafiar}`} href="/comecar"><IconeRede nome="mais" /><span>Convidar alguém</span></Link>
           <div className={s.eu}>
             <Avatar nome={nome} tamanho={40} voce />
             <span className={s.euNome}><b>{nome}</b><small>Sua conta</small></span>
@@ -172,9 +172,9 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
               <h3>Quem vai te enxergar?</h3>
               <p className={s.sub}>Cada relação tem perguntas próprias.</p>
               <div className={s.relacoes}>
-                <Link href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
-                <Link href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-                <Link href="/comecar?rel=crush"><IconeRede nome="coracao" />Alguém especial</Link>
+                <Link prefetch={false} href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
+                <Link prefetch={false} href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
+                <Link prefetch={false} href="/comecar?rel=crush"><IconeRede nome="coracao" />Alguém especial</Link>
               </div>
             </section>
             <nav className={s.rodape} aria-label="Links"><Link href="/privacidade">Privacidade</Link><Link href="/meus-dados">Meus dados</Link><Link href="/perfil">Perfil</Link><span>© orvok 2026</span></nav>
@@ -184,7 +184,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
 
       <nav className={s.abasMovel} aria-label="Navegação">
         {MENU.filter((m) => m.href !== "/notificacoes").slice(0, 2).map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
-        <Link className={s.meio} href="/comecar" aria-label="Convidar alguém"><IconeRede nome="mais" /></Link>
+        <Link prefetch={false} className={s.meio} href="/comecar" aria-label="Convidar alguém"><IconeRede nome="mais" /></Link>
         {[MENU[2]!, MENU[6]!].map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
       </nav>
       {toastState && <div className="toast" role={toastState.kind === "error" ? "alert" : "status"} data-kind={toastState.kind}>{toastState.text}</div>}

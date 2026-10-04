@@ -14,7 +14,9 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-      { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
+      // Content-Security-Policy não entra aqui: precisa de um nonce por requisição
+      // (liberar os scripts inline que o próprio Next.js injeta para hidratar), e
+      // headers() só gera um valor estático. Ver middleware.ts.
     ];
     if (process.env.APP_ENV === "production")
       common.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" });

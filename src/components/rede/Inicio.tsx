@@ -69,7 +69,7 @@ export function Inicio() {
   return (
     <>
       <div className={s.stories} aria-label="Pessoas">
-        <Link className={s.story} href="/comecar"><span className={`${s.anel} ${s.anelVoce}`}><Avatar nome={nome} tamanho={58} voce /><span className={s.mais}>+</span></span><b>Você</b></Link>
+        <Link prefetch={false} className={s.story} href="/comecar"><span className={`${s.anel} ${s.anelVoce}`}><Avatar nome={nome} tamanho={58} voce /><span className={s.mais}>+</span></span><b>Você</b></Link>
         {conhecidos.map((n) => <Link key={n} className={s.story} href="/desafios"><span className={s.anel}><Avatar nome={n} tamanho={58} /></span><b>{n}</b></Link>)}
       </div>
 
@@ -88,7 +88,7 @@ export function Inicio() {
             const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel);
             return (
               <li key={rel} className={feito ? s.feito : ""}>
-                <Link href={`/comecar?rel=${rel}`}>
+                <Link prefetch={false} href={`/comecar?rel=${rel}`}>
                   <span className={s.check} aria-hidden="true">{feito ? "✓" : <IconeRede nome={icone} />}</span>
                   <span><b>{feito ? `${rotulo}: convite enviado` : `Convide ${rotulo === "Alguém especial" ? "alguém especial" : rotulo === "Família" ? "a família" : "os amigos"}`}</b><small>{feito ? "Mandar para mais alguém" : "Perguntas feitas para essa relação"}</small></span>
                 </Link>
@@ -107,7 +107,7 @@ export function Inicio() {
       </div>
 
       {dados && itens.length === 0 ? (
-        <div className={s.vazio}><strong>Sua rede começa com um convite.</strong><span>Quando alguém compartilhar como te vê, o aviso aparece aqui.</span><Link className={s.btnP} href="/comecar">Convidar alguém</Link></div>
+        <div className={s.vazio}><strong>Sua rede começa com um convite.</strong><span>Quando alguém compartilhar como te vê, o aviso aparece aqui.</span><Link prefetch={false} className={s.btnP} href="/comecar">Convidar alguém</Link></div>
       ) : null}
 
       {itens.map((it) => {
@@ -127,7 +127,7 @@ export function Inicio() {
             <div>
               <div className={s.cab}><b>Você</b><span>{quando(it.em)}</span></div>
               <p className={s.texto}>Compartilhou como vê <b>{it.nome}</b>. <span className={`${s.rel} ${s[`rel_${it.relacao}`]}`}>{ROTULO_RELACAO[it.relacao]}</span></p>
-              <Link className={s.btnFio} href={`/comecar?volta=${encodeURIComponent(it.nome)}&de=${it.codigo}`}>Convidar {it.nome} de volta</Link>
+              <Link prefetch={false} className={s.btnFio} href={`/comecar?volta=${encodeURIComponent(it.nome)}&de=${it.codigo}`}>Convidar {it.nome} de volta</Link>
             </div>
           </article>
         );

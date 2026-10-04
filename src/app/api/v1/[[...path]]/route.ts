@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { canAccess } from "@/lib/access-control";
-import { assertMutationRequest, readSessionCookie, requirePrincipal } from "@/lib/auth/session";
+import { assertMutationRequest, authPool, readSessionCookie, requirePrincipal } from "@/lib/auth/session";
 import { tokenHash } from "@/lib/auth/crypto";
+import { AuthService } from "@/lib/auth/service";
 import { DataRightsService } from "@/lib/api/data-rights";
 import { withIdempotency } from "@/lib/api/idempotency";
 import { operationalPool } from "@/lib/api/operational-db";
@@ -597,8 +598,19 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
     const body = z.strictObject({ action: z.enum(["SUSPEND", "UNSUSPEND", "TEMPORARY_BLOCK", "PASSWORD_RESET" ]), reason: z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));
     const targetId = uuid.parse(path[2]);
-    if (body.action === "SUSPEND") await pool.query(`UPDATE "User" SET status='SUSPENDED' WHERE id=$1`, [targetId]);
-    if (body.action === "UNSUSPEND") await pool.query(`UPDATE "User" SET status='ACTIVE' WHERE id=$1`, [targetId]);
+    // Every branch must actually change something (or throw) before the success
+    // row below is written — an admin action that records success without an
+    // effect is worse than one that fails loudly, especially mid-incident.
+    if (body.action === "SUSPEND" || body.action === "TEMPORARY_BLOCK") {
+      const updated = await pool.query(`UPDATE "User" SET status='SUSPENDED' WHERE id=$1 AND status='ACTIVE' RETURNING id`, [targetId]);
+      if (!updated.rowCount) throw new OperationalApiError(404, "NOT_FOUND");
+      await new AuthService(authPool()).adminRevokeSessions(targetId);
+    } else if (body.action === "UNSUSPEND") {
+      const updated = await pool.query(`UPDATE "User" SET status='ACTIVE' WHERE id=$1 AND status='SUSPENDED' RETURNING id`, [targetId]);
+      if (!updated.rowCount) throw new OperationalApiError(404, "NOT_FOUND");
+    } else {
+      await new AuthService(authPool()).adminForcePasswordReset(targetId);
+    }
     const actionId = randomUUID();
     await pool.query(`INSERT INTO "AdminAction" (id,"adminId","targetUserId",action,reason) VALUES ($1,$2,$3,$4,$5)`, [actionId, actorId, targetId, body.action, body.reason]);
     await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,$3,'User',$4,clock_timestamp())`, [randomUUID(), actorId, `ADMIN_${body.action}`, targetId]);

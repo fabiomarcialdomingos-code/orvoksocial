@@ -41,7 +41,6 @@
 .caixa { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
 .caixa h3 { margin: 0; padding: 16px 18px 6px; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
 .sub { margin: 0 18px 12px; color: var(--text-2); font-size: 13px; }
-.caixaRede { background: #050b18; }
 .rede { height: 240px; }
 .rede canvas { width: 100%; height: 100%; display: block; }
 .relacoes { display: grid; gap: 8px; padding: 0 18px 18px; }

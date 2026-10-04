@@ -61,6 +61,11 @@ export function criaGlobo(canvas: HTMLCanvasElement, o: OpcoesGlobo): { parar: (
     R = Math.min(W, H) * o.escala; CX = W / 2; CY = H / 2 + (o.deslocamento ?? 0) * H;
   };
   tamanho();
+  // ResizeObserver (não só "resize" da janela): em layouts flex/grid o canvas pode medir 0x0
+  // no primeiro paint, antes do contêiner esticar — sem isso o globo fica permanentemente
+  // invisível até a janela ser redimensionada manualmente.
+  const ro = new ResizeObserver(() => tamanho());
+  ro.observe(canvas);
   window.addEventListener("resize", tamanho);
   const obs = new IntersectionObserver((es) => { ativo = es[0]?.isIntersecting ?? true; });
   obs.observe(canvas);
@@ -121,5 +126,5 @@ export function criaGlobo(canvas: HTMLCanvasElement, o: OpcoesGlobo): { parar: (
     requestAnimationFrame(quadro);
   };
   requestAnimationFrame(quadro);
-  return { parar: () => { vivo = false; obs.disconnect(); window.removeEventListener("resize", tamanho); } };
+  return { parar: () => { vivo = false; obs.disconnect(); ro.disconnect(); window.removeEventListener("resize", tamanho); } };
 }

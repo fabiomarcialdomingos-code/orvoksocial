@@ -17,8 +17,8 @@ export function SiteNav() {
       <div className="container site-nav-inner">
         <Brand />
         <nav aria-label="Navegação principal">
-          <Link href="/">Início</Link>
-          <Link href="/comecar">Convidar alguém</Link>
+          <Link prefetch={false} href="/">Início</Link>
+          <Link prefetch={false} href="/comecar">Convidar alguém</Link>
         </nav>
         <div className="site-nav-actions">
           {signedIn ? (
@@ -26,7 +26,7 @@ export function SiteNav() {
           ) : (
             <>
               <Link href="/entrar" className="text-link">Entrar</Link>
-              <Link href="/comecar" className="button button-small">Começar sem cadastro</Link>
+              <Link prefetch={false} href="/comecar" className="button button-small">Começar sem cadastro</Link>
             </>
           )}
         </div>

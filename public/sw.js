@@ -1,6 +1,16 @@
 // Service worker do orvok: habilita a instalação como aplicativo e guarda só
 // ícones e a página inicial estática. Dados e telas logadas sempre vêm da rede.
-const CACHE = "orvok-v1";
+//
+// CACHE precisa mudar a cada deploy que altere algo estático (inicio.html,
+// inicio.js, pixel.js, ícones). O navegador só detecta que o service worker
+// "mudou" comparando os bytes deste arquivo — como CACHE era uma string fixa,
+// sw.js nunca mudava de um deploy para o outro, o navegador nunca reinstalava
+// o worker, e /inicio.html ficava congelado na primeira versão que cada
+// visitante carregou. Foi exatamente isso que travou o clique em "/comecar"
+// (a página hidratava contra um HTML desatualizado e o React descartava os
+// listeners). Bump manual por enquanto: suba este número a cada deploy que
+// mexer em algum arquivo estático.
+const CACHE = "orvok-v2";
 const ESTATICOS = ["/inicio.html", "/icone-192.png", "/icone-512.png", "/manifest.webmanifest"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ESTATICOS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {
@@ -9,6 +19,12 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
+  if (url.pathname === "/inicio.html") {
+    // Rede primeiro: a home é o destino de todos os anúncios e muda com
+    // frequência. O cache só entra como rede de segurança (modo offline).
+    e.respondWith(fetch(e.request).then((r) => { caches.open(CACHE).then((c) => c.put(e.request, r.clone())); return r; }).catch(() => caches.match(e.request)));
+    return;
+  }
   if (ESTATICOS.includes(url.pathname)) e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
 });
 

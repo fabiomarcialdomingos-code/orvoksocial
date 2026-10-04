@@ -59,6 +59,18 @@ export async function GET(request: Request) {
   }
 
   const ready = Object.values(checks).every((c) => c.ok);
+  const status = ready ? 200 : 503;
+  const headers = { "Cache-Control": "no-store" };
+
+  // The detailed breakdown (table names, migration/grant state, connection-error
+  // category) is only for whoever is actually deploying — it's reconnaissance
+  // material for anyone else. A shared secret gates it in deployed environments;
+  // local/dev/test keeps the full detail for convenience. Uptime/liveness probes
+  // still get a real ready/not_ready status either way, just without the "why".
+  const key = env.READINESS_CHECK_KEY;
+  const authorized = !deployed || (Boolean(key) && request.headers.get("x-readiness-key") === key);
+  if (!authorized) return Response.json({ status: ready ? "ready" : "not_ready" }, { status, headers });
+
   const body = Object.fromEntries(Object.entries(checks).map(([k, c]) => [k, c.ok ? { ok: true } : c]));
-  return Response.json({ status: ready ? "ready" : "not_ready", checks: body }, { status: ready ? 200 : 503, headers: { "Cache-Control": "no-store" } });
+  return Response.json({ status: ready ? "ready" : "not_ready", checks: body }, { status, headers });
 }

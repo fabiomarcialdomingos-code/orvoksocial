@@ -12,6 +12,16 @@
   background: radial-gradient(60% 50% at 50% 0%, rgb(76 141 255 / 0.16), transparent 70%), radial-gradient(40% 40% at 50% 100%, rgb(255 168 52 / 0.07), transparent 70%); }
 .app { width: min(480px, 100%); min-height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; }
 @media (min-width: 560px) { .app { border-inline: 1px solid var(--fio); background: color-mix(in srgb, var(--sup) 55%, transparent); } }
+/* Em telas largas o cartão central fica isolado; reforça a atmosfera para não ler como página sem estilo. */
+@media (min-width: 900px) {
+  .raiz::before {
+    background:
+      radial-gradient(42% 60% at 8% 15%, rgb(76 141 255 / 0.16), transparent 70%),
+      radial-gradient(42% 60% at 92% 85%, rgb(255 168 52 / 0.1), transparent 70%),
+      radial-gradient(60% 50% at 50% 0%, rgb(76 141 255 / 0.12), transparent 70%);
+  }
+  .app { box-shadow: 0 0 120px -40px rgb(76 141 255 / 0.35); }
+}
 .topo { display: flex; align-items: center; gap: 12px; padding: 14px 18px; min-height: 64px; }
 .marca { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 20px; letter-spacing: -0.04em; margin-right: auto; color: var(--tinta); text-decoration: none; }
 .marca svg { width: 26px; height: 26px; }
@@ -85,7 +95,6 @@
 .cartaoConv small { color: var(--suave); }
 .cartaoConv .url { position: absolute; right: 16px; top: 14px; font-size: 12px; color: var(--suave); }
 .balao { background: #16315E; border-radius: 18px 18px 4px 18px; padding: 12px 14px; margin: 0 0 16px 36px; font-size: 15px; line-height: 1.45; }
-.balaoDele { background: var(--sup-2); border-radius: 18px 18px 18px 4px; margin: 0 36px 16px 0; }
 .balao .link { color: #9CC2FF; text-decoration: underline; word-break: break-all; }
 .consent { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; border: 1px solid var(--fio-2); background: var(--sup); cursor: pointer; font-size: 14px; color: var(--suave); margin-bottom: 6px; }
 .consent input { width: 22px; height: 22px; accent-color: var(--azul); flex: none; margin: 1px 0 0; }

@@ -35,9 +35,9 @@ export function DesafiosConta() {
         <h2>Convide mais alguém</h2>
         <p>Cada relação tem perguntas próprias. Quanto mais pessoas compartilharem como te enxergam, mais completo fica o seu retrato.</p>
         <div className={s.chips}>
-          <Link className={s.chip} href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
-          <Link className={s.chip} href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-          <Link className={s.chip} href="/comecar?rel=crush"><IconeRede nome="coracao" />Alguém especial</Link>
+          <Link prefetch={false} className={s.chip} href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
+          <Link prefetch={false} className={s.chip} href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
+          <Link prefetch={false} className={s.chip} href="/comecar?rel=crush"><IconeRede nome="coracao" />Alguém especial</Link>
         </div>
       </section>
 
@@ -67,7 +67,7 @@ export function DesafiosConta() {
               <Avatar nome={r.nome} tamanho={40} />
               <span className={s.nome}>Você compartilhou como vê <b>{r.nome}</b></span>
             </div>
-            <div className={s.chips}><Link className={s.btnP} href={`/comecar?volta=${encodeURIComponent(r.nome)}&de=${r.codigo}`}>Convidar {r.nome} de volta</Link></div>
+            <div className={s.chips}><Link prefetch={false} className={s.btnP} href={`/comecar?volta=${encodeURIComponent(r.nome)}&de=${r.codigo}`}>Convidar {r.nome} de volta</Link></div>
           </article>
         ))
       )}

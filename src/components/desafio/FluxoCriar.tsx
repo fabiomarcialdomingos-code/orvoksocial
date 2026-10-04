@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { trackMetaCustomEvent, trackMetaEvent } from "@/lib/client/pixel";
 import { Globo } from "./Globo";
 import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, enviarJson, estilos as s, useConta } from "./pecas";
 
@@ -38,6 +39,8 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [diag, setDiag] = useState<Diagnostico | null>(null);
+  // Quem chega aqui está vendo a experiência principal do orvok (campanha Meta Ads, seção 6 do briefing).
+  useEffect(() => { trackMetaEvent("ViewContent", { content_name: "comecar" }); }, []);
   // Quem já tem conta não precisa se apresentar: o nome vem do perfil.
   const conta = useConta();
   const logado = Boolean(conta);
@@ -95,6 +98,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
     if (canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
     if (canal === "copiar") await navigator.clipboard?.writeText(texto).catch(() => undefined);
     if (canal === "outros" && navigator.share) await navigator.share({ text: mensagem, url }).catch(() => undefined);
+    trackMetaCustomEvent("Convite", { content_name: "retrato" }); // "compartilhamento ou convite" (briefing, seção 6)
     setTela("enviado");
   };
 
@@ -106,7 +110,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
         <div className={s.opcoes} role="radiogroup" aria-label="Quem vai compartilhar a visão sobre você">
           {RELACOES.map((rel) => (
             <button key={rel.id} className={`${s.op} ${s.relacao} ${escolheu && relacao === rel.id ? s.opSel : ""}`} type="button" role="radio" aria-checked={escolheu && relacao === rel.id}
-              onClick={() => { if (rel.id !== relacao) { setPerguntas([]); setRespostas([]); } setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(logado ? "pergunta" : "nome"); }, 250); }}>
+              onClick={() => { trackMetaEvent("Lead", { content_name: "retrato" }); if (rel.id !== relacao) { setPerguntas([]); setRespostas([]); } setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(logado ? "pergunta" : "nome"); }, 250); }}>
               <span className={s.letra}><Icone nome={rel.icone} /></span>
               <span><b>{rel.rotulo}</b><small>{rel.texto}</small></span>
             </button>
