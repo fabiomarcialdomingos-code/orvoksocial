@@ -1,16 +1,24 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-/** Fontes Onest (300, 500, 800) para as imagens geradas no servidor. */
+/**
+ * Fontes Onest (300, 500, 800) para as imagens geradas no servidor. Os arquivos ficam
+ * no próprio repositório (src/lib/desafio/fonts), com nomes escritos por extenso para o
+ * empacotamento da Vercel enxergar cada um (e next.config.ts reforça o empacotamento).
+ * Não dependem de nenhum pacote em node_modules.
+ */
 let fontes: { name: string; data: Buffer; weight: 300 | 500 | 800; style: "normal" }[] | null = null;
 export async function fontesCartao() {
   if (fontes) return fontes;
-  const base = join(process.cwd(), "node_modules", "@fontsource", "onest", "files");
-  const [leve, media, forte] = await Promise.all([300, 500, 800].map((p) => readFile(join(base, `onest-latin-${p}-normal.woff`))));
+  const [leve, media, forte] = await Promise.all([
+    readFile(join(process.cwd(), "src/lib/desafio/fonts/onest-latin-300-normal.woff")),
+    readFile(join(process.cwd(), "src/lib/desafio/fonts/onest-latin-500-normal.woff")),
+    readFile(join(process.cwd(), "src/lib/desafio/fonts/onest-latin-800-normal.woff")),
+  ]);
   fontes = [
-    { name: "Onest", data: leve!, weight: 300, style: "normal" },
-    { name: "Onest", data: media!, weight: 500, style: "normal" },
-    { name: "Onest", data: forte!, weight: 800, style: "normal" },
+    { name: "Onest", data: leve, weight: 300, style: "normal" },
+    { name: "Onest", data: media, weight: 500, style: "normal" },
+    { name: "Onest", data: forte, weight: 800, style: "normal" },
   ];
   return fontes;
 }

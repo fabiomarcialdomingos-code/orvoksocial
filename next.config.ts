@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // A imagem de prévia do convite lê as fontes do disco: garante que entrem no pacote da função.
+  outputFileTracingIncludes: { "/d/[codigo]/opengraph-image": ["./src/lib/desafio/fonts/**"] },
   // Accept the loopback host used when accessing the local development server.
   allowedDevOrigins: ["127.0.0.1"],
   // A página inicial é a rede em HTML estático (public/inicio.html).
