@@ -4,7 +4,8 @@ import { Pool } from "pg";
 export class DataRightsService {
   constructor(private readonly pool: Pool) {}
 
-  async streamOwnData(actorId: string, signal: AbortSignal): Promise<Response> {
+  /** `extra` entra no arquivo como "convitesEMundo": dados que vivem em tabelas fora do módulo operacional. */
+  async streamOwnData(actorId: string, signal: AbortSignal, extra?: unknown): Promise<Response> {
     await this.pool.query(
       `INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'DATA_EXPORT','User',$2,clock_timestamp())`,
       [randomUUID(), actorId],
@@ -54,6 +55,7 @@ export class DataRightsService {
           }
           yield "]";
         }
+        if (extra !== undefined) yield `,"convitesEMundo":${JSON.stringify(extra)}`;
         yield "}}";
       }
       const iterator = chunks()[Symbol.asyncIterator]();

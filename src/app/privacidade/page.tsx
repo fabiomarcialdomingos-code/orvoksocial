@@ -190,7 +190,7 @@ export default function PoliticaPrivacidadePage() {
               <li>confirmar se guardamos dados seus, e mostrar quais são;</li>
               <li>corrigir dados incompletos ou desatualizados;</li>
               <li>apagar dados que você não quer mais que existam;</li>
-              <li>receber uma cópia dos seus dados, em formato que você possa reutilizar;</li>
+              <li>receber uma cópia dos seus dados, em formato que você possa reutilizar. A cópia inclui os seus convites, as suas respostas, a visão que você compartilhou sobre outras pessoas, o que você guardou só para você, as suas conversas do Mundo e as suas conversas privadas (as mensagens, enquanto não forem apagadas aos 90 dias). Quem respondeu de forma anônima sobre você aparece só como contagem;</li>
               <li>revogar um consentimento dado anteriormente;</li>
               <li>saber com quem seus dados são compartilhados.</li>
             </ul>

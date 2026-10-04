@@ -5,6 +5,8 @@ import { assertMutationRequest, authPool, readSessionCookie, requirePrincipal } 
 import { tokenHash } from "@/lib/auth/crypto";
 import { AuthService } from "@/lib/auth/service";
 import { DataRightsService } from "@/lib/api/data-rights";
+import { exportarConvitesEMundo } from "@/lib/api/dados-convites";
+import { lerTokenConvidado } from "@/lib/desafio/service";
 import { withIdempotency } from "@/lib/api/idempotency";
 import { operationalPool } from "@/lib/api/operational-db";
 import { RadarOperations } from "@/lib/api/radar-operations";
@@ -387,7 +389,9 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   }
   if (method === "GET" && route === "/me/export") {
     requireAccess(canAccess({ role, actorId, resource: "DATA_REQUEST", action: "READ", ownerId: actorId }));
-    return rights.streamOwnData(actorId, request.signal);
+    // Convites, retrato, Mundo e conversas vivem em tabelas próprias; entram no mesmo arquivo.
+    const convitesEMundo = await exportarConvitesEMundo(authPool(), actorId, lerTokenConvidado(request));
+    return rights.streamOwnData(actorId, request.signal, convitesEMundo);
   }
   if (method === "POST" && route === "/me/erasure-requests") {
     z.strictObject({}).parse(await readJsonBody(request));

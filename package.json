@@ -27,7 +27,8 @@
     "db:seed:demo": "tsx scripts/seed-demo.ts",
     "test:e2e": "tsx scripts/simulate-users.ts",
     "test:desafio": "tsx scripts/test-desafio.ts",
-    "test:mundo": "tsx scripts/test-mundo.ts"
+    "test:mundo": "tsx scripts/test-mundo.ts",
+    "test:dados": "tsx scripts/test-dados.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
