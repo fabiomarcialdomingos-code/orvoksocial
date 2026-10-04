@@ -3,8 +3,9 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
-import { AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
+import { AVISO_IDADE, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
 import { registrarEvento } from "@/lib/medicao";
+import { enviarDenunciaDeConversaPorEmail } from "@/lib/desafio/moderacao-mail";
 import { enviarPush } from "@/lib/push";
 
 /** Notifica e, se a pessoa ativou, manda um aviso push com o selo atualizado. */
@@ -245,6 +246,138 @@ export class MundoService {
       pessoas: lista.map(({ chave, ...p }) => ({ id: tokenHash(chave).slice(0, 12), ...p })),
       andamento,
     };
+  }
+
+  /** De que lado desta conversa a pessoa está (ou null se não faz parte dela). */
+  private ladoDe(r: Rodada, token: string | null, userId: string | null): "criador" | "convidado" | null {
+    if (userId && userId === r.initiatorUserId) return "criador";
+    if (!r.guestTokenHash) return null;
+    if (token && tokenHash(token) === r.guestTokenHash) return "convidado";
+    if (userId && userId === r.guestUserId) return "convidado";
+    return null;
+  }
+
+  /** Quem tem conta confirma uma vez (16+ e Termos) antes de conversar; convidados já confirmaram ao dar a opinião. */
+  private async confirmouIdade(userId: string | null): Promise<boolean> {
+    if (!userId) return true;
+    return ((await this.pool.query(`SELECT 1 FROM "UserAgeConsent" WHERE "userId"=$1`, [userId])).rowCount ?? 0) > 0;
+  }
+
+  /**
+   * Conversa depois da revelação. Só existe entre as duas pessoas de uma
+   * conversa do Mundo já revelada (as duas deram opinião) — nunca com quem
+   * respondeu de forma anônima sobre um retrato. O primeiro contato precisa
+   * ser aceito, e cada lado vê só o que é seu e o que é da outra pessoa.
+   */
+  async conversa(cod: string, token: string | null, userId: string | null) {
+    const { rodada, e } = await this.rodadaPorCodigo(cod);
+    const lado = this.ladoDe(rodada, token, userId);
+    if (!lado) throw new AuthError("FORBIDDEN", 403);
+    const liberada = this.estado(rodada, e) === "revelada";
+    const precisaIdade = lado === "criador" && !(await this.confirmouIdade(userId));
+    const t = await this.pool.query<{ id: string; proposerSide: "criador" | "convidado"; status: "PROPOSED" | "ACCEPTED" | "DECLINED" | "CLOSED" }>(
+      `SELECT id,"proposerSide",status FROM "RoundThread" WHERE "roundId"=$1`, [rodada.id]);
+    const fio = t.rows[0] ?? null;
+    const outra = lado === "criador" ? rodada.guestName : rodada.initiatorName;
+    const mensagens = fio && fio.status !== "PROPOSED"
+      ? (await this.pool.query<{ side: string; body: string; createdAt: Date }>(
+          `SELECT side,body,"createdAt" FROM "RoundMessage" WHERE "threadId"=$1 ORDER BY "createdAt" ASC LIMIT 300`, [fio.id])).rows
+          .map((m) => ({ minha: m.side === lado, texto: m.body, em: m.createdAt }))
+      : [];
+    return {
+      liberada, outra, precisaIdade, avisoIdade: precisaIdade ? AVISO_IDADE : null, status: fio?.status ?? null,
+      // Quem propôs? "voce" aguarda a resposta; "outra" espera a sua.
+      proposta: fio ? (fio.proposerSide === lado ? "voce" : "outra") : null,
+      mensagens,
+    };
+  }
+
+  /** Propor, aceitar, recusar, encerrar, enviar uma mensagem ou denunciar. */
+  async agirNaConversa(cod: string, raw: unknown, token: string | null, userId: string | null) {
+    const d = z.discriminatedUnion("acao", [
+      z.strictObject({ acao: z.literal("confirmar_idade"), consentimentoIdade: idadeSchema }),
+      z.strictObject({ acao: z.literal("propor") }),
+      z.strictObject({ acao: z.literal("aceitar") }),
+      z.strictObject({ acao: z.literal("recusar") }),
+      z.strictObject({ acao: z.literal("encerrar") }),
+      z.strictObject({ acao: z.literal("enviar"), texto: z.string().trim().min(1).max(1000) }),
+      z.strictObject({ acao: z.literal("denunciar"), motivo: z.string().trim().min(1).max(1000) }),
+    ]).parse(raw);
+    const { rodada, e } = await this.rodadaPorCodigo(cod);
+    const lado = this.ladoDe(rodada, token, userId);
+    if (!lado) throw new AuthError("FORBIDDEN", 403);
+    const outroLado = lado === "criador" ? "convidado" : "criador";
+    const chave = tokenHash(token ?? userId ?? "");
+    if (d.acao === "confirmar_idade") {
+      if (!userId) throw new AuthError("FORBIDDEN", 403);
+      await this.pool.query(`INSERT INTO "UserAgeConsent" ("userId",version) VALUES ($1,$2) ON CONFLICT ("userId") DO NOTHING`, [userId, AVISO_IDADE_VERSAO]);
+      return { ok: true };
+    }
+    // Propor, aceitar e escrever exigem a confirmação de idade de quem tem conta.
+    if (["propor", "aceitar", "enviar"].includes(d.acao) && lado === "criador" && !(await this.confirmouIdade(userId))) throw new AuthError("AGE_REQUIRED", 403);
+    const fio = (await this.pool.query<{ id: string; proposerSide: "criador" | "convidado"; status: string }>(
+      `SELECT id,"proposerSide",status FROM "RoundThread" WHERE "roundId"=$1`, [rodada.id])).rows[0];
+
+    if (d.acao === "propor") {
+      if (this.estado(rodada, e) !== "revelada") throw new AuthError("CONFLICT", 409);
+      if (fio) throw new AuthError("CONFLICT", 409);
+      await this.limite(`conversa:propor:${chave}`, 5, 86400);
+      const id = randomUUID();
+      await this.pool.query(`INSERT INTO "RoundThread" (id,"roundId","proposerSide") VALUES ($1,$2,$3) ON CONFLICT ("roundId") DO NOTHING`, [id, rodada.id, lado]);
+      // Só quem tem conta recebe aviso; quem entrou sem cadastro vê o convite ao voltar pelo link.
+      if (outroLado === "criador") {
+        await avisar(this.pool, rodada.initiatorUserId, "MUNDO_CONVERSA_PROPOSTA", id, {
+          titulo: "Alguém quer conversar", corpo: `${rodada.guestName ?? "Alguém"} gostaria de conversar sobre "${e.title}".`, url: "/eventos",
+        });
+      }
+      return { ok: true };
+    }
+    if (!fio) throw new AuthError("NOT_FOUND", 404);
+
+    if (d.acao === "aceitar" || d.acao === "recusar") {
+      if (fio.status !== "PROPOSED" || fio.proposerSide === lado) throw new AuthError("CONFLICT", 409);
+      await this.pool.query(`UPDATE "RoundThread" SET status=$2,"respondedAt"=clock_timestamp() WHERE id=$1`, [fio.id, d.acao === "aceitar" ? "ACCEPTED" : "DECLINED"]);
+      return { ok: true };
+    }
+    if (d.acao === "encerrar") {
+      if (!["PROPOSED", "ACCEPTED"].includes(fio.status)) throw new AuthError("CONFLICT", 409);
+      await this.pool.query(`UPDATE "RoundThread" SET status='CLOSED',"respondedAt"=clock_timestamp() WHERE id=$1`, [fio.id]);
+      return { ok: true };
+    }
+    if (d.acao === "denunciar") {
+      await this.limite(`conversa:denunciar:${chave}`, 5, 86400);
+      const id = randomUUID();
+      await this.pool.query(`INSERT INTO "RoundThreadReport" (id,"threadId","reporterSide",reason) VALUES ($1,$2,$3,$4)`, [id, fio.id, lado, d.motivo]);
+      await enviarDenunciaDeConversaPorEmail({ id, codigoRodada: rodada.code, threadId: fio.id, lado, motivo: d.motivo });
+      return { ok: true };
+    }
+    // enviar
+    if (fio.status !== "ACCEPTED") throw new AuthError("CONFLICT", 409);
+    await this.limite(`conversa:enviar:${chave}`, 40, 3600);
+    const total = Number((await this.pool.query<{ n: string }>(`SELECT count(*) AS n FROM "RoundMessage" WHERE "threadId"=$1`, [fio.id])).rows[0]!.n);
+    if (total >= 300) throw new AuthError("CONFLICT", 409);
+    const ultima = (await this.pool.query<{ side: string }>(`SELECT side FROM "RoundMessage" WHERE "threadId"=$1 ORDER BY "createdAt" DESC LIMIT 1`, [fio.id])).rows[0];
+    const msgId = randomUUID();
+    await this.pool.query(`INSERT INTO "RoundMessage" (id,"threadId",side,body) VALUES ($1,$2,$3,$4)`, [msgId, fio.id, lado, d.texto]);
+    // Aviso só quando a vez muda de mãos, sem repetir a cada mensagem seguida, e nunca com o texto da mensagem.
+    if (outroLado === "criador" && (!ultima || ultima.side !== lado)) {
+      await avisar(this.pool, rodada.initiatorUserId, "MUNDO_CONVERSA_MENSAGEM", msgId, {
+        titulo: "Nova mensagem", corpo: `${rodada.guestName ?? "Alguém"} respondeu na conversa sobre "${e.title}".`, url: "/eventos",
+      });
+    }
+    return { ok: true };
+  }
+
+  /** Limite por janela de tempo (mesmo mecanismo do restante do app). */
+  private async limite(chave: string, max: number, segundos: number): Promise<void> {
+    const r = await this.pool.query<{ attempts: number }>(
+      `INSERT INTO "AuthRateLimit" ("keyHash",attempts,"resetsAt") VALUES ($1,1,clock_timestamp()+($2::int * interval '1 second'))
+       ON CONFLICT ("keyHash") DO UPDATE SET
+         attempts=CASE WHEN "AuthRateLimit"."resetsAt" <= clock_timestamp() THEN 1 ELSE "AuthRateLimit".attempts+1 END,
+         "resetsAt"=CASE WHEN "AuthRateLimit"."resetsAt" <= clock_timestamp() THEN clock_timestamp()+($2::int * interval '1 second') ELSE "AuthRateLimit"."resetsAt" END
+       RETURNING attempts`,
+      [tokenHash(`rate:mundo:${chave}`), segundos]);
+    if (r.rows[0]!.attempts > max) throw new AuthError("RATE_LIMITED", 429);
   }
 
   /** Rodadas de quem está logado: as que criou e as que recebeu como convidado. */

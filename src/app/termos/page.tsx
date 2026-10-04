@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "As regras de uso do orvok: idade mínima, comportamento esperado e moderação.",
 };
 
-const ATUALIZADO_EM = "30 de setembro de 2026";
+const ATUALIZADO_EM = "4 de outubro de 2026";
 
 export default function TermosDeUsoPage() {
   return (
@@ -71,6 +71,21 @@ export default function TermosDeUsoPage() {
               Se uma denúncia mostrar um uso claramente abusivo do orvok, a conta ou o
               convite envolvido pode ser suspenso ou removido, mesmo sem aviso prévio.
             </p>
+          </section>
+
+          <section className={s.secao}>
+            <h2>Conversas entre pessoas</h2>
+            <p>
+              Depois que uma conversa do Mundo é revelada, as duas pessoas que participaram
+              dela podem propor uma conversa privada. <strong>Ela só começa se a outra pessoa
+              aceitar</strong>, e qualquer um dos dois pode encerrá-la quando quiser.
+            </p>
+            <ul>
+              <li>As conversas existem só entre pessoas que deram a opinião uma para a outra. Quem responde de forma anônima sobre o retrato de alguém <strong>nunca</strong> é identificado nem contatado.</li>
+              <li>As mensagens são privadas. O orvok <strong>não lê as conversas</strong>: elas só são abertas pela nossa equipe se alguém denunciar aquela conversa.</li>
+              <li>As mensagens são apagadas automaticamente depois de <strong>90 dias</strong>.</li>
+              <li>Vale tudo o que está na seção &ldquo;O que você não pode fazer no orvok&rdquo;: assédio, ameaça e conteúdo sexual ou ilegal podem levar à suspensão da conta.</li>
+            </ul>
           </section>
 
           <section className={s.secao}>

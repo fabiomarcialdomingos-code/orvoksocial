@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ROTULO_CATEGORIA, fraseEstado, quandoRevela, type Rodada } from "../../lib/client/mundo";
+import { Conversa } from "./Conversa";
 import { Icone, Inicial, Moldura, enviarJson, estilos as s, useConta } from "./pecas";
 
 const AVISO_IDADE = { aceito: true, versao: "desafio-aceitar-idade-v1" } as const;
@@ -56,6 +57,7 @@ export function FluxoRodada({ codigo, hashIdade }: { codigo: string; hashIdade: 
               </div>
             ) : <p className={`${s.miudo}`} style={{ justifyContent: "center" }}><Icone nome="relogio" />{fraseEstado(r)}</p>}
             {r.minhaOpiniao ? <p className={s.miudo} style={{ justifyContent: "center" }}>Sua opinião: {r.minhaOpiniao}</p> : null}
+            {r.estado === "revelada" ? <Conversa codigo={r.codigo} /> : null}
             <div className={s.empurra}>
               <a className={`${s.btn} ${s.btnAzul}`} href="/entrar?returnTo=%2Feventos">Abrir uma conversa minha</a>
               <a className={`${s.btn} ${s.btnFio}`} href="/comecar">Criar o meu retrato</a>

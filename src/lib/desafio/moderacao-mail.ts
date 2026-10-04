@@ -16,7 +16,7 @@ const smtpConfig = z.object({
  * (SMTP ausente, fora do ar, etc.) nunca derruba a resposta da API — ela
  * apenas fica para ser vista na próxima checagem manual.
  */
-export async function enviarDenunciaPorEmail(denuncia: { id: string; codigo: string; criadorNome: string; motivo: string }): Promise<void> {
+async function enviarParaModeracao(assunto: string, texto: string): Promise<void> {
   try {
     const config = smtpConfig.parse(process.env);
     const destino = config.ORVOK_REPORT_EMAIL ?? "contato@orvok.com.br";
@@ -32,13 +32,23 @@ export async function enviarDenunciaPorEmail(denuncia: { id: string; codigo: str
       greetingTimeout: 8_000,
       socketTimeout: 15_000,
     });
-    await transport.sendMail({
-      from: config.SMTP_FROM,
-      to: destino,
-      subject: `Nova denúncia no orvok — desafio ${denuncia.codigo}`,
-      text: `Denúncia ${denuncia.id}\nDesafio: ${denuncia.codigo}\nCriado por: ${denuncia.criadorNome}\n\nMotivo:\n${denuncia.motivo}`,
-    });
+    await transport.sendMail({ from: config.SMTP_FROM, to: destino, subject: assunto, text: texto });
   } catch (error) {
     console.error(JSON.stringify({ level: "error", event: "denuncia_mail_failure", errorName: (error as Error)?.name }));
   }
+}
+
+export async function enviarDenunciaPorEmail(denuncia: { id: string; codigo: string; criadorNome: string; motivo: string }): Promise<void> {
+  await enviarParaModeracao(
+    `Nova denúncia no orvok — convite ${denuncia.codigo}`,
+    `Denúncia ${denuncia.id}\nConvite: ${denuncia.codigo}\nCriado por: ${denuncia.criadorNome}\n\nMotivo:\n${denuncia.motivo}`,
+  );
+}
+
+/** Denúncia de uma conversa privada. O texto das mensagens NÃO vai no e-mail: quem modera abre no banco, só por causa da denúncia. */
+export async function enviarDenunciaDeConversaPorEmail(denuncia: { id: string; codigoRodada: string; threadId: string; lado: string; motivo: string }): Promise<void> {
+  await enviarParaModeracao(
+    `Denúncia de conversa privada no orvok — rodada ${denuncia.codigoRodada}`,
+    `Denúncia ${denuncia.id}\nConversa: ${denuncia.threadId}\nRodada: ${denuncia.codigoRodada}\nDenunciou: ${denuncia.lado}\n\nMotivo:\n${denuncia.motivo}\n\nAs mensagens só devem ser lidas por causa desta denúncia.`,
+  );
 }

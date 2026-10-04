@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Instalar o psql
         run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends postgresql-client
-      - name: Avisar eventos a uma semana de acontecer
+      - name: Avisar eventos próximos e apagar mensagens com mais de 90 dias
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/avisar-eventos.sql

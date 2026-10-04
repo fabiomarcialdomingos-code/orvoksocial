@@ -78,6 +78,10 @@ try {
     await owner.query(`GRANT SELECT,INSERT,UPDATE ON "GuestChallenge","GuestChallengeAttempt","GuestReport","GuestBlock" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT,INSERT,UPDATE ON "WorldRound" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT,INSERT ON "ProductEvent" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE ON "RoundThread" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,DELETE ON "RoundMessage" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT ON "RoundThreadReport" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT ON "UserAgeConsent" TO orvok_auth_runtime`);
     await owner.query(`GRANT USAGE,SELECT ON SEQUENCE "ProductEvent_id_seq" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "WorldEvent","WorldOpportunity","WorldResolution","WorldCategory" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "User","Question","QuestionVersion","AnswerOption","ConsentGrant",

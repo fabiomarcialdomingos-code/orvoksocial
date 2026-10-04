@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Como o orvok trata os dados das pessoas que usam o produto.",
 };
 
-const ATUALIZADO_EM = "30 de setembro de 2026";
+const ATUALIZADO_EM = "4 de outubro de 2026";
 
 export default function PoliticaPrivacidadePage() {
   return (
@@ -57,6 +57,12 @@ export default function PoliticaPrivacidadePage() {
               <li>
                 <strong>Suas respostas no seu retrato</strong> — as escolhas que você faz sobre
                 si mesmo — e <strong>a visão que você compartilha sobre outras pessoas</strong>.
+              </li>
+              <li>
+                <strong>As mensagens das conversas privadas</strong> que você aceita ter com
+                outra pessoa depois de uma conversa do Mundo. Elas só são lidas pela nossa
+                equipe se uma das duas pessoas denunciar a conversa; o texto nunca aparece em
+                avisos ou notificações.
               </li>
               <li>
                 <strong>E-mail e senha</strong>, se você cria uma conta com e-mail, ou o{" "}
@@ -147,6 +153,10 @@ export default function PoliticaPrivacidadePage() {
               <li>
                 Um convite criado sem conta fica disponível por <strong>60 dias</strong>. Depois
                 disso, ele deixa de poder ser respondido.
+              </li>
+              <li>
+                As <strong>mensagens das conversas privadas</strong> são apagadas
+                automaticamente depois de <strong>90 dias</strong>.
               </li>
               <li>
                 Se você cria uma conta, seus dados ficam guardados enquanto a conta existir.

@@ -18,3 +18,8 @@ avisados AS (
 )
 UPDATE "WorldEvent" SET "notifiedAt" = clock_timestamp()
  WHERE id IN (SELECT id FROM alvo);
+
+-- Retenção das conversas privadas: as mensagens são apagadas depois de 90 dias
+-- (a Política de privacidade promete isso). Fios sem mensagens ficam só como
+-- registro de que a conversa existiu; as denúncias guardam apenas o motivo.
+DELETE FROM "RoundMessage" WHERE "createdAt" < clock_timestamp() - interval '90 days';

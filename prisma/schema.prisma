@@ -664,3 +664,40 @@ model PushSubscription {
 
   @@index([userId], map: "PushSubscription_user_idx")
 }
+
+/// Conversa depois da revelação de uma conversa do Mundo. Uma por rodada; quem recebe o primeiro contato aceita.
+model RoundThread {
+  id          String    @id @db.Uuid
+  roundId     String    @unique @db.Uuid
+  proposerSide String   @db.VarChar(10)
+  status      String    @default("PROPOSED") @db.VarChar(10)
+  createdAt   DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  respondedAt DateTime? @db.Timestamptz(6)
+}
+
+/// Mensagem de uma conversa. Apagada após 90 dias; lida pela moderação só em caso de denúncia.
+model RoundMessage {
+  id        String   @id @db.Uuid
+  threadId  String   @db.Uuid
+  side      String   @db.VarChar(10)
+  body      String   @db.VarChar(1000)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([threadId, createdAt], map: "RoundMessage_thread_idx")
+  @@index([createdAt], map: "RoundMessage_created_idx")
+}
+
+model RoundThreadReport {
+  id           String   @id @db.Uuid
+  threadId     String   @db.Uuid
+  reporterSide String   @db.VarChar(10)
+  reason       String   @db.VarChar(1000)
+  createdAt    DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+}
+
+/// Confirmação única (16+ e Termos) de quem tem conta e vai conversar.
+model UserAgeConsent {
+  userId    String   @id @db.Uuid
+  version   String   @db.VarChar(40)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+}

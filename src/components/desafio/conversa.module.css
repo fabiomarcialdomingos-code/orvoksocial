@@ -1,0 +1,18 @@
+/* Conversa depois da revelação. Usa as cores de qualquer um dos dois temas (app e página do convidado). */
+.caixa { margin-top: 12px; padding: 14px; border-radius: 16px; border: 1px solid var(--fio-2, var(--line-strong)); background: var(--sup, var(--panel-2)); display: grid; gap: 10px; }
+.titulo { margin: 0; font-size: 14px; font-weight: 600; color: var(--tinta, var(--text)); }
+.nota { margin: 0; font-size: 13px; color: var(--suave, var(--text-2)); line-height: 1.5; }
+.acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--fio-2, var(--line-strong)); background: transparent; color: var(--tinta, var(--text)); border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: default; }
+.principal { background: var(--azul, var(--people)); border-color: transparent; color: #fff; }
+.fio { display: grid; gap: 6px; max-height: 320px; overflow-y: auto; padding-right: 2px; }
+.msg { max-width: 84%; padding: 8px 12px; border-radius: 14px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.minha { justify-self: end; background: rgb(76 141 255 / .2); }
+.dela { justify-self: start; background: var(--sup-2, var(--panel)); border: 1px solid var(--fio, var(--line)); }
+.hora { display: block; margin-top: 2px; font-size: 11px; color: var(--suave, var(--text-3)); }
+.campo { display: grid; gap: 8px; }
+.campo textarea { min-height: 70px; resize: vertical; border-radius: 14px; border: 1px solid var(--fio-2, var(--line-strong)); background: var(--sup-2, var(--panel)); color: var(--tinta, var(--text)); padding: 10px 12px; font: inherit; font-size: 14px; }
+.contador { font-size: 11px; color: var(--suave, var(--text-3)); justify-self: end; }
+.erro { margin: 0; font-size: 13px; color: #FF8FB1; }
+.discreto { background: none; border: 0; padding: 0; color: var(--suave, var(--text-2)); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }

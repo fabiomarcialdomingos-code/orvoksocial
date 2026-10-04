@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost, describeError } from "../../lib/client/api";
+import { Conversa } from "../desafio/Conversa";
 import { ROTULO_CATEGORIA, fraseEstado, mensagemConvite, quandoRevela, type Opcao, type Rodada } from "../../lib/client/mundo";
 import { IconeRede, useShell } from "../app/AppShell";
 import s from "./rede.module.css";
@@ -127,7 +128,7 @@ export function MundoPessoas() {
           <article key={r.codigo} className={`${s.evento} ${r.minhaVez ? s.eventoAtivo : ""}`}>
             <div className={s.rodapeEvento}><span className={s.cat}>{ROTULO_CATEGORIA[r.evento.categoria] ?? r.evento.categoria}</span><span className={s.muted}>{r.lado === "criador" ? (r.convidado ? `com ${r.convidado}` : "convite enviado") : `com ${r.criador}`}</span></div>
             <h3>{r.evento.titulo}</h3>
-            {r.estado === "revelada" ? <Revelacao r={r} /> : <p className={s.muted} style={{ margin: 0 }}>{fraseEstado(r)}{r.minhaOpiniao ? `. Sua opinião: ${r.minhaOpiniao}` : ""}</p>}
+            {r.estado === "revelada" ? <><Revelacao r={r} /><Conversa codigo={r.codigo} /></> : <p className={s.muted} style={{ margin: 0 }}>{fraseEstado(r)}{r.minhaOpiniao ? `. Sua opinião: ${r.minhaOpiniao}` : ""}</p>}
             {r.minhaVez && r.lado === "criador" ? (
               <div className={s.revela}>
                 <p className={s.muted} style={{ margin: "0 0 8px" }}>{r.convidado} já respondeu. E você, o que acha?</p>
