@@ -54,20 +54,6 @@ export async function apiPost<T>(path: string, body: unknown = {}): Promise<T> {
 /* ---------- Shared types ---------- */
 export type Session = { authenticated: boolean; userId?: string; role?: "USER" | "MODERATOR" | "ADMIN" };
 export type Profile = { userId: string; displayName: string; avatarUrl?: string | null; bio?: string | null };
-export type Option = { id: string; label: string; position: number };
-export type Question = { questionVersionId: string; text: string; options: Option[] };
-export type Answer = { id: string; questionVersionId: string; optionId: string; version: number; answeredAt: string };
-export type Consent = { id: string; purpose: "SELF_ANSWER" | "BE_PREDICTED"; scope: string; invitationAcceptanceId: string | null; noticeVersion: string; consentVersion: number; grantedAt: string; revokedAt: string | null };
-export type Invitation = { id: string; predictorId: string; targetId: string; invitedAt: string; expiresAt: string | null; acceptanceId: string | null; acceptedAt: string | null };
-export type Notice = { presentationId: string; version: string; contentHash: string; content: string };
-export type Opportunity = { targetId: string; grantId: string; questionVersionId: string; selfAnswerVersionId: string };
-export type Dashboard = {
-  made: { id: string; targetId: string; questionVersionId: string; predictedAt: string }[];
-  received: { id: string; predictorId: string; questionVersionId: string; predictedAt: string }[];
-  pendingInvitations: { id: string; predictorId: string; invitedAt: string }[];
-  matches: { userId: string; mutualAt: string }[];
-  hasMore?: { made: boolean; received: boolean; pendingInvitations: boolean; matches: boolean };
-};
 export type WorldEvent = {
   id: string; title: string; description?: string | null; sourceUrl?: string | null; resolutionCriteria: string;
   opensAt: string; closesAt: string; status: string; category: string;
@@ -108,25 +94,3 @@ export function relativeTime(value: string | Date): string {
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-/** Latest answer version per question. */
-export function latestAnswers(answers: Answer[]): Map<string, Answer> {
-  const map = new Map<string, Answer>();
-  for (const answer of answers) {
-    const current = map.get(answer.questionVersionId);
-    if (!current || answer.version > current.version) map.set(answer.questionVersionId, answer);
-  }
-  return map;
-}
-
-export async function getAll<T>(path: string): Promise<T[]> {
-  const items: T[] = [];
-  let cursor: string | null = null;
-  for (let i = 0; i < 20; i += 1) {
-    const sep = path.includes("?") ? "&" : "?";
-    const page: { items: T[]; nextCursor?: string | null } = await apiGet(cursor ? `${path}${sep}cursor=${encodeURIComponent(cursor)}` : path);
-    items.push(...page.items);
-    if (!page.nextCursor) break;
-    cursor = page.nextCursor;
-  }
-  return items;
-}

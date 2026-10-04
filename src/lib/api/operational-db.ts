@@ -3,12 +3,6 @@ import { assertRuntimeDatabaseBoundary } from "../runtime-boundary";
 
 let rawPool: Pool | undefined;
 
-export async function closeOperationalPool(): Promise<void> {
-  const pool = rawPool;
-  rawPool = undefined;
-  if (pool) await pool.end();
-}
-
 /** Bind every app-role statement to a verified session hash using SET LOCAL.
  * The setting dies at COMMIT/ROLLBACK and cannot leak to the next pool user. */
 export function operationalPool(sessionHash: string): Pool {

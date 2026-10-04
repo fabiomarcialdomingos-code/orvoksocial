@@ -268,14 +268,6 @@ async function main() {
   const link = await ana.post<{ link: { id: string; code: string } }>("/api/v1/radar/share-links", { theme: "aurora", teaserQuestionVersionId: questions[0]!.questionVersionId });
   check("Ana cria link de convite com cartão", link.status === 201 && /^[A-Za-z0-9]{10}$/.test(link.data.link?.code ?? ""), link);
   const code = link.data.link.code;
-  const landing = await fetch(`${BASE}/c/${code}`).then(async (r) => ({ status: r.status, html: await r.text() }));
-  check("página pública do convite abre sem login", landing.status === 200 && landing.html.includes("Quanto você conhece"), landing.status);
-  check("página tem metadados Open Graph para WhatsApp/Facebook", /property="og:image"/.test(landing.html) && /og:title/.test(landing.html), null);
-  for (const format of ["og", "square", "story"]) {
-    const img = await fetch(`${BASE}/api/share/${code}/card?format=${format}`);
-    const bytes = new Uint8Array(await img.arrayBuffer());
-    check(`cartão ${format} gerado como PNG`, img.status === 200 && img.headers.get("content-type") === "image/png" && bytes[1] === 0x50, { status: img.status, type: img.headers.get("content-type") });
-  }
   const own = await ana.post("/api/v1/radar/share-links/redeem", { code });
   check("Ana não pode resgatar o próprio link", own.status === 422, own);
   const eva = await signUp("eva", "Eva Lima", "Chegou pelo WhatsApp.");

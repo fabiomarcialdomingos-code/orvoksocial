@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { textoPara } from "./selecao";
 
 export const CODIGOS = ["A", "B", "C", "D"] as const;
-export type CodigoOpcao = (typeof CODIGOS)[number];
 export const CATALOGO_VERSAO = "ORVOK_DESAFIO_NUCLEO_V1";
 
 /** Aviso exibido antes do envio do convite. Mudou o texto, mude a versão. */
@@ -23,9 +22,7 @@ export function perguntaPublica(p: { chave: string; texto: string; opcoes: [stri
   return { chave: p.chave, texto: textoPara(p, quem), opcoes: p.opcoes };
 }
 
-/** Aviso a quem responde: as escolhas entram, sem nome, no retrato de quem desafiou. */
+/** Versão do aviso de anonimato de quem responde sobre alguém (o texto fica na tela de resposta). */
 export const AVISO_RETRATO_VERSAO = "retrato-opiniao-v1";
-export const AVISO_RETRATO_TEXTO =
-  "Você responde como enxerga essa pessoa. Suas respostas entram no retrato dela sem o seu nome, e só aparecem quando pelo menos 3 pessoas responderam.";
 /** Mínimo de pessoas por pergunta para ela aparecer no retrato. */
 export const MINIMO_RETRATO = 3;

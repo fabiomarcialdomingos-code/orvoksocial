@@ -1,6 +1,8 @@
 # ORVOK Social
 
-> **ORVOK 2:** redesenho, correções de banco e testes ponta a ponta estão descritos em [`docs/ORVOK-2.md`](docs/ORVOK-2.md). Capturas de tela em `docs/screenshots/`.
+> **Hoje o orvok é** um espaço privado para descobrir como as pessoas que importam te enxergam: um retrato (12 perguntas), convites anônimos, o Mundo (opinar sobre eventos e descobrir se pensaram igual) e conversas privadas depois da revelação. Não há placar, feed aberto nem pontuação.
+>
+> **Testes:** `pnpm test:desafio`, `pnpm test:mundo` e `pnpm test:dados` (precisam de um banco de teste migrado; veja o topo de cada arquivo em `scripts/`). O workflow **Diagnóstico do site** confere o site publicado. O histórico do redesenho anterior está em [`docs/ORVOK-2.md`](docs/ORVOK-2.md) e descreve o produto antigo.
 
 Aplicação Next.js com PostgreSQL e Prisma. O Radar usa dados de teste em desenvolvimento; conteúdo e avisos oficiais ainda precisam de aprovação antes do uso com pessoas reais.
 

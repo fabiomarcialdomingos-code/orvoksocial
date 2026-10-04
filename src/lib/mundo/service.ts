@@ -4,6 +4,7 @@ import { z } from "zod";
 import { randomToken, tokenHash } from "@/lib/auth/crypto";
 import { AuthError } from "@/lib/auth/session";
 import { AVISO_IDADE, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
+import { limitar } from "@/lib/limite";
 import { registrarEvento } from "@/lib/medicao";
 import { enviarDenunciaDeConversaPorEmail } from "@/lib/desafio/moderacao-mail";
 import { enviarPush } from "@/lib/push";
@@ -368,16 +369,8 @@ export class MundoService {
     return { ok: true };
   }
 
-  /** Limite por janela de tempo (mesmo mecanismo do restante do app). */
-  private async limite(chave: string, max: number, segundos: number): Promise<void> {
-    const r = await this.pool.query<{ attempts: number }>(
-      `INSERT INTO "AuthRateLimit" ("keyHash",attempts,"resetsAt") VALUES ($1,1,clock_timestamp()+($2::int * interval '1 second'))
-       ON CONFLICT ("keyHash") DO UPDATE SET
-         attempts=CASE WHEN "AuthRateLimit"."resetsAt" <= clock_timestamp() THEN 1 ELSE "AuthRateLimit".attempts+1 END,
-         "resetsAt"=CASE WHEN "AuthRateLimit"."resetsAt" <= clock_timestamp() THEN clock_timestamp()+($2::int * interval '1 second') ELSE "AuthRateLimit"."resetsAt" END
-       RETURNING attempts`,
-      [tokenHash(`rate:mundo:${chave}`), segundos]);
-    if (r.rows[0]!.attempts > max) throw new AuthError("RATE_LIMITED", 429);
+  private limite(chave: string, max: number, segundos: number): Promise<void> {
+    return limitar(this.pool, "mundo", chave, max, segundos);
   }
 
   /** Rodadas de quem está logado: as que criou e as que recebeu como convidado. */

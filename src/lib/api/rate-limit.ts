@@ -2,9 +2,6 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { OperationalApiError } from "./response";
 
-/** Technical anti-abuse budget, independent of prediction or reputation rules. */
-export const OPERATIONAL_RATE_LIMIT_VERSION = "API-RATE-01";
-
 export async function enforceOperationalRateLimit(pool: Pool, route: string) {
   const limit = z.coerce.number().int().min(1).max(10_000).parse(
     route === "/radar/invitations"

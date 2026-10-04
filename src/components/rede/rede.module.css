@@ -24,10 +24,6 @@
 .chip:hover { border-color: var(--people); background: rgb(76 141 255 / 0.1); transform: translateY(-1px); }
 .chip svg { width: 18px; height: 18px; color: var(--self); }
 
-.compor { display: flex; gap: 12px; padding: 4px 0 16px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
-.compor textarea { flex: 1; min-height: 48px; resize: vertical; border: 0; background: none; color: var(--text); font: 400 17px var(--font-ui); padding: 10px 0; }
-.compor textarea:focus { outline: 0; }
-.comporAcoes { display: flex; justify-content: flex-end; margin-top: 6px; }
 .btnP { min-height: 36px; padding: 0 16px; border-radius: 999px; border: 0; font-weight: 700; font-size: 14px; color: #fff; cursor: pointer; background: linear-gradient(180deg, color-mix(in srgb, var(--people) 82%, #fff), var(--people)); box-shadow: 0 8px 24px -10px rgb(76 141 255 / 0.8); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 .btnP:disabled { opacity: 0.4; cursor: not-allowed; }
 .btnFio { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: none; color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
@@ -41,19 +37,6 @@
 .tipo { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); margin: 2px 0 4px; }
 .tipo svg { width: 14px; height: 14px; }
 .texto { margin: 4px 0 10px; font-size: 16px; white-space: pre-wrap; }
-.cartao { border: 1px solid var(--line-strong); border-radius: 18px; overflow: hidden; margin-bottom: 8px; background: var(--panel); transition: border-color 0.3s, box-shadow 0.3s; }
-.cartao:hover { border-color: color-mix(in srgb, var(--people) 55%, var(--line-strong)); box-shadow: 0 14px 40px -20px var(--people); }
-.encontro { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center; padding: 14px 16px; background: radial-gradient(80% 120% at 0% 50%, rgb(255 168 52 / 0.1), transparent 60%), var(--panel); }
-.encontro svg { width: 120px; height: 120px; overflow: visible; }
-.placar { font-size: 42px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
-.placar small { font-size: 16px; color: var(--text-3); font-weight: 600; letter-spacing: 0; }
-.acertos { display: flex; gap: 4px; margin-top: 10px; }
-.acertos i { width: 16px; height: 16px; border-radius: 5px; background: var(--panel-3); }
-.acertos i.ok { background: var(--self); box-shadow: 0 0 10px -1px var(--self); }
-.varre { transform-origin: 60px 60px; animation: gira 5s linear infinite; }
-.acoes { display: flex; gap: 14px; color: var(--text-3); font-size: 13px; }
-.acoes button { border: 0; background: none; color: inherit; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 999px; }
-.acoes button:hover { color: var(--like); background: color-mix(in srgb, var(--like) 10%, transparent); }
 .rel { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 .rel_familia { background: color-mix(in srgb, var(--rel-familia) 14%, transparent); color: var(--rel-familia); }
 .rel_amigos { background: color-mix(in srgb, var(--rel-amigos) 16%, transparent); color: var(--rel-amigos); }
@@ -74,19 +57,9 @@
 .linha strong { color: var(--self); font-size: 18px; font-variant-numeric: tabular-nums; }
 .muted { color: var(--text-3); font-size: 14px; }
 
-.radarPalco { position: relative; width: min(100%, 420px, calc(100vh - 470px)); width: min(100%, 420px, calc(100dvh - 470px)); min-width: 220px; aspect-ratio: 1; margin: 0 auto 14px; }
-.radarVazio { padding: 8px 20px 0; gap: 8px; }
-.radarVazio strong { font-size: 17px; }
-.radarPalco svg { width: 100%; height: 100%; overflow: visible; }
 .no { cursor: pointer; transition: transform 0.3s cubic-bezier(0.2, 1.6, 0.4, 1); transform-box: fill-box; transform-origin: center; }
 .no:hover, .no:focus { transform: scale(1.18); outline: none; }
-.dica { position: absolute; pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); padding: 8px 12px; border-radius: 12px; border: 1px solid rgb(255 168 52 / 0.35); background: rgb(5 11 24 / 0.94); font-size: 13px; white-space: nowrap; }
-.dica b { display: block; color: #ffd39a; }
-.ranking { display: grid; gap: 2px; }
-.ranking .linha { border-top: 1px solid var(--line); padding: 10px 0; }
-.posicao { width: 24px; color: var(--text-3); font-weight: 700; text-align: center; }
-@media (max-width: 520px) { .encontro { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .varre, .post, .story:hover .anel::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .post, .story:hover .anel::before { animation: none; } }
 
 /* Mundo */
 .evento { border: 1px solid var(--line); border-radius: 20px; padding: 16px; margin-bottom: 12px; background: radial-gradient(90% 80% at 100% 0%, rgb(76 141 255 / 0.08), transparent 60%), var(--panel); display: grid; gap: 10px; transition: border-color 0.3s, box-shadow 0.3s; }
@@ -167,7 +140,7 @@
 @media (prefers-reduced-motion: reduce) { .medalha, .medalhaGira { animation: none; } }
 .btnP svg, .btnFio svg { width: 16px; height: 16px; flex: none; }
 
-/* Meu placar */
+/* Minhas conexões */
 .blocosPlacar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .blocosPlacar div { padding: 10px 12px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line); display: grid; gap: 2px; }
 .blocosPlacar small { color: var(--text-3); font-size: 12px; }
@@ -182,13 +155,8 @@
 .pessoaCel { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .numAcerto { color: var(--self); font-weight: 800; }
 .detalhePessoa { padding: 6px 0 4px; animation: revela 0.4s both; }
-.duasDirecoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.duasDirecoes div { padding: 12px; border-radius: 14px; background: var(--panel-2); display: grid; gap: 2px; }
-.duasDirecoes small { color: var(--text-3); font-size: 12px; }
-.duasDirecoes b { font-size: 22px; font-weight: 800; }
-.duasDirecoes span { color: var(--text-2); font-size: 13px; }
 .seletor { margin-left: 6px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--text); padding: 4px 8px; font: inherit; }
-@media (max-width: 640px) { .blocosPlacar, .duasDirecoes { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .blocosPlacar { grid-template-columns: 1fr; } }
 
 /* Nota inspirada no modelo SOKA, sobre traços que divergem no retrato */
 .notaSoka { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px dashed var(--line-strong); color: var(--text-2); font-size: 12.5px; line-height: 1.5; }

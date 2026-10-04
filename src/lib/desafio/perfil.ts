@@ -8,7 +8,6 @@ import { NUCLEO, ORDEM_TRACOS, TRACOS, type PerguntaNucleo, type Traco } from ".
  */
 export type Notas = Record<Traco, number | null>;
 const porChave = new Map(NUCLEO.map((p) => [p.chave, p]));
-export const perguntaNucleo = (chave: string) => porChave.get(chave);
 
 export function notas(chaves: string[], opcoes: number[]): Notas {
   const soma: Record<Traco, number> = { social: 0, ritmo: 0, decisao: 0, reacao: 0, novidade: 0, foco: 0 };

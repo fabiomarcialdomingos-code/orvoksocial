@@ -79,24 +79,6 @@ export function Anel({ nome, feitas, atual, ambar }: { nome: string; feitas: num
   );
 }
 
-/** Radar do resultado: acertos perto do centro, erros na borda. */
-export function Radar({ acertos, visivel, total = 10 }: { acertos: number; visivel: boolean; total?: number }) {
-  return (
-    <svg viewBox="0 0 280 280" className={visivel ? s.vis : ""} aria-hidden="true">
-      <defs>
-        <linearGradient id="varreDesafio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#4C8DFF" stopOpacity=".4" /><stop offset="1" stopColor="#4C8DFF" stopOpacity="0" /></linearGradient>
-      </defs>
-      {[130, 90, 50].map((r) => <circle key={r} cx="140" cy="140" r={r} fill="none" stroke="var(--fio-2)" />)}
-      <g className={s.varre}><path d="M140 140 L140 10 A130 130 0 0 1 250 70 Z" fill="url(#varreDesafio)" /></g>
-      {Array.from({ length: total }, (_, k) => {
-        const a = (k / total) * Math.PI * 2 - Math.PI / 2, ok = k < acertos, r = ok ? 68 + (k % 3) * 9 : 110 + (k % 2) * 8;
-        return <circle key={k} className={s.pt} style={{ transitionDelay: `${0.2 + k * 0.09}s`, filter: ok ? "drop-shadow(0 0 6px #FFA834)" : undefined }}
-          cx={140 + Math.cos(a) * r} cy={140 + Math.sin(a) * r} r={ok ? 8 : 6} fill={ok ? "var(--ambar)" : "var(--fio-2)"} />;
-      })}
-    </svg>
-  );
-}
-
 export async function enviarJson<T>(caminho: string, corpo: unknown): Promise<{ ok: boolean; status: number; dados: T & { code?: string } }> {
   const r = await fetch(caminho, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo), credentials: "same-origin" });
   const dados = (await r.json().catch(() => ({}))) as T & { code?: string };
