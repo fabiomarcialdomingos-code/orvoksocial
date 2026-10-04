@@ -9,7 +9,6 @@ import { apiJson, OperationalApiError } from "./response";
  */
 export interface ExperienceContext {
   method: "GET" | "POST";
-  path: string[];
   route: string;
   request: Request;
   pool: Pool;
@@ -19,7 +18,7 @@ export interface ExperienceContext {
 const uuid = z.uuid();
 
 export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Response | null> {
-  const { method, path, route, request, pool, actorId } = ctx;
+  const { method, route, request, pool, actorId } = ctx;
 
   // Display names for people the actor interacts with. Profiles are public
   // inside the product (policy social_profile_select), ids are capped at 50.
@@ -30,26 +29,6 @@ export async function handleExperienceRoute(ctx: ExperienceContext): Promise<Res
     const result = await pool.query(
       `SELECT "userId","displayName","avatarUrl",bio FROM "UserProfile" WHERE "userId" = ANY($1::uuid[])`,
       [ids],
-    );
-    return apiJson({ items: result.rows });
-  }
-
-  if (method === "GET" && route === "/world/predictions") {
-    const result = await pool.query(
-      `SELECT DISTINCT ON (p."eventId") p.id,p."eventId",p."opportunityId",p.confidence,p."predictedAt"
-         FROM "WorldPrediction" p WHERE p."predictorId"=$1
-         ORDER BY p."eventId",p."predictedAt" DESC`,
-      [actorId],
-    );
-    return apiJson({ items: result.rows });
-  }
-
-  // Comments of a World event, newest last.
-  if (method === "GET" && path.length === 4 && path[0] === "world" && path[1] === "events" && path[3] === "comments") {
-    const eventId = uuid.parse(path[2]);
-    const result = await pool.query(
-      `SELECT id,"authorId",body,"createdAt" FROM "WorldComment" WHERE "eventId"=$1 ORDER BY "createdAt" ASC LIMIT 100`,
-      [eventId],
     );
     return apiJson({ items: result.rows });
   }

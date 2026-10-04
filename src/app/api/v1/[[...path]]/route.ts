@@ -160,39 +160,26 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     const queries = [
       ["users", `SELECT count(*)::int AS count FROM "User"`],
       ["activeUsers", `SELECT count(*)::int AS count FROM "User" WHERE status='ACTIVE'`],
-      ["questions", `SELECT count(*)::int AS count FROM "Question"`],
-      ["answers", `SELECT count(*)::int AS count FROM "AnswerVersion"`],
       ["events", `SELECT count(*)::int AS count FROM "WorldEvent"`],
       ["publishedEvents", `SELECT count(*)::int AS count FROM "WorldEvent" WHERE status='PUBLISHED'`],
-      ["posts", `SELECT count(*)::int AS count FROM "SocialPost"`],
-      ["messages", `SELECT count(*)::int AS count FROM "SocialMessage"`],
       ["reports", `SELECT count(*)::int AS count FROM "SocialReport" WHERE state IN ('OPEN','REVIEWING')`],
     ] as const;
     const values = await Promise.all(queries.map(async ([key, sql]) => {
       try { const result = await pool.query<{ count: number }>(sql); return [key, Number(result.rows[0]?.count ?? 0)] as const; }
       catch { return [key, 0] as const; }
     }));
-    return apiJson({ metrics: Object.fromEntries(values), generatedAt: new Date().toISOString() });
-  }
-  if (method === "GET" && route === "/admin/questions") {
-    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const result = await pool.query(`SELECT q.id,q."stableKey",q.domain,q."createdAt",qv.id AS "versionId",qv.version,qv.text,qv."familyKey",qv."catalogStatus",COALESCE(jsonb_agg(jsonb_build_object('id',ao.id,'code',ao.code,'label',ao.label,'position',ao.position) ORDER BY ao.position) FILTER (WHERE ao.id IS NOT NULL),'[]') AS options FROM "Question" q JOIN LATERAL (SELECT * FROM "QuestionVersion" v WHERE v."questionId"=q.id ORDER BY v.version DESC LIMIT 1) qv ON true LEFT JOIN "AnswerOption" ao ON ao."questionVersionId"=qv.id GROUP BY q.id,qv.id,qv.version,qv.text,qv."familyKey",qv."catalogStatus" ORDER BY q."createdAt" DESC LIMIT 100`);
-    return apiJson({ items: result.rows });
-  }
-  if (method === "POST" && route === "/admin/questions") {
-    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const body = z.strictObject({ stableKey:z.string().trim().min(1).max(120), familyKey:z.string().trim().min(1).max(120), text:z.string().trim().min(1).max(2000), domain:z.enum(["WORLD","RADAR"]), catalogStatus:z.enum(["TEST_ONLY","CANDIDATE","PROPOSTA_PARA_APROVACAO","APPROVED"]), options:z.array(z.strictObject({ code:z.string().trim().min(1).max(40), label:z.string().trim().min(1).max(300) })).min(2).max(20), reason:z.string().trim().min(1).max(1000) }).parse(await readJsonBody(request));
-    const questionId = randomUUID(); const versionId = randomUUID(); const contentHash = createHash("sha256").update(JSON.stringify(body)).digest("hex"); const client = await pool.connect();
-    try { await client.query("BEGIN"); await client.query(`INSERT INTO "Question" (id,"stableKey",domain) VALUES ($1,$2,$3)`, [questionId, body.stableKey, body.domain]); await client.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash","instrumentVersion","catalogStatus","approvedAt") VALUES ($1,$2,1,$3,$4,$5,'RADAR_BASE_CANDIDATA_V1',$6,$7)`, [versionId, questionId, body.text, body.familyKey, contentHash, body.catalogStatus, body.catalogStatus === "APPROVED" ? new Date() : null]); for (const [position, option] of body.options.entries()) await client.query(`INSERT INTO "AnswerOption" (id,"questionVersionId",code,label,position) VALUES ($1,$2,$3,$4,$5)`, [randomUUID(), versionId, option.code, option.label, position]); await client.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'QUESTION_CREATE','Question',$3,clock_timestamp())`, [randomUUID(), actorId, questionId]); await client.query("COMMIT"); return apiJson({ id: questionId, versionId }, 201); } catch (cause) { await client.query("ROLLBACK"); throw cause; } finally { client.release(); }
-  }
-  if (method === "POST" && path.length===4 && path[0]==="admin" && path[1]==="questions" && path[3]==="edit") {
-    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const body=z.strictObject({text:z.string().trim().min(1).max(2000),reason:z.string().trim().min(1).max(1000)}).parse(await readJsonBody(request));
-    const client=await pool.connect(); try { await client.query("BEGIN"); const current=await client.query<{id:string;questionId:string;version:number;text:string;familyKey:string;contentHash:string;instrumentVersion:string;language:string;responseType:string;sensitivity:string}>(`SELECT qv.id,qv."questionId",qv.version,qv.text,qv."familyKey",qv."contentHash",qv."instrumentVersion",qv.language,qv."responseType",qv.sensitivity FROM "QuestionVersion" qv WHERE qv."questionId"=$1 ORDER BY qv.version DESC LIMIT 1`,[path[2]!]); const row=current.rows[0]; if(!row) throw new OperationalApiError(404,"NOT_FOUND"); const options=await client.query<{code:string;label:string;position:number}>(`SELECT code,label,position FROM "AnswerOption" WHERE "questionVersionId"=$1 ORDER BY position`,[row.id]); const versionId=randomUUID(); const contentHash=createHash("sha256").update(JSON.stringify({text:body.text,familyKey:row.familyKey,options:options.rows})).digest("hex"); await client.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash","instrumentVersion","catalogStatus",language,"responseType",sensitivity,"effectiveAt") VALUES ($1,$2,$3,$4,$5,$6,$7,'PROPOSTA_PARA_APROVACAO',$8,$9,$10,clock_timestamp())`,[versionId,row.questionId,row.version+1,body.text,row.familyKey,contentHash,row.instrumentVersion==='TEST_ONLY_LEGACY'?'RADAR_BASE_CANDIDATA_V1':row.instrumentVersion,row.language,row.responseType,row.sensitivity]); for(const option of options.rows) await client.query(`INSERT INTO "AnswerOption" (id,"questionVersionId",code,label,position) VALUES ($1,$2,$3,$4,$5)`,[randomUUID(),versionId,option.code,option.label,option.position]); await client.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'QUESTION_EDIT','Question',$3,clock_timestamp())`,[randomUUID(),actorId,row.questionId]); await client.query("COMMIT"); return apiJson({id:row.questionId,versionId,status:"PROPOSTA_PARA_APROVACAO"}); } catch(e){await client.query("ROLLBACK");throw e;} finally{client.release();}
-  }
-  if (method === "POST" && path.length===4 && path[0]==="admin" && path[1]==="questions" && path[3]==="publish") {
-    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const body=z.strictObject({reason:z.string().trim().min(1).max(1000)}).parse(await readJsonBody(request)); void body.reason; const client=await pool.connect(); try {await client.query("BEGIN"); const current=await client.query<{id:string;questionId:string;version:number;text:string;familyKey:string;contentHash:string;instrumentVersion:string;language:string;responseType:string;sensitivity:string}>(`SELECT qv.id,qv."questionId",qv.version,qv.text,qv."familyKey",qv."contentHash",qv."instrumentVersion",qv.language,qv."responseType",qv.sensitivity FROM "QuestionVersion" qv WHERE qv."questionId"=$1 ORDER BY qv.version DESC LIMIT 1`,[path[2]!]); const row=current.rows[0]; if(!row) throw new OperationalApiError(404,"NOT_FOUND"); if(row.instrumentVersion==='TEST_ONLY_LEGACY') throw new OperationalApiError(409,"CONFLICT"); const options=await client.query<{code:string;label:string;position:number}>(`SELECT code,label,position FROM "AnswerOption" WHERE "questionVersionId"=$1 ORDER BY position`,[row.id]); const versionId=randomUUID(); await client.query(`INSERT INTO "QuestionVersion" (id,"questionId",version,text,"familyKey","contentHash","instrumentVersion","catalogStatus",language,"responseType",sensitivity,"effectiveAt","approvedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,'APPROVED',$8,$9,$10,clock_timestamp(),clock_timestamp())`,[versionId,row.questionId,row.version+1,row.text,row.familyKey,row.contentHash,row.instrumentVersion,row.language,row.responseType,row.sensitivity]); for(const option of options.rows) await client.query(`INSERT INTO "AnswerOption" (id,"questionVersionId",code,label,position) VALUES ($1,$2,$3,$4,$5)`,[randomUUID(),versionId,option.code,option.label,option.position]); await client.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,'QUESTION_PUBLISH','Question',$3,clock_timestamp())`,[randomUUID(),actorId,row.questionId]); await client.query("COMMIT"); return apiJson({id:row.questionId,versionId,status:"APPROVED"}); } catch(e){await client.query("ROLLBACK");throw e;} finally{client.release();}
+    // Convites, visões e conversas vivem em tabelas do módulo do Retrato/Mundo, lidas pelo outro papel do banco.
+    const produto = [
+      ["invites", `SELECT count(*)::int AS count FROM "GuestChallenge" WHERE "revokedAt" IS NULL`],
+      ["views", `SELECT count(*)::int AS count FROM "GuestChallengeAttempt"`],
+      ["worldRounds", `SELECT count(*)::int AS count FROM "WorldRound" WHERE "revokedAt" IS NULL`],
+      ["privateThreads", `SELECT count(*)::int AS count FROM "RoundThread" WHERE status='ACCEPTED'`],
+    ] as const;
+    const valoresProduto = await Promise.all(produto.map(async ([key, sql]) => {
+      try { const result = await authPool().query<{ count: number }>(sql); return [key, Number(result.rows[0]?.count ?? 0)] as const; }
+      catch { return [key, 0] as const; }
+    }));
+    return apiJson({ metrics: Object.fromEntries([...values, ...valoresProduto]), generatedAt: new Date().toISOString() });
   }
   if (method === "GET" && route === "/admin/messages") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
@@ -224,20 +211,10 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     const body=z.strictObject({reason:z.string().trim().min(1).max(1000)}).parse(await readJsonBody(request));
     return apiJson(await world.publishEvent(actorId,path[2]!,body.reason));
   }
-  if (method === "POST" && path.length===3 && path[0]==="world" && path[1]==="events" && path[2]!.length>0) {
-    const body = z.strictObject({opportunityId:uuid,confidence:z.number().finite().min(0).max(1)}).parse(await readJsonBody(request));
-    return apiJson(await world.predict(actorId,path[2]!,body.opportunityId,body.confidence),201);
-  }
   if (method === "POST" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="resolve") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
     const body=z.strictObject({state:z.enum(["TEST","OFFICIAL","CANCELLED","VOID"]),outcomeOpportunityId:uuid.optional(),rationale:z.string().trim().min(1).max(4000)}).parse(await readJsonBody(request));
     return apiJson(await world.resolve(actorId,path[2]!,body));
-  }
-  if (method === "POST" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="comments") {
-    const body=z.strictObject({body:z.string().trim().min(1).max(2000)}).parse(await readJsonBody(request)); return apiJson(await world.comment(actorId,path[2]!,body.body),201);
-  }
-  if (method === "POST" && path.length===4 && path[0]==="world" && path[1]==="events" && path[3]==="reactions") {
-    const body=z.strictObject({kind:z.string().trim().min(1).max(32)}).parse(await readJsonBody(request)); return apiJson(await world.react(actorId,path[2]!,body.kind),201);
   }
   if (method === "GET" && route === "/admin/users") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" })); const cursor=pageCursor(request); return apiJson(await world.adminUsers(actorId,cursor));
@@ -300,7 +277,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     await pool.query(`INSERT INTO "AuditLog" (id,"actorId",action,"objectType","objectId","occurredAt") VALUES ($1,$2,$3,'User',$4,clock_timestamp())`, [randomUUID(), actorId, `ADMIN_${body.action}`, targetId]);
     return apiJson({ actionId });
   }
-  const experience = await handleExperienceRoute({ method, path, route, request, pool, actorId });
+  const experience = await handleExperienceRoute({ method, route, request, pool, actorId });
   if (experience) return experience;
   throw new OperationalApiError(404, "NOT_FOUND");
 }
