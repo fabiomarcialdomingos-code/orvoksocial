@@ -19,13 +19,10 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "radar:metrics": "tsx scripts/radar-metrics.ts",
-    "math:worker": "tsx scripts/math-engine-worker.ts",
     "db:provision:local": "tsx scripts/provision-runtime-roles.ts --local",
     "db:provision:reapply": "tsx scripts/provision-runtime-roles.ts --reapply-local",
     "auth:mail-worker": "tsx scripts/auth-mail-worker.ts",
     "db:seed:demo": "tsx scripts/seed-demo.ts",
-    "test:e2e": "tsx scripts/simulate-users.ts",
     "test:desafio": "tsx scripts/test-desafio.ts",
     "test:mundo": "tsx scripts/test-mundo.ts",
     "test:dados": "tsx scripts/test-dados.ts"

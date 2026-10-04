@@ -2,9 +2,9 @@
 
 > **Hoje o orvok é** um espaço privado para descobrir como as pessoas que importam te enxergam: um retrato (12 perguntas), convites anônimos, o Mundo (opinar sobre eventos e descobrir se pensaram igual) e conversas privadas depois da revelação. Não há placar, feed aberto nem pontuação.
 >
-> **Testes:** `pnpm test:desafio`, `pnpm test:mundo` e `pnpm test:dados` (precisam de um banco de teste migrado; veja o topo de cada arquivo em `scripts/`). O workflow **Diagnóstico do site** confere o site publicado. O histórico do redesenho anterior está em [`docs/ORVOK-2.md`](docs/ORVOK-2.md) e descreve o produto antigo.
+> **Testes:** `pnpm test:desafio`, `pnpm test:mundo` e `pnpm test:dados` (precisam de um banco de teste migrado; veja o topo de cada arquivo em `scripts/`). O workflow **Diagnóstico do site** confere o site publicado.
 
-Aplicação Next.js com PostgreSQL e Prisma. O Radar usa dados de teste em desenvolvimento; conteúdo e avisos oficiais ainda precisam de aprovação antes do uso com pessoas reais.
+Aplicação Next.js com PostgreSQL e Prisma. Em desenvolvimento usa dados de teste (`pnpm db:seed:demo`); o conteúdo e os avisos oficiais ainda precisam de aprovação antes do uso com pessoas reais.
 
 ## Requisitos
 
@@ -33,7 +33,6 @@ corepack pnpm dev
 corepack pnpm build
 corepack pnpm start
 corepack pnpm auth:mail-worker
-corepack pnpm math:worker
 ```
 
 O worker de e-mail depende das variáveis SMTP, `AUTH_SECRET` e `AUTH_MAIL_KEY`. O login Google exige `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REDIRECT_URI`. Configure segredos fora do Git. O worker matemático e o worker de e-mail devem usar o mesmo banco da aplicação.

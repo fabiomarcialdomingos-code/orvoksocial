@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
-import { RadarInvariantError } from "../radar-consent";
 
 export type ApiErrorCode =
   | "VALIDATION_ERROR"
@@ -41,9 +40,6 @@ export function apiError(error: unknown): Response {
   } else if (error instanceof ZodError || error instanceof SyntaxError) {
     status = 400;
     code = "VALIDATION_ERROR";
-  } else if (error instanceof RadarInvariantError) {
-    status = 422;
-    code = error.code;
   } else if (error instanceof Error && "status" in error && "code" in error) {
     const candidate = error as Error & { status: unknown; code: unknown };
     if (typeof candidate.status === "number" && typeof candidate.code === "string") {
