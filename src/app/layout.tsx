@@ -15,6 +15,16 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#040811", colorScheme: "dark", viewportFit: "cover" };
 
+/**
+ * O CSP (middleware.ts) só libera scripts inline com um nonce novo a cada
+ * requisição, e o Next.js só consegue colocar esse nonce nos scripts do próprio
+ * Next quando a página é montada na hora do acesso. Páginas pré-geradas no
+ * build (como /entrar, /cadastro, /painel) saem sem nonce: o navegador bloqueia
+ * o script de hidratação, a página nunca "acorda" e os formulários viram envios
+ * nativos do navegador (a senha vai parar na URL). Por isso tudo é dinâmico.
+ */
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
