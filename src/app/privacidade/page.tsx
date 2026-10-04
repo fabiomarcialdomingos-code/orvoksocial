@@ -55,8 +55,8 @@ export default function PoliticaPrivacidadePage() {
                 não pede documento nem nome completo obrigatório.
               </li>
               <li>
-                <strong>Suas respostas nos desafios</strong> — as escolhas que você faz sobre
-                si mesmo — e <strong>as previsões que você faz sobre outras pessoas</strong>.
+                <strong>Suas respostas no seu retrato</strong> — as escolhas que você faz sobre
+                si mesmo — e <strong>a visão que você compartilha sobre outras pessoas</strong>.
               </li>
               <li>
                 <strong>E-mail e senha</strong>, se você cria uma conta com e-mail, ou o{" "}
@@ -64,7 +64,7 @@ export default function PoliticaPrivacidadePage() {
                 Google. O orvok nunca vê nem guarda a sua senha do Google.
               </li>
               <li>
-                <strong>Um código no seu aparelho</strong> (um cookie), para que um desafio
+                <strong>Um código no seu aparelho</strong> (um cookie), para que um convite
                 respondido sem conta continue seu quando você criar uma conta depois. Esse
                 código não identifica você, só o aparelho.
               </li>
@@ -88,21 +88,21 @@ export default function PoliticaPrivacidadePage() {
               </li>
               <li>
                 Não monta um perfil psicológico ou clínico seu — o que o orvok mostra sobre
-                &ldquo;como você se vê&rdquo; é uma brincadeira de autoconhecimento entre
-                amigos, não um diagnóstico.
+                &ldquo;como você se vê&rdquo; é uma leitura de autoconhecimento entre
+                pessoas próximas, não um diagnóstico.
               </li>
-              <li>Não publica ranking público comparando quem conhece mais gente.</li>
+              <li>Não publica listas ou classificações públicas de pessoas.</li>
             </ul>
           </section>
 
           <section className={s.secao}>
             <h2>4. Por que o orvok guarda esses dados</h2>
             <p>
-              Todo dado listado acima existe para uma finalidade concreta: fazer o desafio
+              Todo dado listado acima existe para uma finalidade concreta: fazer o retrato
               funcionar (guardar e comparar respostas), manter sua conta segura (senha,
               sessão), evitar fraude e abuso, e cumprir obrigações legais quando exigido por
               lei. O orvok trata seus dados com base no seu consentimento (quando você
-              responde um desafio ou cria conta), na execução do próprio serviço que você
+              responde um convite ou cria conta), na execução do próprio serviço que você
               pediu, e no interesse legítimo de manter a plataforma segura — sempre dentro
               dos limites da LGPD.
             </p>
@@ -145,7 +145,7 @@ export default function PoliticaPrivacidadePage() {
             <h2>7. Por quanto tempo os dados ficam guardados</h2>
             <ul>
               <li>
-                Um desafio criado sem conta fica disponível por <strong>60 dias</strong>. Depois
+                Um convite criado sem conta fica disponível por <strong>60 dias</strong>. Depois
                 disso, ele deixa de poder ser respondido.
               </li>
               <li>
@@ -198,7 +198,7 @@ export default function PoliticaPrivacidadePage() {
               O orvok é destinado a pessoas com <strong>16 anos ou mais</strong>, como
               descrevem os <Link className="text-link" href="/termos">Termos de uso</Link>.
               Não coletamos intencionalmente dados de crianças ou adolescentes abaixo dessa
-              idade. Pais ou responsáveis que identificarem uma conta ou um desafio de
+              idade. Pais ou responsáveis que identificarem uma conta ou um convite de
               alguém mais novo podem escrever para{" "}
               <a className="text-link" href="mailto:contato@orvok.com.br">contato@orvok.com.br</a>{" "}
               para que os dados sejam removidos.
@@ -209,7 +209,7 @@ export default function PoliticaPrivacidadePage() {
             <h2>11. Cookies</h2>
             <p>
               O orvok usa cookies estritamente necessários: um para manter você conectado à
-              sua conta, e outro para lembrar um desafio respondido antes de você ter conta.
+              sua conta, e outro para lembrar um convite respondido antes de você ter conta.
               Não usamos cookies de propaganda nem de rastreamento por outros sites.
             </p>
           </section>

@@ -59,7 +59,7 @@ export function FluxoRodada({ codigo, hashIdade }: { codigo: string; hashIdade: 
             {r.meuPalpite ? <p className={s.miudo} style={{ justifyContent: "center" }}>Seu palpite: {r.meuPalpite}</p> : null}
             <div className={s.empurra}>
               <a className={`${s.btn} ${s.btnAzul}`} href="/entrar?returnTo=%2Feventos">Criar uma rodada minha</a>
-              <a className={`${s.btn} ${s.btnFio}`} href="/comecar?tipo=desafio">Jogar: quanto te conhecem?</a>
+              <a className={`${s.btn} ${s.btnFio}`} href="/comecar">Criar o meu retrato</a>
             </div>
           </>
         ) : (

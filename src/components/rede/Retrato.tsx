@@ -57,7 +57,7 @@ export function Retrato() {
       <small className={s.marcador}>Seu retrato</small>
       <h2>Descubra como você se vê e como te veem.</h2>
       <p>Responda 12 perguntas sobre você para ver o seu perfil. Depois, quem você convidar diz como te enxerga. Com 3 respostas, aparece o seu retrato e o seu selo.</p>
-      <div className={s.chips}><Link className={s.btnP} href="/comecar?tipo=retrato">Fazer o Retrato</Link></div>
+      <div className={s.chips}><Link className={s.btnP} href="/comecar">Fazer o Retrato</Link></div>
     </section>
   );
 
@@ -141,7 +141,7 @@ export function Retrato() {
               <div key={r.relacao} className={s.linha}>
                 <span className={`${s.rel} ${s[`rel_${r.relacao}`]}`}>{ROTULO_RELACAO[r.relacao]}</span>
                 <span className={s.nome}>{r.selo ? (r.selo.titulo ?? "Te veem diferente") : `${r.respondentes} de 3 pessoas`}</span>
-                {r.selo ? <strong>{r.selo.batem}/6</strong> : <Link className={s.btnFio} href={`/comecar?rel=${r.relacao}`}>Desafiar</Link>}
+                {r.selo ? <strong>{r.selo.batem}/6</strong> : <Link className={s.btnFio} href={`/comecar?rel=${r.relacao}`}>Convidar</Link>}
               </div>
             ))}
           </section>
@@ -151,7 +151,7 @@ export function Retrato() {
           <b>Como te veem</b>
           <div className={s.progressoRetrato} aria-label={`${d.respondentes} de 3 pessoas`}>{[0, 1, 2].map((k) => <i key={k} className={k < d.respondentes ? s.ok : ""} />)}</div>
           <p className={s.muted} style={{ margin: 0 }}>Faltam {d.faltam} {d.faltam === 1 ? "pessoa" : "pessoas"} para aparecer como te enxergam e descobrir o seu selo. Para proteger quem responde, só mostramos com pelo menos 3.</p>
-          <div className={s.chips}><Link className={s.btnP} href="/comecar?tipo=retrato">Convidar mais gente</Link></div>
+          <div className={s.chips}><Link className={s.btnP} href="/comecar">Convidar mais gente</Link></div>
         </section>
       )}
     </>

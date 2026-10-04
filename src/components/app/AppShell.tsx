@@ -60,8 +60,7 @@ export function Avatar({ nome, tamanho = 44, voce }: { nome: string; tamanho?: n
 
 const MENU: { href: string; rotulo: string; icone: NomeIcone; ativo?: string[] }[] = [
   { href: "/painel", rotulo: "Início", icone: "casa", ativo: ["/painel", "/feed"] },
-  { href: "/desafios", rotulo: "Desafios", icone: "alvo" },
-  { href: "/radar", rotulo: "Meu radar", icone: "radar" },
+  { href: "/desafios", rotulo: "Convites", icone: "pessoas" },
   { href: "/retrato", rotulo: "Meu retrato", icone: "espelho" },
   { href: "/placar", rotulo: "Meu placar", icone: "trofeu" },
   { href: "/eventos", rotulo: "Mundo", icone: "globo" },
@@ -150,7 +149,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
             ))}
             {session?.role === "ADMIN" ? <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined}><IconeRede nome="escudo" /><span>Quartel general</span></Link> : null}
           </nav>
-          <Link className={`${s.btn} ${s.btnAzul} ${s.desafiar}`} href="/comecar"><IconeRede nome="mais" /><span>Desafiar alguém</span></Link>
+          <Link className={`${s.btn} ${s.btnAzul} ${s.desafiar}`} href="/comecar"><IconeRede nome="mais" /><span>Convidar alguém</span></Link>
           <div className={s.eu}>
             <Avatar nome={nome} tamanho={40} voce />
             <span className={s.euNome}><b>{nome}</b><small>Sua conta</small></span>
@@ -170,12 +169,12 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
           <aside className={s.direita} aria-label="Descobrir">
             {lateral}
             <section className={s.caixa}>
-              <h3>Quem te conhece melhor?</h3>
+              <h3>Quem vai te enxergar?</h3>
               <p className={s.sub}>Cada relação tem perguntas próprias.</p>
               <div className={s.relacoes}>
                 <Link href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
                 <Link href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-                <Link href="/comecar?rel=crush"><IconeRede nome="coracao" />Crush</Link>
+                <Link href="/comecar?rel=crush"><IconeRede nome="coracao" />Alguém especial</Link>
               </div>
             </section>
             <nav className={s.rodape} aria-label="Links"><Link href="/privacidade">Privacidade</Link><Link href="/meus-dados">Meus dados</Link><Link href="/perfil">Perfil</Link><span>© orvok 2026</span></nav>
@@ -185,8 +184,8 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
 
       <nav className={s.abasMovel} aria-label="Navegação">
         {MENU.filter((m) => m.href !== "/notificacoes").slice(0, 2).map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
-        <Link className={s.meio} href="/comecar" aria-label="Desafiar alguém"><IconeRede nome="mais" /></Link>
-        {[MENU[2]!, MENU[7]!].map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
+        <Link className={s.meio} href="/comecar" aria-label="Convidar alguém"><IconeRede nome="mais" /></Link>
+        {[MENU[2]!, MENU[6]!].map((item) => <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined} aria-label={item.rotulo}><IconeRede nome={item.icone} /></Link>)}
       </nav>
       {toastState && <div className="toast" role={toastState.kind === "error" ? "alert" : "status"} data-kind={toastState.kind}>{toastState.text}</div>}
     </ShellContext.Provider>

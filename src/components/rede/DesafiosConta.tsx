@@ -5,7 +5,7 @@ import { Avatar, IconeRede, useShell } from "../app/AppShell";
 import { ROTULO_RELACAO, quando, useDesafios } from "./dados";
 import s from "./rede.module.css";
 
-/** Desafios da conta: os que a pessoa enviou e os que ela tentou prever. */
+/** Convites da conta: os que a pessoa enviou e as visões que ela compartilhou sobre outras pessoas. */
 export function DesafiosConta() {
   const { toast } = useShell();
   const { dados, recarregar } = useDesafios();
@@ -26,38 +26,30 @@ export function DesafiosConta() {
 
   return (
     <>
-      <div className={s.abas} role="tablist" aria-label="Tipo de desafio">
+      <div className={s.abas} role="tablist" aria-label="Convites">
         <button role="tab" aria-selected={aba === "enviados"} type="button" onClick={() => setAba("enviados")}>Enviados{dados ? ` (${dados.enviados.length})` : ""}</button>
-        <button role="tab" aria-selected={aba === "recebidos"} type="button" onClick={() => setAba("recebidos")}>Que eu previ{dados ? ` (${dados.recebidos.length})` : ""}</button>
+        <button role="tab" aria-selected={aba === "recebidos"} type="button" onClick={() => setAba("recebidos")}>Que eu respondi{dados ? ` (${dados.recebidos.length})` : ""}</button>
       </div>
 
       <section className={s.hero}>
-        <h2>Desafie mais alguém</h2>
-        <p>Cada relação tem perguntas próprias. Quanto mais gente responder, mais completo fica o seu radar.</p>
+        <h2>Convide mais alguém</h2>
+        <p>Cada relação tem perguntas próprias. Quanto mais pessoas compartilharem como te enxergam, mais completo fica o seu retrato.</p>
         <div className={s.chips}>
-          <Link className={s.chip} href="/comecar?tipo=desafio&rel=familia"><IconeRede nome="casaRel" />Família</Link>
-          <Link className={s.chip} href="/comecar?tipo=desafio&rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
-          <Link className={s.chip} href="/comecar?tipo=desafio&rel=crush"><IconeRede nome="coracao" />Crush</Link>
+          <Link className={s.chip} href="/comecar?rel=familia"><IconeRede nome="casaRel" />Família</Link>
+          <Link className={s.chip} href="/comecar?rel=amigos"><IconeRede nome="pessoas" />Amigos</Link>
+          <Link className={s.chip} href="/comecar?rel=crush"><IconeRede nome="coracao" />Alguém especial</Link>
         </div>
       </section>
 
       {!dados ? <p className={s.muted} aria-busy="true">Carregando…</p> : aba === "enviados" ? (
-        dados.enviados.length === 0 ? <div className={s.vazio}><strong>Nenhum desafio enviado ainda.</strong><span>Escolha uma relação acima para começar.</span></div> :
+        dados.enviados.length === 0 ? <div className={s.vazio}><strong>Nenhum convite enviado ainda.</strong><span>Escolha uma relação acima para começar.</span></div> :
         dados.enviados.map((d) => (
           <article key={d.codigo} className={s.item}>
             <div className={s.itemCab}>
-              <span>{d.tipo === "retrato" ? <span className={`${s.rel} ${s.rel_amigos}`} style={{ marginRight: 6 }}>Retrato</span> : null}<span className={`${s.rel} ${s[`rel_${d.relacao}`]}`}>{ROTULO_RELACAO[d.relacao]}</span></span>
+              <span className={`${s.rel} ${s[`rel_${d.relacao}`]}`}>{ROTULO_RELACAO[d.relacao]}</span>
               <span className={s.muted}>enviado {quando(d.criadoEm)}</span>
             </div>
-            {d.tipo === "retrato" ? (
-              <p className={s.muted} style={{ margin: 0 }}>{d.tentativas.length === 0 ? "Ninguém respondeu ainda." : `${d.tentativas.length} ${d.tentativas.length === 1 ? "pessoa respondeu" : "pessoas responderam"}, sem identificação.`} <Link className="text-link" href="/retrato">Ver meu retrato</Link></p>
-            ) : d.tentativas.length === 0 ? <p className={s.muted} style={{ margin: 0 }}>Ninguém respondeu ainda. Que tal mandar o link de novo?</p> : d.tentativas.map((t) => (
-              <div key={t.em} className={s.linha}>
-                <Avatar nome={t.nome ?? "?"} tamanho={36} />
-                <span className={s.nome}><b>{t.nome ?? "Alguém"}</b> <span className={s.muted}>{quando(t.em)}</span></span>
-                <strong>{t.score ?? "?"} de {t.total ?? 10}</strong>
-              </div>
-            ))}
+            <p className={s.muted} style={{ margin: 0 }}>{d.tentativas.length === 0 ? "Ninguém respondeu ainda. Que tal mandar o link de novo?" : `${d.tentativas.length} ${d.tentativas.length === 1 ? "pessoa compartilhou" : "pessoas compartilharam"} como te veem, sem identificação.`} {d.tentativas.length ? <Link className="text-link" href="/retrato">Ver meu retrato</Link> : null}</p>
             <div className={s.chips}>
               <button className={s.btnFio} type="button" onClick={() => void copiar(d.codigo)}>Copiar link</button>
               {confirmar === d.codigo
@@ -67,16 +59,15 @@ export function DesafiosConta() {
           </article>
         ))
       ) : (
-        dados.recebidos.length === 0 ? <div className={s.vazio}><strong>Você ainda não previu ninguém.</strong><span>Quando alguém te mandar um desafio, ele aparece aqui.</span></div> :
+        dados.recebidos.length === 0 ? <div className={s.vazio}><strong>Você ainda não compartilhou a sua visão sobre ninguém.</strong><span>Quando alguém te enviar um convite, ele aparece aqui.</span></div> :
         dados.recebidos.map((r) => (
           <article key={r.codigo} className={s.item}>
             <div className={s.itemCab}><span className={`${s.rel} ${s[`rel_${r.relacao}`]}`}>{ROTULO_RELACAO[r.relacao]}</span><span className={s.muted}>{quando(r.em)}</span></div>
             <div className={s.linha} style={{ borderTop: 0, paddingTop: 0 }}>
               <Avatar nome={r.nome} tamanho={40} />
-              <span className={s.nome}>Você acertou sobre <b>{r.nome}</b></span>
-              <strong>{r.acertos} de {r.total}</strong>
+              <span className={s.nome}>Você compartilhou como vê <b>{r.nome}</b></span>
             </div>
-            <div className={s.chips}><Link className={s.btnP} href={`/comecar?volta=${encodeURIComponent(r.nome)}&de=${r.codigo}`}>Desafiar {r.nome} de volta</Link></div>
+            <div className={s.chips}><Link className={s.btnP} href={`/comecar?volta=${encodeURIComponent(r.nome)}&de=${r.codigo}`}>Convidar {r.nome} de volta</Link></div>
           </article>
         ))
       )}

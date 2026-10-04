@@ -4,12 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost, describeError, loadPeople, personName, type Post, type Profile, type WorldEvent } from "../../lib/client/api";
 import { Avatar, IconeRede, useShell } from "../app/AppShell";
 import { ROTULO_RELACAO, quando, useDesafios, type Relacao } from "./dados";
-import { MiniRadar } from "./MiniRadar";
 import s from "./rede.module.css";
 
 type Item =
-  | { tipo: "resposta"; em: string; nome: string; relacao: Relacao; acertos: number; total: number; codigo: string }
-  | { tipo: "recebido"; em: string; nome: string; relacao: Relacao; acertos: number; total: number; codigo: string }
+  | { tipo: "visao"; em: string; relacao: Relacao; codigo: string }
+  | { tipo: "compartilhou"; em: string; nome: string; relacao: Relacao; codigo: string }
   | { tipo: "post"; em: string; post: Post }
   | { tipo: "mundo"; em: string; evento: WorldEvent };
 
@@ -41,9 +40,8 @@ export function Inicio() {
 
   const itens = useMemo<Item[]>(() => {
     const lista: Item[] = [];
-    for (const d of dados?.enviados ?? []) for (const t of d.tentativas) if (d.tipo !== "retrato")
-      lista.push({ tipo: "resposta", em: t.em, nome: t.nome ?? "Alguém", relacao: d.relacao, acertos: t.score ?? 0, total: t.total ?? 10, codigo: d.codigo });
-    for (const r of dados?.recebidos ?? []) lista.push({ tipo: "recebido", em: r.em, nome: r.nome, relacao: r.relacao, acertos: r.acertos, total: r.total, codigo: r.codigo });
+    for (const d of dados?.enviados ?? []) for (const t of d.tentativas) lista.push({ tipo: "visao", em: t.em, relacao: d.relacao, codigo: d.codigo });
+    for (const r of dados?.recebidos ?? []) lista.push({ tipo: "compartilhou", em: r.em, nome: r.nome, relacao: r.relacao, codigo: r.codigo });
     for (const p of posts) lista.push({ tipo: "post", em: p.createdAt, post: p });
     for (const e of eventos) lista.push({ tipo: "mundo", em: e.opensAt, evento: e });
     return lista.sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime());
@@ -51,7 +49,6 @@ export function Inicio() {
 
   const conhecidos = useMemo(() => {
     const nomes = new Set<string>();
-    for (const d of dados?.enviados ?? []) if (d.tipo !== "retrato") for (const t of d.tentativas) if (t.nome) nomes.add(t.nome);
     for (const r of dados?.recebidos ?? []) nomes.add(r.nome);
     return [...nomes];
   }, [dados]);
@@ -73,33 +70,32 @@ export function Inicio() {
     <>
       <div className={s.stories} aria-label="Pessoas">
         <Link className={s.story} href="/comecar"><span className={`${s.anel} ${s.anelVoce}`}><Avatar nome={nome} tamanho={58} voce /><span className={s.mais}>+</span></span><b>Você</b></Link>
-        {conhecidos.map((n) => <Link key={n} className={s.story} href="/radar"><span className={s.anel}><Avatar nome={n} tamanho={58} /></span><b>{n}</b></Link>)}
+        {conhecidos.map((n) => <Link key={n} className={s.story} href="/desafios"><span className={s.anel}><Avatar nome={n} tamanho={58} /></span><b>{n}</b></Link>)}
       </div>
 
       <section className={s.hero} aria-labelledby="t-hero">
-        <small className={s.marcador}>{enviados ? "Seus desafios" : "Comece por aqui"}</small>
-        <h2 id="t-hero">{enviados ? "Quem mais te conhece até agora?" : "Descubra quem te conhece de verdade."}</h2>
+        <small className={s.marcador}>{enviados ? "Seus convites" : "Comece por aqui"}</small>
+        <h2 id="t-hero">{enviados ? "Como as pessoas te enxergam até agora?" : "Descubra como as pessoas que importam te enxergam."}</h2>
         {enviados ? (
           <div className={s.numeros}>
-            <div><strong>{enviados}</strong><span>{enviados === 1 ? "desafio enviado" : "desafios enviados"}</span></div>
-            <div><strong>{respostas}</strong><span>{respostas === 1 ? "resposta" : "respostas"}</span></div>
-            <div><strong>{dados?.recebidos.length ?? 0}</strong><span>que você previu</span></div>
+            <div><strong>{enviados}</strong><span>{enviados === 1 ? "convite enviado" : "convites enviados"}</span></div>
+            <div><strong>{respostas}</strong><span>{respostas === 1 ? "visão recebida" : "visões recebidas"}</span></div>
+            <div><strong>{dados?.recebidos.length ?? 0}</strong><span>que você compartilhou</span></div>
           </div>
-        ) : <p>Responda 10 perguntas sobre você e desafie alguém. As perguntas mudam conforme a relação.</p>}
+        ) : <p>Responda 12 perguntas sobre você e convide alguém. As perguntas mudam conforme a relação.</p>}
         <ol className={s.caminho} aria-label="Seu caminho no orvok">
-          {([["familia", "Família", "casaRel"], ["amigos", "Amigos", "pessoas"], ["crush", "Crush", "coracao"]] as const).map(([rel, rotulo, icone]) => {
-            const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel && d.tipo !== "retrato");
+          {([["familia", "Família", "casaRel"], ["amigos", "Amigos", "pessoas"], ["crush", "Alguém especial", "coracao"]] as const).map(([rel, rotulo, icone]) => {
+            const feito = (dados?.enviados ?? []).some((d) => d.relacao === rel);
             return (
               <li key={rel} className={feito ? s.feito : ""}>
-                <Link href={`/comecar?tipo=desafio&rel=${rel}`}>
+                <Link href={`/comecar?rel=${rel}`}>
                   <span className={s.check} aria-hidden="true">{feito ? "✓" : <IconeRede nome={icone} />}</span>
-                  <span><b>{feito ? `${rotulo}: desafio enviado` : `Desafie ${rotulo === "Crush" ? "o crush" : rotulo === "Família" ? "a família" : "os amigos"}`}</b><small>{feito ? "Mandar para mais alguém" : "Perguntas feitas para essa relação"}</small></span>
+                  <span><b>{feito ? `${rotulo}: convite enviado` : `Convide ${rotulo === "Alguém especial" ? "alguém especial" : rotulo === "Família" ? "a família" : "os amigos"}`}</b><small>{feito ? "Mandar para mais alguém" : "Perguntas feitas para essa relação"}</small></span>
                 </Link>
               </li>
             );
           })}
         </ol>
-        <Link className={s.chip} href="/comecar?tipo=retrato" style={{ marginTop: 12 }}><IconeRede nome="espelho" />Fazer o Retrato: como te veem?</Link>
       </section>
 
       <div className={s.compor}>
@@ -111,38 +107,37 @@ export function Inicio() {
       </div>
 
       {dados && itens.length === 0 ? (
-        <div className={s.vazio}><strong>Sua rede começa com um desafio.</strong><span>Quando alguém responder, o placar aparece aqui.</span><Link className={s.btnP} href="/comecar">Desafiar alguém</Link></div>
+        <div className={s.vazio}><strong>Sua rede começa com um convite.</strong><span>Quando alguém compartilhar como te vê, o aviso aparece aqui.</span><Link className={s.btnP} href="/comecar">Convidar alguém</Link></div>
       ) : null}
 
       {itens.map((it) => {
-        if (it.tipo === "resposta" || it.tipo === "recebido") {
-          const titulo = it.tipo === "resposta" ? <><b>{it.nome}</b><span>respondeu o seu desafio</span></> : <><b>Você</b><span>previu {it.nome}</span></>;
-          return (
-            <article key={`${it.tipo}-${it.codigo}-${it.em}`} className={s.post}>
-              <Avatar nome={it.tipo === "resposta" ? it.nome : nome} voce={it.tipo === "recebido"} />
-              <div>
-                <div className={s.cab}>{titulo}<span>{quando(it.em)}</span></div>
-                <div className={s.tipo}><IconeRede nome="radar" />Encontro no radar <span className={`${s.rel} ${s[`rel_${it.relacao}`]}`}>{ROTULO_RELACAO[it.relacao]}</span></div>
-                <div className={`${s.cartao} ${s.encontro}`}>
-                  <MiniRadar acertos={it.acertos} total={it.total} />
-                  <div>
-                    <div className={s.placar}>{it.acertos}<small> de {it.total}</small></div>
-                    <p className={s.muted} style={{ margin: "4px 0 0" }}>{it.tipo === "resposta" ? `${it.nome} acertou sobre você` : `Você acertou sobre ${it.nome}`}</p>
-                    <div className={s.acertos} aria-label={`${it.acertos} acertos de ${it.total}`}>{Array.from({ length: it.total }, (_, i) => <i key={i} className={i < it.acertos ? s.ok : ""} />)}</div>
-                  </div>
-                </div>
-                {it.tipo === "recebido" ? <Link className={s.btnFio} href={`/comecar?volta=${encodeURIComponent(it.nome)}&de=${it.codigo}`}>Desafiar {it.nome} de volta</Link> : null}
-              </div>
-            </article>
-          );
-        }
+        if (it.tipo === "visao") return (
+          <article key={`v-${it.codigo}-${it.em}`} className={s.post}>
+            <Avatar nome="?" />
+            <div>
+              <div className={s.cab}><b>Alguém</b><span>{quando(it.em)}</span></div>
+              <p className={s.texto}>Compartilhou como te vê. <span className={`${s.rel} ${s[`rel_${it.relacao}`]}`}>{ROTULO_RELACAO[it.relacao]}</span></p>
+              <Link className={s.btnFio} href="/retrato">Ver meu retrato</Link>
+            </div>
+          </article>
+        );
+        if (it.tipo === "compartilhou") return (
+          <article key={`c-${it.codigo}-${it.em}`} className={s.post}>
+            <Avatar nome={nome} voce />
+            <div>
+              <div className={s.cab}><b>Você</b><span>{quando(it.em)}</span></div>
+              <p className={s.texto}>Compartilhou como vê <b>{it.nome}</b>. <span className={`${s.rel} ${s[`rel_${it.relacao}`]}`}>{ROTULO_RELACAO[it.relacao]}</span></p>
+              <Link className={s.btnFio} href={`/comecar?volta=${encodeURIComponent(it.nome)}&de=${it.codigo}`}>Convidar {it.nome} de volta</Link>
+            </div>
+          </article>
+        );
         if (it.tipo === "mundo") return (
           <article key={`m-${it.evento.id}`} className={s.post}>
             <span style={{ width: 44, height: 44, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--panel-2)", color: "#7fb2ff" }}><IconeRede nome="globo" /></span>
             <div>
-              <div className={s.cab}><b>Mundo</b><span>previsão aberta</span></div>
+              <div className={s.cab}><b>Mundo</b><span>evento aberto</span></div>
               <p className={s.texto}>{it.evento.title}</p>
-              <Link className={s.btnFio} href="/eventos">Fazer minha previsão</Link>
+              <Link className={s.btnFio} href="/eventos">Ver no Mundo</Link>
             </div>
           </article>
         );

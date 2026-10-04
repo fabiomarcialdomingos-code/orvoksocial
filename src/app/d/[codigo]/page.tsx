@@ -1,6 +1,6 @@
 import "@fontsource-variable/onest";
 import type { Metadata } from "next";
-import { FluxoPrever } from "@/components/desafio/FluxoPrever";
+import { FluxoResponder } from "@/components/desafio/FluxoResponder";
 import { authPool } from "@/lib/auth/session";
 import { DesafioService } from "@/lib/desafio/service";
 
@@ -8,13 +8,13 @@ import { DesafioService } from "@/lib/desafio/service";
 export async function generateMetadata({ params }: { params: Promise<{ codigo: string }> }): Promise<Metadata> {
   const { codigo } = await params;
   const v = await new DesafioService(authPool()).vitrine(codigo.toUpperCase(), null).catch(() => null);
-  const titulo = !v ? "Convite do orvok" : v.tipo === "retrato" ? `Como você vê ${v.nome}?` : `${v.nome} te desafiou no orvok`;
-  const descricao = !v ? "Descubra quem conhece você de verdade."
-    : v.tipo === "retrato" ? `${v.nome} quer saber como você enxerga essa pessoa. 3 minutos, anônimo.` : "Quanto você conhece essa pessoa? 5 perguntas, 1 minuto.";
+  const titulo = !v ? "Convite do orvok" : `Como você vê ${v.nome}?`;
+  const descricao = !v ? "Descubra como as pessoas que importam te enxergam."
+    : `${v.nome} convidou você para compartilhar a sua visão. Leva cerca de 3 minutos e é anônimo.`;
   return { title: titulo, description: descricao, robots: { index: false }, openGraph: { title: titulo, description: descricao } };
 }
 
 export default async function Page({ params }: { params: Promise<{ codigo: string }> }) {
   const { codigo } = await params;
-  return <FluxoPrever codigo={codigo.toUpperCase()} />;
+  return <FluxoResponder codigo={codigo.toUpperCase()} />;
 }

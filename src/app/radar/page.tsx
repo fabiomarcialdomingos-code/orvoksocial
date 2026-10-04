@@ -1,4 +1,4 @@
-import { AppShell } from "../../components/app/AppShell";
-import { RadarVivo } from "../../components/rede/RadarVivo";
-export const metadata = { title: "Meu radar" };
-export default function RadarPage() { return <AppShell title="Meu radar"><RadarVivo /></AppShell>; }
+import { redirect } from "next/navigation";
+
+/** O "Meu radar" media pessoas por quanto acertavam. Sem pontuação, o lugar dessa leitura é o Meu retrato. */
+export default function RadarPage() { redirect("/retrato"); }

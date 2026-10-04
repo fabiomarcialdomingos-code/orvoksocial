@@ -7,7 +7,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#040811">
-<meta name="description" content="Responda sobre você, desafie um amigo e descubra quem te conhece de verdade. Sem cadastro para começar.">
+<meta name="description" content="Descubra como as pessoas que importam te enxergam. Responda sobre você e convide quem quiser, de forma anônima. Sem cadastro para começar.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2213%22 fill=%22none%22 stroke=%22%23EAF0FA%22 stroke-width=%222.4%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%224.2%22 fill=%22%23FFA834%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -140,25 +140,11 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 
 
 .fixado-globo{height:170px;margin-top:0!important}
-.portas{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.porta{position:relative;display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:20px;border:1px solid var(--fio-2);background:rgba(76,141,255,.06);transition:transform .25s,border-color .25s,box-shadow .35s;overflow:hidden}
-.porta::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:radial-gradient(120% 90% at 100% 0%,rgba(76,141,255,.22),transparent 55%);pointer-events:none}
-.porta-ambar{background:rgba(255,168,52,.05)}
-.porta-ambar::before{background:radial-gradient(120% 90% at 100% 0%,rgba(255,168,52,.2),transparent 55%)}
-.porta>*{position:relative}
-.porta:hover{transform:translateY(-3px);border-color:var(--azul);box-shadow:0 18px 44px -22px var(--azul)}
-.porta-ambar:hover{border-color:var(--ambar);box-shadow:0 18px 44px -22px var(--ambar)}
-.porta-ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--azul-sub);color:var(--azul-luz);margin-bottom:4px}
-.porta-ambar .porta-ico{background:var(--ambar-sub);color:var(--ambar)}
-.porta-ico svg{width:22px;height:22px}
-.porta b{font-size:18px;letter-spacing:-.02em}
-.porta-meta{font-size:12px;font-weight:600;color:var(--azul-luz)}
-.porta-ambar .porta-meta{color:var(--ambar)}
-.porta small{color:var(--suave);font-size:13px;line-height:1.45;flex:1}
-.porta-btn{margin-top:8px;align-self:flex-start}
-.sem-cad{margin:14px 0 0;color:var(--suave);font-size:13px;display:flex;align-items:center;gap:8px}
+.fixado-lead{margin:10px 0 18px;color:var(--suave);max-width:48ch;line-height:1.55}
+.fixado-acoes{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sem-cad{margin:0;color:var(--suave);font-size:13px;display:flex;align-items:center;gap:8px}
 .sem-cad i{width:6px;height:6px;border-radius:50%;background:var(--verde);box-shadow:0 0 8px var(--verde)}
-@media (max-width:640px){.portas{grid-template-columns:1fr}.fixado-globo{height:130px}}
+@media (max-width:640px){.fixado-globo{height:130px}}
 
 /* ---------- seções de produto (abaixo do cartão fixado) ---------- */
 .secao{margin:22px 18px 0;padding:22px;border-radius:24px;border:1px solid var(--fio);background:var(--sup);opacity:0;transform:translateY(18px);transition:opacity .7s,transform .8s cubic-bezier(.2,.9,.3,1)}
@@ -306,17 +292,17 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     <a class="marca" href="#" aria-label="orvok, início"><svg viewBox="0 0 32 32" aria-hidden="true" class="orb"></svg><span>orvok</span></a>
     <nav class="menu">
       <a href="#" aria-current="page"><svg data-ic="casa"></svg><span>Início</span></a>
-      <a href="/entrar?returnTo=%2Fradar"><svg data-ic="radar"></svg><span>Meu radar</span></a>
+      <a href="/entrar?returnTo=%2Fretrato"><svg data-ic="espelho"></svg><span>Meu retrato</span></a>
       <a href="/entrar?returnTo=%2Feventos"><svg data-ic="globo"></svg><span>Mundo</span></a>
       <a href="#" data-comecar><svg data-ic="pessoas"></svg><span>Pessoas</span></a>
       <a href="/entrar?returnTo=%2Fnotificacoes"><svg data-ic="sino"></svg><span>Notificações</span></a>
       <a href="/entrar?returnTo=%2Fperfil"><svg data-ic="perfil"></svg><span>Perfil</span></a>
     </nav>
-    <button class="btn btn-azul prever" type="button" data-comecar><svg data-ic="mais" style="width:22px;height:22px"></svg><span>Desafiar alguém</span></button>
+    <button class="btn btn-azul prever" type="button" data-comecar><svg data-ic="mais" style="width:22px;height:22px"></svg><span>Convidar alguém</span></button>
     <a class="btn btn-fio entrar-lat" href="/entrar" aria-label="Entrar na minha conta"><svg data-ic="perfil" style="width:20px;height:20px"></svg><span>Entrar</span></a>
     <div class="visitante luz">
       <strong>Comece sem cadastro</strong>
-      <p>Responda sobre você e desafie um amigo. A conta só é pedida depois, se quiser acompanhar o resultado.</p>
+      <p>Responda sobre você e convide alguém. A conta só é pedida depois, se quiser acompanhar o seu retrato.</p>
       <button class="btn btn-tinta" type="button" data-comecar>Começar agora</button>
       <button class="btn btn-fio" type="button" data-entrar>Já tenho conta</button>
     </div>
@@ -335,25 +321,13 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
       <canvas class="teia-viva" id="teiaViva" aria-hidden="true"></canvas>
       <div class="fixado-globo" aria-hidden="true"><canvas id="globoFixado"></canvas></div>
       <div class="fixado-corpo">
-        <span class="marcador"><svg data-ic="pino"></svg>Dois jeitos de descobrir</span>
+        <span class="marcador"><svg data-ic="pino"></svg>Um espaço para quem importa</span>
         <h2 id="t-fixado">Descubra como as pessoas que importam te enxergam.</h2>
-        <div class="portas">
-          <a class="porta" href="/comecar?tipo=desafio">
-            <span class="porta-ico"><svg data-ic="alvo"></svg></span>
-            <b>Quanto te conhecem?</b>
-            <span class="porta-meta">5 perguntas · 1 minuto</span>
-            <small>Você responde sobre você. Seu amigo tenta adivinhar e ganha um placar.</small>
-            <span class="btn btn-azul btn-p porta-btn">Jogar agora</span>
-          </a>
-          <a class="porta porta-ambar" href="/comecar?tipo=retrato">
-            <span class="porta-ico"><svg data-ic="espelho"></svg></span>
-            <b>Como te veem?</b>
-            <span class="porta-meta">12 perguntas · 3 minutos</span>
-            <small>Receba o seu perfil. Quem você convidar diz como te enxerga, sem se identificar.</small>
-            <span class="btn btn-fio btn-p porta-btn">Descobrir meu retrato</span>
-          </a>
+        <p class="fixado-lead">Responda 12 perguntas sobre você, receba o seu perfil e convide quem você quiser para compartilhar, de forma anônima, como te vê.</p>
+        <div class="fixado-acoes">
+          <a class="btn btn-azul" href="/comecar">Começar o meu retrato</a>
+          <p class="sem-cad"><i></i>Sem cadastro para começar · cerca de 3 minutos</p>
         </div>
-        <p class="sem-cad"><i></i>Sem cadastro para começar</p>
       </div>
     </section>
 
@@ -392,13 +366,13 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     </section>
 
     <section class="secao" aria-labelledby="t-rel">
-      <span class="rotulo"><svg data-ic="pessoas"></svg>Escolha quem desafiar</span>
+      <span class="rotulo"><svg data-ic="pessoas"></svg>Escolha quem convidar</span>
       <h2 id="t-rel">Cada relação tem <b>perguntas próprias</b></h2>
-      <p>Família, amigos e crush conhecem lados diferentes de você. Descubra qual deles te conhece melhor.</p>
+      <p>Família, amigos e pessoas especiais conhecem lados diferentes de você. Cada relação revela um olhar próprio.</p>
       <div class="relacoes-g">
-        <a class="rel-card" href="/comecar?rel=familia"><span class="ico"><svg data-ic="casa"></svg></span><span><b>Família</b><br><small>Quem cresceu com você ainda te reconhece?</small></span></a>
-        <a class="rel-card" href="/comecar?rel=amigos"><span class="ico"><svg data-ic="pessoas"></svg></span><span><b>Amigos</b><br><small>Quem está sempre por perto e acha que te conhece.</small></span></a>
-        <a class="rel-card" href="/comecar?rel=crush"><span class="ico"><svg data-ic="coracao"></svg></span><span><b>Crush</b><br><small>Será que te conhece mesmo, ou só acha?</small></span></a>
+        <a class="rel-card" href="/comecar?rel=familia"><span class="ico"><svg data-ic="casa"></svg></span><span><b>Família</b><br><small>Quem cresceu com você.</small></span></a>
+        <a class="rel-card" href="/comecar?rel=amigos"><span class="ico"><svg data-ic="pessoas"></svg></span><span><b>Amigos</b><br><small>Quem acompanha o seu dia a dia.</small></span></a>
+        <a class="rel-card" href="/comecar?rel=crush"><span class="ico"><svg data-ic="coracao"></svg></span><span><b>Alguém especial</b><br><small>Quem faz o coração acelerar.</small></span></a>
       </div>
     </section>
 
@@ -414,9 +388,9 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     </section>
 
     <section class="cta-final" aria-labelledby="t-final">
-      <h2 id="t-final">Por qual você quer começar?</h2>
-      <p>Dá para fazer os dois. Nenhum precisa de cadastro.</p>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><a class="btn btn-azul" href="/comecar?tipo=desafio">Quanto te conhecem?</a><a class="btn btn-fio" href="/comecar?tipo=retrato">Como te veem?</a></div>
+      <h2 id="t-final">Pronto para descobrir?</h2>
+      <p>Leva cerca de 3 minutos e não precisa de cadastro.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><a class="btn btn-azul" href="/comecar">Começar o meu retrato</a></div>
     </section>
   </main>
 
@@ -433,10 +407,9 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     <section class="caixa faq" aria-labelledby="t-faq">
       <h3 id="t-faq">Perguntas rápidas</h3>
       <details><summary>Preciso criar conta?</summary><p>Não para começar. A conta só é útil depois, para acompanhar quem respondeu.</p></details>
-      <details><summary>Quem vê as minhas respostas?</summary><p>Ninguém. Quem te desafia vê só o placar, e o "como te veem" só aparece com 3 pessoas ou mais, sem nomes.</p></details>
-      <details><summary>É um teste psicológico?</summary><p>Não. É uma brincadeira de autoconhecimento entre pessoas que se conhecem, sem diagnóstico.</p></details>
-      <details><summary>Qual a diferença entre os dois?</summary><p>No "Quanto te conhecem?" seu amigo tenta adivinhar o que você respondeu e ganha um placar. No "Como te veem?" ele diz como te enxerga, sem se identificar, e você recebe um retrato.</p></details>
-      <details><summary>Quanto tempo leva?</summary><p>O jogo leva cerca de 1 minuto (5 perguntas). O retrato, cerca de 3 minutos (12 perguntas).</p></details>
+      <details><summary>Quem vê as minhas respostas?</summary><p>Ninguém. Quem responde sobre você também fica anônimo, e o "como te veem" só aparece com 3 pessoas ou mais, sem nomes.</p></details>
+      <details><summary>É um teste psicológico?</summary><p>Não. É um espaço de autoconhecimento entre pessoas que se conhecem, sem diagnóstico.</p></details>
+      <details><summary>Quanto tempo leva?</summary><p>Cerca de 3 minutos: 12 perguntas sobre você.</p></details>
     </section>
     <nav class="rodape-d" aria-label="Links"><a href="/privacidade">Privacidade</a><a href="/meus-dados">Meus dados</a><a href="/entrar">Entrar</a><a href="/comecar">Como funciona</a><span>© orvok 2026</span></nav>
   </aside>
@@ -445,15 +418,15 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
 <nav class="abas-movel" aria-label="Navegação">
   <a href="#" aria-current="page" aria-label="Início"><svg data-ic="casa"></svg></a>
   <a href="/entrar?returnTo=%2Feventos" aria-label="Mundo"><svg data-ic="globo"></svg></a>
-  <a href="#" class="meio" data-comecar aria-label="Desafiar alguém"><svg data-ic="mais"></svg></a>
-  <a href="/entrar?returnTo=%2Fradar" aria-label="Meu radar"><svg data-ic="radar"></svg></a>
+  <a href="#" class="meio" data-comecar aria-label="Convidar alguém"><svg data-ic="mais"></svg></a>
+  <a href="/entrar?returnTo=%2Fretrato" aria-label="Meu retrato"><svg data-ic="espelho"></svg></a>
   <a href="/entrar" aria-label="Entrar na minha conta"><svg data-ic="perfil"></svg></a>
 </nav>
 
 <aside class="empurrao" id="empurrao" aria-label="Convite para começar">
-  <span class="icone-e"><svg data-ic="alvo"></svg></span>
-  <div><b>Quanto seus amigos te conhecem?</b><small>5 perguntas, 1 minuto, sem cadastro.</small></div>
-  <a class="btn btn-azul btn-p" href="/comecar?tipo=desafio">Jogar</a>
+  <span class="icone-e"><svg data-ic="espelho"></svg></span>
+  <div><b>Como as pessoas te enxergam?</b><small>12 perguntas, 3 minutos, sem cadastro.</small></div>
+  <a class="btn btn-azul btn-p" href="/comecar">Começar</a>
   <button class="fechar-e" type="button" id="fechaEmp" aria-label="Dispensar"><svg data-ic="x"></svg></button>
 </aside>
 
@@ -462,7 +435,7 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     <button class="fechar" type="button" data-fecha aria-label="Fechar"><svg data-ic="x"></svg></button>
     <svg class="orb" viewBox="0 0 32 32" aria-hidden="true"></svg>
     <h2>Primeiro, mostre quem você é</h2>
-    <p>Escolha entre o jogo rápido ou o retrato completo.</p>
+    <p>Doze perguntas, cerca de 3 minutos.</p>
     <ul>
       <li><svg data-ic="ok"></svg>Sem cadastro e sem senha para começar</li>
       <li><svg data-ic="ok"></svg>Ninguém vê as suas respostas</li>

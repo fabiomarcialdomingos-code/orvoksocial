@@ -18,14 +18,14 @@ jobs:
             pv=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/privacidade" || echo ERR)
             tm=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/termos" || echo ERR)
             home_tem_rede=$(curl -s -m 15 "$base/" | grep -q "Rede ao vivo" && echo SIM || echo nao)
-            home_espelho=$(curl -s -m 15 "$base/" | grep -q "Como te veem" && echo SIM || echo nao)
+            home_porta=$(curl -s -m 15 "$base/" | grep -q "Começar o meu retrato" && echo SIM || echo nao)
+            home_jogo=$(curl -s -m 15 "$base/" | grep -qiE "Jogar agora|placar|adivinh|desafi" && echo SIM || echo nao)
             mundo=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/eventos" || echo ERR)
             push=$(curl -s -m 15 "$base/api/v1/push/public-key" | python3 -c "import json,sys;d=json.load(sys.stdin);print('disponivel' if d.get('disponivel') else 'sem-chaves')" 2>/dev/null || echo ERR)
             placar=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/placar" || echo ERR)
             rodada=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/r/AAAAAAAA" || echo ERR)
-            cat_desafio=$(curl -s -m 15 "$base/api/v1/desafio/catalogo?tipo=desafio" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
-            cat_retrato=$(curl -s -m 15 "$base/api/v1/desafio/catalogo?tipo=retrato" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
-            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede duasPortas=$home_espelho perguntasDesafio=$cat_desafio perguntasRetrato=$cat_retrato mundoSemLogin=$mundo rodadaInexistente=$rodada placarSemLogin=$placar push=$push"
+            cat_perguntas=$(curl -s -m 15 "$base/api/v1/desafio/catalogo" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede umaPorta=$home_porta linguagemDeJogoNaHome=$home_jogo perguntas=$cat_perguntas mundoSemLogin=$mundo rodadaInexistente=$rodada placarSemLogin=$placar push=$push"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: Google

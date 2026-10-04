@@ -5,8 +5,8 @@ import { DesafioService } from "@/lib/desafio/service";
 
 export const runtime = "nodejs";
 /**
- * Abertura do questionário. Sem parâmetros: três âncoras escolhidas na hora.
- * Com `?de=CODIGO`: as mesmas 10 perguntas de um desafio existente ("desafie de volta").
+ * Abertura do questionário: as 12 perguntas, escolhidas na hora para a relação.
+ * Com `?de=CODIGO`: as mesmas perguntas de um convite existente ("convide de volta").
  */
 export async function GET(request: Request) {
   return leituraPublica(async () => {
@@ -15,7 +15,6 @@ export async function GET(request: Request) {
     if (de) return Response.json({ schemaVersion: "1", ...(await servico.conjuntoDe(de.toUpperCase())), aviso: AVISO });
     const rel = new URL(request.url).searchParams.get("rel");
     const relacao = rel === "familia" || rel === "crush" ? rel : "amigos";
-    const tipo = new URL(request.url).searchParams.get("tipo") === "retrato" ? "retrato" : "desafio";
-    return Response.json({ schemaVersion: "1", tipo, perguntas: await servico.conjunto(relacao, tipo), aviso: AVISO });
+    return Response.json({ schemaVersion: "1", perguntas: await servico.conjunto(relacao), aviso: AVISO });
   });
 }

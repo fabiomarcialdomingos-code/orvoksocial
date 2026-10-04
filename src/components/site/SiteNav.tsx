@@ -18,7 +18,7 @@ export function SiteNav() {
         <Brand />
         <nav aria-label="Navegação principal">
           <Link href="/">Início</Link>
-          <Link href="/comecar">Desafiar alguém</Link>
+          <Link href="/comecar">Convidar alguém</Link>
         </nav>
         <div className="site-nav-actions">
           {signedIn ? (

@@ -47,7 +47,7 @@ export function Feed() {
           <form className="post" style={{ paddingTop: 0 }} onSubmit={(e) => { e.preventDefault(); void publish(); }}>
             <span className="avatar">{initials(profile?.displayName)}</span>
             <div className="form-stack">
-              <textarea className="input" value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} placeholder="Uma percepção, uma previsão, uma surpresa…" aria-label="Nova publicação" />
+              <textarea className="input" value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} placeholder="Uma percepção, uma surpresa…" aria-label="Nova publicação" />
               <div className="row-between"><span className="faint" style={{ fontSize: 13 }}>{body.length}/5000</span><button className="button button-small" disabled={!body.trim()}>Publicar</button></div>
             </div>
           </form>
@@ -70,7 +70,7 @@ export function Feed() {
           ))}
         </section>
         <aside className="stack">
-          <div className="card" data-p="people"><h3>Boas práticas</h3><p className="muted" style={{ marginTop: 8 }}>Fale das suas percepções. Não publique respostas ou previsões de outra pessoa sem que ela concorde.</p></div>
+          <div className="card" data-p="people"><h3>Boas práticas</h3><p className="muted" style={{ marginTop: 8 }}>Fale das suas percepções. Não publique as respostas de outra pessoa sem que ela concorde.</p></div>
           <div className="card"><h3>Grupos</h3><p className="muted" style={{ marginTop: 8 }}>Para conversar só com quem você escolher.</p><Link className="text-link" href="/grupos" style={{ marginTop: 10 }}>Ver grupos</Link></div>
         </aside>
       </div>
@@ -124,7 +124,7 @@ export function Groups() {
 
   return (
     <>
-      <Head title="Grupos" text="Espaços privados para prever junto: a turma da faculdade, a família, o time. Só membros veem o que acontece dentro." />
+      <Head title="Grupos" text="Espaços privados para conviver: a turma da faculdade, a família, o time. Só membros veem o que acontece dentro." />
       {invites.length > 0 && (
         <section className="card" data-p="people" style={{ marginBottom: 16 }}>
           <h2>Convites para grupos</h2>
@@ -187,13 +187,13 @@ const labels: Record<string, [string, string]> = {
   RADAR_INVITATION_CREATED: ["Novo pedido para prever você", "/desafios"],
   RADAR_INVITED: ["Novo pedido para prever você", "/desafios"],
   RADAR_INVITATION_ACCEPTED: ["Seu pedido foi aceito", "/desafios"],
-  RADAR_CONSENT_GRANTED: ["Alguém consentiu ser prevista por você", "/desafios"],
+  RADAR_CONSENT_GRANTED: ["Alguém consentiu em compartilhar a visão sobre você", "/desafios"],
   RADAR_CONSENT_REVOKED: ["Um consentimento foi revogado", "/desafios"],
-  RADAR_PREDICTION_CREATED: ["Nova previsão sobre você", "/radar"],
+  RADAR_PREDICTION_CREATED: ["Nova visão sobre você", "/retrato"],
   RADAR_SHARE_LINK_REDEEMED: ["Alguém aceitou o seu convite", "/desafios"],
   GROUP_INVITATION: ["Convite para um grupo", "/grupos"],
   WORLD_EVENT_DRAFT_READY: ["Um evento pré-cadastrado está chegando. Dê uma olhada no Quartel general.", "/admin"],
-  MUNDO_SUA_VEZ: ["É sua vez de prever no Mundo", "/eventos"],
+  MUNDO_SUA_VEZ: ["É a sua vez de responder no Mundo", "/eventos"],
 };
 
 export function Notifications() {
@@ -209,9 +209,9 @@ export function Notifications() {
     try { await apiPost(`/notifications/${id}/${action}`, {}); await load(); } catch (e) { toast(describeError(e), "error"); }
   };
   const { dados } = useDesafios();
-  const respostas = (dados?.enviados ?? []).flatMap((d) => d.tentativas.map((t) => ({ nome: d.tipo === "retrato" ? null : t.nome ?? "Alguém", em: t.em, score: t.score, total: t.total, codigo: d.codigo })));
+  const respostas = (dados?.enviados ?? []).flatMap((d) => d.tentativas.map((t) => ({ em: t.em, codigo: d.codigo })));
   const lista = [
-    ...respostas.map((x) => ({ chave: `d-${x.codigo}-${x.em}`, em: x.em, texto: x.nome === null ? "Alguém respondeu o seu Retrato" : `${x.nome} respondeu o seu desafio${x.score !== undefined ? ` e acertou ${x.score} de ${x.total}` : ""}`, href: x.nome === null ? "/retrato" : "/desafios", lida: true, id: null as string | null })),
+    ...respostas.map((x) => ({ chave: `d-${x.codigo}-${x.em}`, em: x.em, texto: "Alguém compartilhou como te vê", href: "/retrato", lida: true, id: null as string | null })),
     ...(items ?? []).map((n) => {
       const [text, href] = labels[n.eventType] ?? [n.eventType.toLowerCase().replaceAll("_", " "), "/painel"];
       return { chave: n.id, em: n.createdAt, texto: text, href, lida: n.state !== "UNREAD", id: n.id as string | null };
@@ -220,10 +220,10 @@ export function Notifications() {
   return (
     <>
       {!items || !dados ? <p className={r.muted} aria-busy="true">Carregando…</p> : lista.length === 0 ? (
-        <div className={r.vazio}><strong>Tudo em dia.</strong><span>Quando alguém responder um desafio seu, o aviso aparece aqui.</span><Link className={r.btnP} href="/comecar">Desafiar alguém</Link></div>
+        <div className={r.vazio}><strong>Tudo em dia.</strong><span>Quando alguém compartilhar como te vê, o aviso aparece aqui.</span><Link className={r.btnP} href="/comecar">Convidar alguém</Link></div>
       ) : lista.map((n) => (
         <div key={n.chave} className={`${r.aviso} ${n.lida ? "" : r.naoLido}`}>
-          <span className={r.iconeAviso}><IconeRede nome={n.href === "/desafios" ? "alvo" : "sino"} /></span>
+          <span className={r.iconeAviso}><IconeRede nome="sino" /></span>
           <span><Link href={n.href} onClick={() => { if (!n.lida && n.id) void act(n.id, "read"); }}><b>{n.texto}</b></Link><br /><span className={r.muted}>{relativeTime(n.em)}</span></span>
           {n.id ? <button type="button" className={r.linkSutil} onClick={() => void act(n.id!, "dismiss")}>Dispensar</button> : <span />}
         </div>
@@ -249,9 +249,9 @@ export function ProfileView({ mathPanel }: { mathPanel?: ReactNode }) {
           <div><h2>{name || "Sem nome"}</h2><p>{bio || "Conte em uma frase quem você é."}</p></div>
         </div>
         <div className={r.numeros}>
-          <div><strong>{enviados}</strong><span>desafios enviados</span></div>
-          <div><strong>{respostas}</strong><span>respostas recebidas</span></div>
-          <div><strong>{dados?.recebidos.length ?? 0}</strong><span>pessoas que você previu</span></div>
+          <div><strong>{enviados}</strong><span>convites enviados</span></div>
+          <div><strong>{respostas}</strong><span>visões recebidas</span></div>
+          <div><strong>{dados?.recebidos.length ?? 0}</strong><span>pessoas sobre quem você opinou</span></div>
         </div>
       </section>
       <form className={r.item} onSubmit={async (e) => {

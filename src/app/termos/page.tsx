@@ -21,7 +21,7 @@ export default function TermosDeUsoPage() {
           <h1>Termos de uso</h1>
           <p>
             Regras simples para o orvok continuar sendo um espaço seguro entre você e as
-            pessoas que escolheu. Ao responder um desafio, criar uma conta ou prever alguém,
+            pessoas que escolheu. Ao responder um convite, criar uma conta ou compartilhar a sua visão sobre alguém,
             você concorda com o que está escrito aqui.
           </p>
           <p className={s.atualizado}>Última atualização: {ATUALIZADO_EM}.</p>
@@ -32,11 +32,11 @@ export default function TermosDeUsoPage() {
             <h2>1. Idade mínima</h2>
             <p>
               O orvok é destinado a pessoas com <strong>16 anos ou mais</strong>. Isso vale
-              tanto para quem cria um desafio quanto para quem responde a um, com ou sem
+              tanto para quem cria um convite quanto para quem responde a um, com ou sem
               conta. Ao aceitar estes termos, você está confirmando que tem 16 anos ou mais.
             </p>
             <p>
-              Se um responsável identificar uma conta ou um desafio de alguém abaixo dessa
+              Se um responsável identificar uma conta ou um convite de alguém abaixo dessa
               idade, pode escrever para{" "}
               <a className="text-link" href="mailto:contato@orvok.com.br">contato@orvok.com.br</a>{" "}
               e removemos o quanto antes.
@@ -47,8 +47,8 @@ export default function TermosDeUsoPage() {
             <h2>2. O que você não pode fazer no orvok</h2>
             <ul>
               <li>Assediar, ameaçar, perseguir ou constranger outra pessoa.</li>
-              <li>Enviar um desafio ou uma previsão com conteúdo sexual, violento ou ilegal.</li>
-              <li>Se passar por outra pessoa ao responder um desafio.</li>
+              <li>Enviar um convite ou uma resposta com conteúdo sexual, violento ou ilegal.</li>
+              <li>Se passar por outra pessoa ao responder um convite.</li>
               <li>Usar o orvok para coletar dados de outras pessoas sem que elas saibam.</li>
               <li>Tentar contornar um bloqueio ou continuar contatando quem pediu para não ser contatado.</li>
             </ul>
@@ -74,10 +74,10 @@ export default function TermosDeUsoPage() {
           </section>
 
           <section className={s.secao}>
-            <h2>4. O que os desafios não são</h2>
+            <h2>4. O que o orvok não é</h2>
             <div className={s.destaque}>
               <p>
-                O orvok é um jogo de autoconhecimento entre pessoas que se conhecem. Não é
+                O orvok é um espaço de autoconhecimento entre pessoas que se conhecem. Não é
                 um teste psicológico, não diagnostica nada, e o resultado não deve ser
                 usado para tomar decisões sérias sobre alguém.
               </p>
