@@ -19,6 +19,8 @@ jobs:
             tm=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/termos" || echo ERR)
             home_tem_rede=$(curl -s -m 15 "$base/" | grep -q "Rede ao vivo" && echo SIM || echo nao)
             home_porta=$(curl -s -m 15 "$base/" | grep -q "Começar o meu retrato" && echo SIM || echo nao)
+            home_nitidez=$(curl -s -m 15 "$base/" | grep -q "Em revelação" && echo SIM || echo nao)
+            home_selos_velhos=$(curl -s -m 15 "$base/" | grep -qE "Selo (Ouro|Prata|Bronze)|<b>(Ouro|Prata|Bronze)</b>" && echo SIM || echo nao)
             home_jogo=$(curl -s -m 15 "$base/" | grep -qiE "Jogar agora|placar|adivinh|desafi" && echo SIM || echo nao)
             mundo=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/eventos" || echo ERR)
             push=$(curl -s -m 15 "$base/api/v1/push/public-key" | python3 -c "import json,sys;d=json.load(sys.stdin);print('disponivel' if d.get('disponivel') else 'sem-chaves')" 2>/dev/null || echo ERR)
@@ -31,7 +33,7 @@ jobs:
             ins_entrar=$(curl -s -m 15 "$base/entrar" | grep -o '<script[^>]*>' | grep -v 'src=' | grep -vc 'nonce=' || true)
             ins_comecar=$(curl -s -m 15 "$base/comecar" | grep -o '<script[^>]*>' | grep -v 'src=' | grep -vc 'nonce=' || true)
             cat_perguntas=$(curl -s -m 15 "$base/api/v1/desafio/catalogo" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
-            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede umaPorta=$home_porta linguagemDeJogoNaHome=$home_jogo perguntas=$cat_perguntas scriptsInlineSemNonce_entrar=$ins_entrar scriptsInlineSemNonce_comecar=$ins_comecar mundoSemLogin=$mundo rodadaInexistente=$rodada conexoesSemLogin=$conexoes prontoStatus=$pronto loginComOrigemDoProprioSite=$origem imagemDoConvite=$og_convite conversaInexistente=$conversa push=$push"
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede umaPorta=$home_porta linguagemDeJogoNaHome=$home_jogo nitidezNaHome=$home_nitidez selosAntigosNaHome=$home_selos_velhos perguntas=$cat_perguntas scriptsInlineSemNonce_entrar=$ins_entrar scriptsInlineSemNonce_comecar=$ins_comecar mundoSemLogin=$mundo rodadaInexistente=$rodada conexoesSemLogin=$conexoes prontoStatus=$pronto loginComOrigemDoProprioSite=$origem imagemDoConvite=$og_convite conversaInexistente=$conversa push=$push"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: Google
