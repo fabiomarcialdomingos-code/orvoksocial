@@ -701,3 +701,68 @@ model UserAgeConsent {
   version   String   @db.VarChar(40)
   createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
 }
+
+/// Interruptores de lançamento (ex.: "estante"). Desligado por padrão.
+model AppFlag {
+  name      String   @id @db.VarChar(40)
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+}
+
+/// Quem participa da Estante: uma conta ou só um aparelho.
+model ShelfPerson {
+  id                String   @id @db.Uuid
+  userId            String?  @unique @db.Uuid
+  tokenHash         String?  @unique @db.VarChar(64)
+  name              String   @db.VarChar(24)
+  inviteCode        String   @unique @db.VarChar(10)
+  ageConsentVersion String?  @db.VarChar(40)
+  createdAt         DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+}
+
+/// Duas pessoas que se conhecem (o círculo). personA < personB.
+model ShelfBond {
+  id        String   @id @db.Uuid
+  personA   String   @db.Uuid
+  personB   String   @db.Uuid
+  status    String   @default("ACTIVE") @db.VarChar(10)
+  blockedBy String?  @db.Uuid
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@unique([personA, personB], map: "ShelfBond_par")
+  @@index([personB], map: "ShelfBond_b")
+}
+
+/// "Lembrei de você": um objeto, uma frase, a previsão de quem mandou e a reação de quem recebeu.
+model Keepsake {
+  id              String    @id @db.Uuid
+  code            String    @unique @db.VarChar(10)
+  fromId          String    @db.Uuid
+  toId            String?   @db.Uuid
+  toName          String?   @db.VarChar(24)
+  title           String    @db.VarChar(60)
+  note            String?   @db.VarChar(240)
+  imageId         String?   @db.Uuid
+  illustrationSvg String?
+  predicted       Int       @db.SmallInt
+  reaction        Int?      @db.SmallInt
+  reactedAt       DateTime? @db.Timestamptz(6)
+  state           String    @default("VISIBLE") @db.VarChar(10)
+  openedAt        DateTime? @db.Timestamptz(6)
+  createdAt       DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([toId, createdAt(sort: Desc)], map: "Keepsake_to")
+  @@index([fromId, createdAt(sort: Desc)], map: "Keepsake_from")
+}
+
+/// Visitas e "passei por aqui" na estante de alguém.
+model ShelfVisit {
+  id        String   @id @db.Uuid
+  ownerId   String   @db.Uuid
+  visitorId String   @db.Uuid
+  day       DateTime @db.Date
+  mark      Boolean  @default(false)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@unique([ownerId, visitorId, day], map: "ShelfVisit_unico")
+}

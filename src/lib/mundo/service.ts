@@ -7,14 +7,7 @@ import { AVISO_IDADE, AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio
 import { limitar } from "@/lib/limite";
 import { registrarEvento } from "@/lib/medicao";
 import { enviarDenunciaDeConversaPorEmail } from "@/lib/desafio/moderacao-mail";
-import { enviarPush } from "@/lib/push";
-
-/** Notifica e, se a pessoa ativou, manda um aviso push com o selo atualizado. */
-async function avisar(pool: Pool, recipientId: string, eventType: string, sourceId: string, aviso: { titulo: string; corpo: string; url: string }): Promise<void> {
-  await pool.query(`SELECT orvok_social_notify($1,$2,$3::uuid)`, [recipientId, eventType, sourceId]).catch(() => undefined);
-  const n = await pool.query<{ n: string }>(`SELECT count(*) AS n FROM "Notification" WHERE "recipientId"=$1 AND state='UNREAD'`, [recipientId]).catch(() => null);
-  await enviarPush(pool, recipientId, { ...aviso, selo: n ? Number(n.rows[0]!.n) : undefined }).catch(() => undefined);
-}
+import { avisar } from "@/lib/avisar";
 
 /**
  * Mundo entre pessoas. O evento externo é só o assunto: cada uma das duas
