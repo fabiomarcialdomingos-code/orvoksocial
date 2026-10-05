@@ -16,7 +16,19 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          r=$(psql "$DATABASE_URL" -At -c "SELECT 'migracoes=' || (SELECT count(*) FROM \"_prisma_migrations\" WHERE finished_at IS NOT NULL) || ' ultimas=' || (SELECT string_agg(substr(migration_name,1,14) || ':' || applied_steps_count || CASE WHEN finished_at IS NULL THEN ':ABERTA' ELSE '' END, ',' ORDER BY started_at DESC) FROM (SELECT * FROM \"_prisma_migrations\" ORDER BY started_at DESC LIMIT 6) m) || ' colunaNotifiedAt=' || (SELECT count(*) FROM information_schema.columns WHERE table_name='WorldEvent' AND column_name='notifiedAt') || ' tabelas=' || (SELECT string_agg(t, ',') FROM unnest(ARRAY['WorldEvent','WorldCategory','WorldRound','RoundThread','UserAgeConsent','GuestChallenge','ProductEvent']) t WHERE to_regclass('public.\"' || t || '\"') IS NOT NULL) || ' categorias=' || (SELECT count(*) FROM \"WorldCategory\") || ' eventos=' || (SELECT count(*) FROM \"WorldEvent\") || ' rodadas=' || (SELECT count(*) FROM \"WorldRound\") || ' convites=' || (SELECT count(*) FROM \"GuestChallenge\") || ' usuarios=' || (SELECT count(*) FROM \"User\") || ' admins=' || (SELECT count(*) FROM \"User\" WHERE role='ADMIN' AND status='ACTIVE') || ' adminCriadoAntesDaMigracao=' || coalesce((SELECT CASE WHEN min(u.\"createdAt\") < (SELECT min(finished_at) FROM \"_prisma_migrations\" WHERE migration_name='20260930040000_eventos_pre_cadastrados') THEN 'sim' ELSE 'nao' END FROM \"User\" u WHERE u.role='ADMIN' AND u.status='ACTIVE'),'n/a'))
+          q() { psql "$DATABASE_URL" -At -c "$1" 2>/dev/null | tr '\n' ',' || true; }
+          m1=$(q "SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL")
+          m2=$(q "SELECT substr(migration_name,1,14)||':'||applied_steps_count FROM _prisma_migrations ORDER BY started_at DESC LIMIT 6")
+          m3=$(q "SELECT count(*) FROM information_schema.columns WHERE table_name='WorldEvent' AND column_name='notifiedAt'")
+          m4=$(q "SELECT count(*) FROM \"WorldCategory\"")
+          m5=$(q "SELECT count(*) FROM \"WorldEvent\"")
+          m6=$(q "SELECT count(*) FROM \"WorldRound\"")
+          m7=$(q "SELECT count(*) FROM \"GuestChallenge\"")
+          m8=$(q "SELECT count(*) FROM \"User\"")
+          m9=$(q "SELECT count(*) FROM \"User\" WHERE role='ADMIN' AND status='ACTIVE'")
+          m10=$(q "SELECT CASE WHEN min(u.\"createdAt\") < (SELECT min(finished_at) FROM _prisma_migrations WHERE migration_name='20260930040000_eventos_pre_cadastrados') THEN 'sim' ELSE 'nao' END FROM \"User\" u WHERE u.role='ADMIN' AND u.status='ACTIVE'")
+          m11=$(q "SELECT string_agg(t,'+') FROM (VALUES ('RoundThread'),('UserAgeConsent'),('ProductEvent')) v(t) WHERE to_regclass('public.\"'||t||'\"') IS NOT NULL")
+          r="migracoes=$m1 ultimas=$m2 colNotifiedAt=$m3 categorias=$m4 eventos=$m5 rodadas=$m6 convites=$m7 usuarios=$m8 admins=$m9 adminAntesDaMigracao=$m10 tabelasNovas=$m11"
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: "Resultado ${{ steps.c.outputs.resumo }}"
         run: "true"
