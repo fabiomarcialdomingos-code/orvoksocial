@@ -30,20 +30,19 @@ export async function GET(request: Request) {
   };
   checks.authSecret = { ok: Boolean(env.AUTH_SECRET && env.AUTH_SECRET.length >= 32), hint: "Defina AUTH_SECRET com pelo menos 32 caracteres." };
   checks.authMailKey = { ok: Boolean(env.AUTH_MAIL_KEY), hint: "Defina AUTH_MAIL_KEY." };
-  checks.appUrl = { ok: Boolean(env.APP_URL), hint: "Defina APP_URL com o domínio público (usado nos cartões de convite)." };
 
   if (env.AUTH_DATABASE_URL) {
     const pool = new Pool({ connectionString: env.AUTH_DATABASE_URL, max: 1, connectionTimeoutMillis: 4000 });
     try {
-      const r = await pool.query<{ identity: boolean; users: boolean; share: boolean; insert: boolean }>(`
+      const r = await pool.query<{ identity: boolean; users: boolean; conversas: boolean; insert: boolean }>(`
         SELECT to_regclass('public."AuthIdentity"') IS NOT NULL AS identity,
                to_regclass('public."User"') IS NOT NULL AS users,
-               to_regclass('public."RadarShareLink"') IS NOT NULL AS share,
+               to_regclass('public."UserAgeConsent"') IS NOT NULL AS conversas,
                CASE WHEN to_regclass('public."AuthIdentity"') IS NULL THEN false
                     ELSE has_table_privilege('public."AuthIdentity"', 'INSERT') END AS insert`);
       const row = r.rows[0]!;
       checks.authDatabaseConnection = { ok: true };
-      checks.migrationsApplied = { ok: row.identity && row.users && row.share, hint: "Rode pnpm db:migrate no banco de produção (inclui as migrações de 2026-09-25)." };
+      checks.migrationsApplied = { ok: row.identity && row.users && row.conversas, hint: "Rode pnpm db:migrate no banco de produção (falta alguma migração recente)." };
       checks.authRolePrivileges = { ok: row.insert, hint: "Rode pnpm db:provision:reapply no banco de produção." };
     } catch (error) {
       const code = (error as { code?: unknown }).code;

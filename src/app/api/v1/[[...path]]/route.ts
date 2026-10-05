@@ -181,11 +181,6 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     }));
     return apiJson({ metrics: Object.fromEntries([...values, ...valoresProduto]), generatedAt: new Date().toISOString() });
   }
-  if (method === "GET" && route === "/admin/messages") {
-    requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
-    const result = await pool.query(`SELECT id,"senderId","recipientId",body,"createdAt","readAt" FROM "SocialMessage" ORDER BY "createdAt" DESC LIMIT 100`);
-    return apiJson({ items: result.rows });
-  }
   if (method === "GET" && route === "/admin/reports") {
     requireAccess(canAccess({ role, actorId, resource: "AUDIT", action: "READ" }));
     const result = await pool.query(`SELECT id,"reporterId","targetUserId","postId",reason,state,"createdAt","resolvedAt" FROM "SocialReport" ORDER BY "createdAt" DESC LIMIT 100`);
@@ -248,10 +243,6 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
   if (method === "POST" && path.length === 4 && path[0] === "social" && path[1] === "events" && path[3] === "state") {
     const body = z.strictObject({ state: z.enum(["FROZEN", "RESOLVED_TEST", "CANCELLED"]) }).parse(await readJsonBody(request));
     return apiJson(await social.setEventState(actorId, path[2]!, body.state));
-  }
-  if (method === "POST" && route === "/social/messages") {
-    const body = z.strictObject({ recipientId: uuid, body: z.string().trim().min(1).max(2000), predictionId: uuid.optional() }).parse(await readJsonBody(request));
-    return apiJson(await social.message(actorId, body.recipientId, body.body, body.predictionId), 201);
   }
   if (method === "POST" && route === "/social/blocks") { const body = z.strictObject({ userId: uuid }).parse(await readJsonBody(request)); return apiJson(await social.block(actorId, body.userId), 201); }
   if (method === "POST" && route === "/social/reports") { const body = z.strictObject({ targetUserId: uuid, reason: z.string().trim().min(1).max(500) }).parse(await readJsonBody(request)); return apiJson(await social.report(actorId, body), 201); }
