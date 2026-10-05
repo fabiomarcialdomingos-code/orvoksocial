@@ -717,6 +717,7 @@ model ShelfPerson {
   name              String   @db.VarChar(24)
   inviteCode        String   @unique @db.VarChar(10)
   ageConsentVersion String?  @db.VarChar(40)
+  avatarImageId     String?  @db.Uuid
   createdAt         DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
 }
 
@@ -765,4 +766,33 @@ model ShelfVisit {
   createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
 
   @@unique([ownerId, visitorId, day], map: "ShelfVisit_unico")
+}
+
+/// Foto (fotinha de perfil ou foto de uma lembrança), já reduzida e sem metadados.
+model ShelfImage {
+  id        String   @id @db.Uuid
+  ownerId   String   @db.Uuid
+  purpose   String   @db.VarChar(10)
+  mime      String   @default("image/webp") @db.VarChar(20)
+  bytes     Bytes
+  width     Int
+  height    Int
+  byteSize  Int
+  sha256    String   @db.VarChar(64)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([ownerId, createdAt(sort: Desc)], map: "ShelfImage_owner")
+}
+
+/// Decisões da moderação, sem guardar a imagem recusada.
+model ShelfModerationLog {
+  id        BigInt   @id @default(autoincrement())
+  personId  String   @db.Uuid
+  kind      String   @db.VarChar(8)
+  ok        Boolean
+  reason    String   @db.VarChar(40)
+  sha256    String?  @db.VarChar(64)
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([personId, createdAt(sort: Desc)], map: "ShelfModerationLog_person")
 }

@@ -2,12 +2,21 @@
 // Uso: AUTH_SECRET=... AUTH_DATABASE_URL=(orvok_auth_runtime) DATABASE_URL=(dono) npx tsx scripts/test-estante.ts
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
+import sharp from "sharp";
 import { AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
+import type { Moderador } from "@/lib/estante/moderacao";
 import { EstanteService, comparar } from "@/lib/estante/service";
 
 const pool = new Pool({ connectionString: process.env.AUTH_DATABASE_URL });
 const adm = new Pool({ connectionString: process.env.DATABASE_URL });
-const svc = new EstanteService(pool);
+// Moderador de mentira: aprova tudo, exceto o que o teste mandar recusar.
+let recusarImagem = false, indisponivel = false, configurado = true;
+const moderador: Moderador = {
+  configurado: () => configurado,
+  imagem: async () => (indisponivel ? { ok: false, motivo: "indisponivel" } : recusarImagem ? { ok: false, motivo: "nudez" } : { ok: true, motivo: "ok" }),
+  texto: async (t) => (t.includes("RECUSAR") ? { ok: false, motivo: "assedio" } : { ok: true, motivo: "ok" }),
+};
+const svc = new EstanteService(pool, moderador);
 const ok = (c: boolean, m: string) => { if (!c) { console.error("FALHOU:", m); process.exit(1); } console.log("ok -", m); };
 const erro = async (f: () => Promise<unknown>) => { try { await f(); return "ok"; } catch (e) { return (e as { code?: string }).code ?? (e as Error).name; } };
 const idade = { aceito: true as const, versao: AVISO_IDADE_VERSAO, hash: AVISO_IDADE_HASH };
@@ -17,6 +26,7 @@ const tok = () => randomUUID() + randomUUID();
 // interruptor
 ok((await svc.ativa()) === false, "a Estante nasce desligada");
 await svc.ligar(true); ok((await svc.ativa()) === true, "dá para ligar");
+configurado = false; ok((await svc.ativa()) === false, "ligada, mas sem moderação configurada, continua desligada"); configurado = true;
 await svc.ligar(false); ok((await svc.ativa()) === false, "e desligar de novo");
 
 // pessoas
@@ -99,12 +109,94 @@ semana = (await svc.minhaEstante(ana))!.visitas;
 ok(semana.passaramPorAqui.map((m) => m.nome).join() === "Dani", "só quem deixa o 'passei por aqui' aparece com nome");
 ok((await adm.query(`SELECT 1 FROM "Notification" WHERE "recipientId"=$1 AND "eventType"='ESTANTE_PEGADA'`, [ana.userId])).rowCount === 1, "marcar duas vezes no dia avisa uma vez só");
 
+// fotos
+const foto = (lado = 2000, exif = false) => {
+  const img = sharp({ create: { width: lado, height: Math.round(lado * 0.75), channels: 3, background: "#ff9900" } }).jpeg();
+  return (exif ? img.withExif({ IFD0: { Copyright: "segredo", Artist: "alguem" } }) : img).toBuffer();
+};
+const contar = async (q: string, p: unknown[] = []) => Number((await adm.query(q, p)).rows[0].n);
+ok((await erro(() => svc.subirImagem(caio, Buffer.from("isto não é uma foto"), "keepsake"))) === "INVALID_INPUT", "arquivo que não é imagem é recusado");
+ok((await erro(() => svc.subirImagem(caio, Buffer.alloc(0), "keepsake"))) === "INVALID_INPUT", "arquivo vazio é recusado");
+ok((await erro(async () => svc.subirImagem({ token: tok(), userId: null }, await foto(), "keepsake"))) === "UNAUTHENTICATED", "quem não participou não sobe foto");
+const entradaComExif = await foto(2000, true);
+ok(((await sharp(entradaComExif).metadata()).exif ?? null) !== null, "a foto de teste tem metadados de verdade");
+const up = await svc.subirImagem(dani, entradaComExif, "keepsake");
+ok(up.largura === 1280, "a foto da lembrança é reduzida para 1280 px");
+const guardada = await svc.imagem(dani, up.id);
+const metaGuardada = await sharp(guardada.bytes).metadata();
+ok(metaGuardada.format === "webp" && !metaGuardada.exif && !metaGuardada.xmp, "a foto guardada é webp e não tem nenhum metadado (nem localização)");
+ok(guardada.bytes.length < entradaComExif.length, "e é menor que a original");
+recusarImagem = true;
+ok((await erro(async () => svc.subirImagem(dani, await foto(900), "keepsake"))) === "CONTENT_REJECTED", "a moderação recusa uma foto");
+ok(await contar(`SELECT count(*) AS n FROM "ShelfImage" WHERE "ownerId"=$1`, [pDani.id]) === 1, "foto recusada não é guardada");
+ok(await contar(`SELECT count(*) AS n FROM "ShelfModerationLog" WHERE "personId"=$1 AND NOT ok`, [pDani.id]) === 1, "só fica o registro da decisão");
+recusarImagem = false; indisponivel = true;
+ok((await erro(async () => svc.subirImagem(dani, await foto(900), "keepsake"))) === "SERVICE_UNAVAILABLE", "se a moderação não responde, a foto não entra (e não é culpa de quem enviou)");
+indisponivel = false;
+recusarImagem = true;
+for (let i = 0; i < 4; i++) await erro(async () => svc.subirImagem(caio, await foto(500), "keepsake"));
+const rec = [] as string[]; for (let i = 0; i < 6; i++) rec.push(await erro(async () => svc.subirImagem(caio, await foto(500), "keepsake")));
+ok(rec.includes("RATE_LIMITED"), "quem é recusado várias vezes no dia espera até o dia seguinte");
+recusarImagem = false;
+
+// fotinha de perfil
+const avA = await svc.subirImagem(ana, await foto(1500), "avatar");
+ok(avA.largura === 512 && avA.altura === 512, "a fotinha vira um quadrado de 512 px");
+await svc.definirAvatar(ana, avA.id);
+ok((await svc.circulo(dani)).pessoas.find((p) => p.nome === "Ana")!.avatar === avA.id, "o círculo enxerga a fotinha");
+ok((await svc.imagem(dani, avA.id)).bytes.length > 0 && (await svc.imagem(ana, avA.id)).bytes.length > 0, "a pessoa e o círculo baixam a fotinha");
+ok((await erro(() => svc.imagem(caio, avA.id))) === "NOT_FOUND", "quem não é do círculo não vê nem sabe que existe");
+ok((await erro(() => svc.definirAvatar(dani, avA.id))) === "NOT_FOUND", "ninguém usa a foto de outra pessoa");
+ok((await erro(() => svc.definirAvatar(ana, up.id))) === "NOT_FOUND", "uma foto de lembrança não vira fotinha");
+const avA2 = await svc.subirImagem(ana, await foto(900), "avatar");
+await svc.definirAvatar(ana, avA2.id);
+ok((await erro(() => svc.imagem(ana, avA.id))) === "NOT_FOUND" && await contar(`SELECT count(*) AS n FROM "ShelfImage" WHERE id=$1`, [avA.id]) === 0, "trocar a fotinha apaga a antiga de verdade");
+
+// foto dentro da lembrança
+const comFoto = await svc.enviar(dani, { titulo: "Praia", frase: "Aquele pôr do sol.", previsao: 2, paraPessoaId: pAna.id, imageId: up.id });
+ok((await svc.imagem(ana, up.id)).bytes.length > 0 && (await svc.imagem(dani, up.id)).bytes.length > 0, "quem deu e quem recebeu baixam a foto da lembrança");
+ok((await erro(() => svc.imagem(bia, up.id))) === "NOT_FOUND" && (await erro(() => svc.imagem(caio, up.id))) === "NOT_FOUND", "mais ninguém, nem do mesmo círculo, vê a foto");
+ok((await svc.estanteDe(bia, pAna.id)).objetos.every((o) => o.foto === null), "o visitante vê o desenho, nunca a foto");
+ok((await svc.estanteDe(dani, pAna.id)).objetos.find((o) => o.objeto === "Praia")!.foto === up.id, "quem deu vê a própria foto na estante de quem recebeu");
+ok((await erro(() => svc.enviar(dani, { titulo: "Outra", previsao: 3, paraPessoaId: pAna.id, imageId: up.id }))) === "NOT_FOUND", "uma foto só serve a uma lembrança");
+const fotoDaBia = await svc.subirImagem(bia, await foto(800), "keepsake");
+ok((await erro(() => svc.enviar(dani, { titulo: "Roubada", previsao: 3, paraPessoaId: pAna.id, imageId: fotoDaBia.id }))) === "NOT_FOUND", "ninguém manda a foto de outra pessoa");
+const antesTexto = await contar(`SELECT count(*) AS n FROM "Keepsake"`);
+ok((await erro(() => svc.enviar(dani, { titulo: "Teste", frase: "RECUSAR isto", previsao: 3, paraPessoaId: pAna.id }))) === "CONTENT_REJECTED", "a moderação também recusa texto");
+ok(await contar(`SELECT count(*) AS n FROM "Keepsake"`) === antesTexto, "e nada é criado quando o texto é recusado");
+const lemb = (await svc.minhaEstante(ana))!.objetos.find((o) => o.objeto === "Praia")!;
+ok(lemb.foto === up.id, "a foto aparece na estante de quem recebeu");
+configurado = false;
+ok((await erro(() => svc.enviar(dani, { titulo: "Sem moderação", previsao: 3, paraPessoaId: pAna.id }))) === "SERVICE_UNAVAILABLE", "sem moderação configurada ninguém publica nada");
+ok((await erro(async () => svc.subirImagem(dani, await foto(500), "keepsake"))) === "SERVICE_UNAVAILABLE", "nem foto");
+configurado = true;
+
+// álbuns que se montam sozinhos
+const albuns = (await svc.albuns(ana))!;
+ok(albuns.deQuem.find((x) => x.nome === "Bia")!.quantidade === 4 && albuns.deQuem.find((x) => x.nome === "Dani")!.quantidade === 1, "o álbum 'de quem' agrupa o que cada pessoa deu");
+ok(albuns.amadas === 1 && albuns.anos.length === 1 && albuns.anos[0]!.quantidade === 5, "há o álbum das mais amadas e o do ano");
+ok(albuns.vocesDois.find((x) => x.nome === "Bia")!.quantidade === 4 && albuns.vocesDois.find((x) => x.nome === "Dani")!.quantidade === 2, "e o álbum de vocês dois conta as duas direções");
+const dele = await svc.album(ana, { tipo: "vocesDois", pessoaId: pDani.id });
+ok(dele.length === 2 && dele[0]!.objeto === "Farol" && dele[0]!.souEuQuemDeu && dele[1]!.objeto === "Praia" && !dele[1]!.souEuQuemDeu, "a história de vocês dois vem em ordem, nas duas direções");
+const delaAoContrario = await svc.album(dani, { tipo: "vocesDois", pessoaId: pAna.id });
+ok(delaAoContrario.length === 2 && delaAoContrario[0]!.souEuQuemDeu === false, "a outra pessoa vê a mesma história do seu lado");
+ok((await erro(() => svc.album(caio, { tipo: "vocesDois", pessoaId: pAna.id }))) === "FORBIDDEN", "quem não é do círculo não abre o álbum");
+ok((await svc.album(ana, { tipo: "de", pessoaId: pBia.id })).length === 4 && (await svc.album(bia, { tipo: "de", pessoaId: pAna.id })).length === 0, "o álbum 'de' só mostra o que a pessoa recebeu");
+const mais = await svc.album(ana, { tipo: "amadas" });
+ok(mais.length === 1 && mais[0]!.reacao === 5 && mais[0]!.frase !== undefined, "o álbum das mais amadas traz a reação");
+
 // esconder, recolher e bloquear
+const antesDeEsconder = (await svc.minhaEstante(ana))!.objetos.length;
 await svc.ocultar(ana, est!.objetos[3]!.id);
-ok((await svc.minhaEstante(ana))!.objetos.length === 3, "quem recebeu pode esconder um objeto");
+ok((await svc.minhaEstante(ana))!.objetos.length === antesDeEsconder - 1, "quem recebeu pode esconder um objeto");
 const l5 = await svc.enviar(dani, { titulo: "Livro", previsao: 4, paraPessoaId: pAna.id });
 ok((await erro(() => svc.recolher(ana, l5.id))) === "NOT_FOUND", "só quem mandou recolhe");
 await svc.recolher(dani, l5.id);
+const comFoto2 = await svc.subirImagem(dani, await foto(600), "keepsake");
+const l6 = await svc.enviar(dani, { titulo: "Para recolher", previsao: 3, paraPessoaId: pAna.id, imageId: comFoto2.id });
+await svc.recolher(dani, l6.id);
+ok((await erro(() => svc.imagem(dani, comFoto2.id))) === "NOT_FOUND" && await contar(`SELECT count(*) AS n FROM "ShelfImage" WHERE id=$1`, [comFoto2.id]) === 0, "recolher uma lembrança apaga a foto de verdade");
+void comFoto;
 ok((await erro(() => svc.reagir(ana, l5.id, 3))) === "CONFLICT", "lembrança recolhida não aceita reação");
 await svc.bloquear(ana, pBia.id);
 ok((await svc.minhaEstante(ana))!.objetos.every((o) => o.de !== "Bia"), "bloquear tira da estante o que a pessoa bloqueada deu");

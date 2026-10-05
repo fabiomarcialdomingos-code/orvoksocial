@@ -84,6 +84,9 @@ try {
     await owner.query(`GRANT SELECT,INSERT ON "UserAgeConsent" TO orvok_auth_runtime`);
     for (const t of ["ShelfPerson", "ShelfBond", "Keepsake", "ShelfVisit"]) await owner.query(`GRANT SELECT,INSERT,UPDATE,DELETE ON "${t}" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT,INSERT,UPDATE ON "AppFlag" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT,UPDATE,DELETE ON "ShelfImage" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT ON "ShelfModerationLog" TO orvok_auth_runtime`);
+    await owner.query(`GRANT USAGE ON SEQUENCE "ShelfModerationLog_id_seq" TO orvok_auth_runtime`);
     await owner.query(`GRANT USAGE,SELECT ON SEQUENCE "ProductEvent_id_seq" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "WorldEvent","WorldOpportunity","WorldResolution","WorldCategory" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "User","Question","QuestionVersion","AnswerOption","ConsentGrant",
