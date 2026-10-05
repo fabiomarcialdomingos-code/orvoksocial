@@ -1,0 +1,22 @@
+# Consulta SOMENTE LEITURA do banco de produção: quantos eventos existem por status,
+# se os 15 pré-cadastrados entraram e se há conta de admin ativa (só contagens, nenhum
+# dado de pessoa). O resultado aparece no nome do último passo.
+# Precisa do mesmo segredo DATABASE_URL usado pela migração do banco.
+name: Consultar eventos
+on: workflow_dispatch
+jobs:
+  consultar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Instalar o psql
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Consultar
+        id: c
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          r=$(psql "$DATABASE_URL" -At -c "SELECT 'eventos=' || (SELECT count(*) FROM \"WorldEvent\") || ' rascunhos=' || (SELECT count(*) FROM \"WorldEvent\" WHERE status='DRAFT') || ' publicados=' || (SELECT count(*) FROM \"WorldEvent\" WHERE status='PUBLISHED') || ' preCadastrados=' || (SELECT count(*) FROM \"WorldEvent\" WHERE id::text LIKE 'a1a10000-0000-4000-8000-%') || ' admins=' || (SELECT count(*) FROM \"User\" WHERE role='ADMIN' AND status='ACTIVE') || ' moderadores=' || (SELECT count(*) FROM \"User\" WHERE role='MODERATOR' AND status='ACTIVE') || ' categorias=' || (SELECT count(*) FROM \"WorldCategory\") || ' migracaoEventos=' || coalesce((SELECT 'aplicada' FROM \"_prisma_migrations\" WHERE migration_name='20260930040000_eventos_pre_cadastrados' AND finished_at IS NOT NULL),'NAO') || ' opcoesSemEvento=' || (SELECT count(*) FROM \"WorldOpportunity\" o WHERE NOT EXISTS (SELECT 1 FROM \"WorldEvent\" e WHERE e.id=o.\"eventId\"))" | tr ' ' '_' | tr '_' ' ')
+          echo "resumo=$r" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.c.outputs.resumo }}"
+        run: "true"
