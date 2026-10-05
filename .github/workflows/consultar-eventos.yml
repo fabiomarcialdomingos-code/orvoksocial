@@ -28,7 +28,10 @@ jobs:
           m9=$(q "SELECT count(*) FROM \"User\" WHERE role='ADMIN' AND status='ACTIVE'")
           m10=$(q "SELECT CASE WHEN min(u.\"createdAt\") < (SELECT min(finished_at) FROM _prisma_migrations WHERE migration_name='20260930040000_eventos_pre_cadastrados') THEN 'sim' ELSE 'nao' END FROM \"User\" u WHERE u.role='ADMIN' AND u.status='ACTIVE'")
           m11=$(q "SELECT string_agg(t,'+') FROM (VALUES ('RoundThread'),('UserAgeConsent'),('ProductEvent')) v(t) WHERE to_regclass('public.\"'||t||'\"') IS NOT NULL")
-          r="migracoes=$m1 ultimas=$m2 colNotifiedAt=$m3 categorias=$m4 eventos=$m5 rodadas=$m6 convites=$m7 usuarios=$m8 admins=$m9 adminAntesDaMigracao=$m10 tabelasNovas=$m11"
+          rls=$(q "SELECT string_agg(relname||':rls='||relrowsecurity||':forcado='||relforcerowsecurity,'+') FROM pg_class WHERE relname IN ('WorldEvent','WorldCategory','WorldOpportunity','User') AND relkind='r'")
+          papel=$(q "SELECT current_user||':super='||rolsuper||':bypassrls='||rolbypassrls FROM pg_roles WHERE rolname=current_user")
+          est=$(q "SELECT string_agg(relname||':vivas='||n_live_tup||':inseridas='||n_tup_ins,'+') FROM pg_stat_user_tables WHERE relname IN ('WorldEvent','WorldCategory','WorldOpportunity')")
+          r="rls=$rls papel=$papel estatisticas=$est"
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: "Resultado ${{ steps.c.outputs.resumo }}"
         run: "true"
