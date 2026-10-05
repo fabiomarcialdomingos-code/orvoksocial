@@ -1,4 +1,4 @@
-import { randomInt, randomUUID } from "node:crypto";
+import { createHash, randomInt, randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import { z } from "zod";
 import { tokenHash } from "@/lib/auth/crypto";
@@ -8,7 +8,9 @@ import { avisar } from "@/lib/avisar";
 import { limitar } from "@/lib/limite";
 import { registrarEvento } from "@/lib/medicao";
 import { processarImagem, type Finalidade } from "./imagem";
+import { ilustradorAnthropic, type Ilustrador } from "./ilustrador";
 import { moderadorAnthropic, type Moderador } from "./moderacao";
+import { normalizarObjeto } from "./svg";
 
 /**
  * A Estante. Alguém lembra de você, guarda isso como um objeto na sua estante e diz o quanto
@@ -36,7 +38,7 @@ type LinhaPessoa = { id: string; userId: string | null; name: string; inviteCode
 const dePessoa = (r: LinhaPessoa): Pessoa => ({ id: r.id, userId: r.userId, nome: r.name, inviteCode: r.inviteCode, idadeOk: r.ageConsentVersion === AVISO_IDADE_VERSAO, avatar: r.avatarImageId });
 
 export class EstanteService {
-  constructor(private readonly pool: Pool, private readonly moderador: Moderador = moderadorAnthropic()) {}
+  constructor(private readonly pool: Pool, private readonly moderador: Moderador = moderadorAnthropic(), private readonly ilustrador: Ilustrador = ilustradorAnthropic()) {}
 
   /** O interruptor de lançamento. Tudo da Estante fica escondido enquanto estiver desligado, ou sem moderação configurada. */
   async ativa(): Promise<boolean> {
@@ -417,6 +419,38 @@ export class EstanteService {
     if (!pode && im.purpose === "keepsake") pode = ((await this.pool.query(`SELECT 1 FROM "Keepsake" WHERE "imageId"=$1 AND "toId"=$2 AND state='VISIBLE'`, [imageId, eu.id])).rowCount ?? 0) > 0;
     if (!pode) throw new AuthError("NOT_FOUND", 404);
     return { bytes: im.bytes, mime: im.mime, nome: `orvok-${imageId.slice(0, 8)}.webp` };
+  }
+
+  // ---------- ilustração do objeto ----------
+
+  /**
+   * Garante o desenho do objeto de uma lembrança (quem deu ou quem recebeu pode pedir). O mesmo nome
+   * reaproveita o mesmo desenho para todos, o que custa menos e mantém o estilo. Se não for possível
+   * desenhar agora (sem chave, limite do dia, recusa do filtro), devolve null e a tela mostra o desenho
+   * de reserva; dá para tentar de novo depois.
+   */
+  async ilustrar(ator: Ator, keepsakeId: string): Promise<{ ilustracao: string | null; gerada: boolean; motivo?: string }> {
+    z.uuid().parse(keepsakeId);
+    const eu = await this.achar(ator);
+    if (!eu) throw new AuthError("UNAUTHENTICATED", 401);
+    const k = (await this.pool.query<{ title: string; svg: string | null; fromId: string; toId: string | null }>(
+      `SELECT title,"illustrationSvg" AS svg,"fromId","toId" FROM "Keepsake" WHERE id=$1 AND state IN ('VISIBLE','PENDING')`, [keepsakeId])).rows[0];
+    if (!k || (k.fromId !== eu.id && k.toId !== eu.id)) throw new AuthError("NOT_FOUND", 404);
+    if (k.svg) return { ilustracao: k.svg, gerada: false };
+    const chave = createHash("sha256").update(normalizarObjeto(k.title) || k.title).digest("hex");
+    let svg = (await this.pool.query<{ svg: string }>(`SELECT svg FROM "ShelfIllustration" WHERE "key"=$1`, [chave])).rows[0]?.svg ?? null;
+    if (!svg) {
+      if (!this.ilustrador.configurado()) return { ilustracao: null, gerada: false, motivo: "indisponivel" };
+      await limitar(this.pool, "estante", `ilustrar:${eu.id}`, 40, 86400);
+      const teto = Number(process.env.ORVOK_ILUSTRACOES_POR_DIA ?? 300);
+      const hoje = Number((await this.pool.query<{ n: string }>(`SELECT count(*) AS n FROM "ShelfIllustration" WHERE "createdAt" > clock_timestamp() - interval '24 hours'`)).rows[0]!.n);
+      if (hoje >= teto) return { ilustracao: null, gerada: false, motivo: "limite_diario" };
+      svg = await this.ilustrador.gerar(k.title);
+      if (!svg) return { ilustracao: null, gerada: false, motivo: "indisponivel" };
+      await this.pool.query(`INSERT INTO "ShelfIllustration"("key",svg) VALUES ($1,$2) ON CONFLICT ("key") DO NOTHING`, [chave, svg]);
+    }
+    await this.pool.query(`UPDATE "Keepsake" SET "illustrationSvg"=$2 WHERE id=$1 AND "illustrationSvg" IS NULL`, [keepsakeId, svg]);
+    return { ilustracao: svg, gerada: true };
   }
 
   // ---------- álbuns (montam-se sozinhos) ----------

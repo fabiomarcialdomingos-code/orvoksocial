@@ -27,7 +27,8 @@
     "test:mundo": "tsx scripts/test-mundo.ts",
     "test:dados": "tsx scripts/test-dados.ts",
     "test:estante": "tsx scripts/test-estante.ts",
-    "test:moderacao": "tsx scripts/test-moderacao.ts"
+    "test:moderacao": "tsx scripts/test-moderacao.ts",
+    "test:svg": "tsx scripts/test-svg.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

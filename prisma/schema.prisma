@@ -796,3 +796,12 @@ model ShelfModerationLog {
 
   @@index([personId, createdAt(sort: Desc)], map: "ShelfModerationLog_person")
 }
+
+/// Desenho de um objeto, reaproveitado por todos. A chave é o hash do nome normalizado.
+model ShelfIllustration {
+  key       String   @id @db.VarChar(64)
+  svg       String
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@index([createdAt], map: "ShelfIllustration_created")
+}

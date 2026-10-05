@@ -4,7 +4,10 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import sharp from "sharp";
 import { AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
+import type { Ilustrador } from "@/lib/estante/ilustrador";
+import { EXEMPLOS } from "@/lib/estante/ilustrador";
 import type { Moderador } from "@/lib/estante/moderacao";
+import { sanitizarSvg } from "@/lib/estante/svg";
 import { EstanteService, comparar } from "@/lib/estante/service";
 
 const pool = new Pool({ connectionString: process.env.AUTH_DATABASE_URL });
@@ -16,7 +19,13 @@ const moderador: Moderador = {
   imagem: async () => (indisponivel ? { ok: false, motivo: "indisponivel" } : recusarImagem ? { ok: false, motivo: "nudez" } : { ok: true, motivo: "ok" }),
   texto: async (t) => (t.includes("RECUSAR") ? { ok: false, motivo: "assedio" } : { ok: true, motivo: "ok" }),
 };
-const svc = new EstanteService(pool, moderador);
+// Ilustrador de mentira: devolve um desenho limpo, ou nada quando o teste mandar falhar.
+let ilustradorOk = true, ilustradorLigado = true, chamadasIlustrador = 0;
+const ilustrador: Ilustrador = {
+  configurado: () => ilustradorLigado,
+  gerar: async () => { chamadasIlustrador++; return ilustradorOk ? sanitizarSvg(EXEMPLOS[0]!.svg) : null; },
+};
+const svc = new EstanteService(pool, moderador, ilustrador);
 const ok = (c: boolean, m: string) => { if (!c) { console.error("FALHOU:", m); process.exit(1); } console.log("ok -", m); };
 const erro = async (f: () => Promise<unknown>) => { try { await f(); return "ok"; } catch (e) { return (e as { code?: string }).code ?? (e as Error).name; } };
 const idade = { aceito: true as const, versao: AVISO_IDADE_VERSAO, hash: AVISO_IDADE_HASH };
@@ -184,6 +193,34 @@ ok((await erro(() => svc.album(caio, { tipo: "vocesDois", pessoaId: pAna.id })))
 ok((await svc.album(ana, { tipo: "de", pessoaId: pBia.id })).length === 4 && (await svc.album(bia, { tipo: "de", pessoaId: pAna.id })).length === 0, "o álbum 'de' só mostra o que a pessoa recebeu");
 const mais = await svc.album(ana, { tipo: "amadas" });
 ok(mais.length === 1 && mais[0]!.reacao === 5 && mais[0]!.frase !== undefined, "o álbum das mais amadas traz a reação");
+
+// ilustração dos objetos
+const vio = await svc.enviar(ana, { titulo: "Violão", previsao: 3, paraPessoaId: pDani.id });
+ok((await erro(() => svc.ilustrar(bia, vio.id))) === "NOT_FOUND", "quem não tem a ver com a lembrança não pede o desenho");
+const d1 = await svc.ilustrar(dani, vio.id);
+ok(d1.gerada && d1.ilustracao!.startsWith("<svg viewBox") && chamadasIlustrador === 1, "quem recebeu pede e o desenho é feito");
+const d2 = await svc.ilustrar(ana, vio.id);
+ok(!d2.gerada && d2.ilustracao === d1.ilustracao && chamadasIlustrador === 1, "pedir de novo devolve o mesmo desenho, sem gastar outra chamada");
+ok((await svc.minhaEstante(dani))!.objetos.find((o) => o.objeto === "Violão")!.ilustracao === d1.ilustracao, "o desenho aparece na estante");
+const vio2 = await svc.enviar(ana, { titulo: "  VIOLÃO ", previsao: 4, paraPessoaId: pDani.id });
+const d3 = await svc.ilustrar(ana, vio2.id);
+ok(d3.ilustracao === d1.ilustracao && chamadasIlustrador === 1, "o mesmo objeto, com outra grafia, reaproveita o desenho de todos");
+const linhaCache = (await adm.query(`SELECT "key",svg FROM "ShelfIllustration"`)).rows.find((r: { svg: string }) => r.svg === d1.ilustracao);
+ok(linhaCache.key.length === 64 && linhaCache.key !== "violao" && !JSON.stringify(linhaCache).toLowerCase().includes("viol"), "o cache guarda só o resumo do nome, não o que a pessoa escreveu");
+ilustradorOk = false;
+const vio3 = await svc.enviar(ana, { titulo: "Coisa impossível de desenhar", previsao: 3, paraPessoaId: pDani.id });
+const d4 = await svc.ilustrar(ana, vio3.id);
+ok(d4.ilustracao === null && d4.motivo === "indisponivel", "se não dá para desenhar, devolve nada e a tela usa o desenho de reserva");
+ok(await contar(`SELECT count(*) AS n FROM "Keepsake" WHERE id=$1 AND "illustrationSvg" IS NOT NULL`, [vio3.id]) === 0, "e nada é gravado");
+ilustradorOk = true;
+ok((await svc.ilustrar(ana, vio3.id)).gerada === true, "dá para tentar de novo depois e funciona");
+ilustradorLigado = false;
+const vio4 = await svc.enviar(ana, { titulo: "Outro objeto", previsao: 3, paraPessoaId: pDani.id });
+ok((await svc.ilustrar(ana, vio4.id)).motivo === "indisponivel", "sem ilustrador configurado não desenha e não dá erro");
+ilustradorLigado = true;
+process.env.ORVOK_ILUSTRACOES_POR_DIA = "0";
+ok((await svc.ilustrar(ana, vio4.id)).motivo === "limite_diario", "o teto de desenhos novos por dia protege a conta");
+delete process.env.ORVOK_ILUSTRACOES_POR_DIA;
 
 // esconder, recolher e bloquear
 const antesDeEsconder = (await svc.minhaEstante(ana))!.objetos.length;

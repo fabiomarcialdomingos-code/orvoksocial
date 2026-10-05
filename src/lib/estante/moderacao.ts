@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { chamarClaude } from "./llm";
 
 /**
  * Moderação de fotos e textos da Estante, feita por um modelo da Anthropic. Regra de ouro: se não
@@ -37,28 +38,14 @@ export function moderadorAnthropic(env: Env = process.env, buscar: typeof fetch 
   const modelo = () => env.ORVOK_MODERACAO_MODELO ?? "claude-haiku-4-5-20251001";
 
   async function perguntar(sistema: string, conteudo: unknown[]): Promise<Veredito> {
-    const key = chave();
-    if (!key) return { ok: false, motivo: "sem_moderacao" };
-    for (let tentativa = 0; tentativa < 2; tentativa++) {
-      const limite = new AbortController();
-      const timer = setTimeout(() => limite.abort(), 20_000);
-      try {
-        const r = await buscar("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-          body: JSON.stringify({ model: modelo(), max_tokens: 100, temperature: 0, system: sistema, messages: [{ role: "user", content: conteudo }] }),
-          signal: limite.signal,
-        });
-        if (!r.ok) continue;
-        const corpo = (await r.json()) as { content?: { type: string; text?: string }[] };
-        const texto = corpo.content?.find((c) => c.type === "text")?.text ?? "";
-        const achado = texto.match(/\{[\s\S]*\}/)?.[0];
-        if (!achado) continue;
-        const v = resposta.parse(JSON.parse(achado));
-        return { ok: v.permitido, motivo: v.permitido ? "ok" : v.motivo };
-      } catch { /* tenta de novo; no fim, a resposta é não */ } finally { clearTimeout(timer); }
-    }
-    return { ok: false, motivo: "indisponivel" };
+    if (!chave()) return { ok: false, motivo: "sem_moderacao" };
+    const texto = await chamarClaude({ env, buscar, modelo: modelo(), sistema, mensagens: [{ role: "user", content: conteudo }], maxTokens: 100, temperatura: 0, tentativas: 2, timeoutMs: 20_000 });
+    const achado = texto?.match(/\{[\s\S]*\}/)?.[0];
+    if (!achado) return { ok: false, motivo: "indisponivel" };
+    try {
+      const v = resposta.parse(JSON.parse(achado));
+      return { ok: v.permitido, motivo: v.permitido ? "ok" : v.motivo };
+    } catch { return { ok: false, motivo: "indisponivel" }; }
   }
 
   return {
