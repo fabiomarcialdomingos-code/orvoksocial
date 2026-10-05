@@ -68,9 +68,10 @@ export function perfil(n: Notas): Perfil {
 export function selo(eu: Notas, eles: Notas) {
   const batem = ORDEM_TRACOS.filter((t) => ((eu[t] ?? 0) >= 0) === ((eles[t] ?? 0) >= 0)).length;
   const nivel = batem === 6 ? "autentico" : batem === 5 ? "prata" : batem === 4 ? "bronze" : null;
-  const titulo = { autentico: "Selo Ouro", prata: "Selo Prata", bronze: "Selo Bronze" } as const;
-  const frase = { autentico: "Você é exatamente quem acha que é.", prata: "Quase transparente: as pessoas te veem quase como você se vê.", bronze: "As pessoas te conhecem bem." } as const;
-  return { batem, nivel, titulo: nivel ? titulo[nivel] : null, frase: nivel ? frase[nivel] : "Aqui as pessoas te veem diferente de como você se vê." };
+  // Os níveis dizem o quanto o retrato está nítido, não quem ficou na frente: nada de medalha.
+  const titulo = { autentico: "Retrato nítido", prata: "Retrato em foco", bronze: "Retrato em revelação" } as const;
+  const frase = { autentico: "As pessoas te veem como você se vê.", prata: "Quase nítido: as pessoas te veem quase como você se vê.", bronze: "As pessoas te conhecem bem, e ainda há o que se revelar." } as const;
+  return { batem, nivel, titulo: nivel ? titulo[nivel] : null, frase: nivel ? frase[nivel] : "Aqui as pessoas te veem diferente de como você se vê. É onde mais se descobre." };
 }
 
 export type { PerguntaNucleo };

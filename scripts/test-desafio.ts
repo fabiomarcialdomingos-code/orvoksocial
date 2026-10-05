@@ -81,7 +81,7 @@ await svc.tentar(codigo, { nome: "Tom", previsoes: respostas, avisoRetrato, cons
 await svc.tentar(codigo, { nome: "Lia2", previsoes: respostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
 await svc.tentar(codigo, { nome: "Pedro", previsoes: respostas, avisoRetrato, consentimentoIdade: consentIdade }, null);
 const linha2 = await svc.linhaDoTempo(dono, null);
-ok(linha2.length === 2 && linha2[1]!.nivel === "autentico" && linha2[1]!.batem === 6, "quando o selo muda de verdade (virou Ouro), grava um 2º marco");
+ok(linha2.length === 2 && linha2[1]!.nivel === "autentico" && linha2[1]!.batem === 6, "quando o selo muda de verdade (virou nítido), grava um 2º marco");
 ok(new Date(linha2[0]!.em).getTime() <= new Date(linha2[1]!.em).getTime(), "os marcos vêm em ordem cronológica");
 
 const meus = await svc.meus(dono, null);

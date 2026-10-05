@@ -196,7 +196,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
         )}
         <div className={s.empurra}>
           <button className={`${s.btn} ${s.btnAzul}`} type="button" disabled={!diag} onClick={() => setTela("convite")}><Icone nome="enviar" />Convidar alguém</button>
-          <p className={s.miudo} style={{ justifyContent: "center" }}>Convide pessoas para compartilhar como te enxergam. Com 3 respostas, aparece o seu retrato e o seu selo.</p>
+          <p className={s.miudo} style={{ justifyContent: "center" }}>Convide pessoas para compartilhar como te enxergam. Com 3 respostas, aparece o seu retrato e o quanto ele está nítido.</p>
         </div>
       </main>
     </Moldura>

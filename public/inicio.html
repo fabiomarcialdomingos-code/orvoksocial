@@ -186,7 +186,7 @@ body.com-abertura.entrou .app{opacity:1;transform:none}
 .traco.diverge{background:rgba(255,79,130,.09);box-shadow:inset 0 0 0 1px rgba(255,79,130,.3)}
 .traco.diverge .s{color:#FF8FB1}
 :root[data-theme="light"] .traco .v{color:#B35F00}:root[data-theme="light"] .traco .e{color:#1F5CFF}
-.selo-demo{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:16px;border:1px solid rgba(215,227,244,.35);background:radial-gradient(90% 120% at 0% 50%,rgba(215,227,244,.12),transparent 60%),var(--sup-2)}
+.selo-demo{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,184,77,.35);background:radial-gradient(90% 120% at 0% 50%,rgba(255,184,77,.12),transparent 60%),var(--sup-2)}
 .selo-demo svg{width:46px;height:46px;flex:none}
 .selo-demo b{display:block}
 .selo-demo span{color:var(--suave);font-size:13px}
@@ -372,8 +372,8 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
         </div>
       </div>
       <div class="selo-demo">
-        <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="26" fill="none" stroke="#D7E3F4" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#D7E3F4" fill-opacity=".16" stroke="#D7E3F4"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#D7E3F4">5/6</text></svg>
-        <div><b>Selo Prata</b><span>Quase transparente. O ponto cego: você acha que decide pela razão, mas te veem decidindo pelo coração.</span></div>
+        <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="26" fill="none" stroke="#FFB84D" stroke-width="2" stroke-dasharray="2 3" stroke-linecap="round"/><circle cx="30" cy="30" r="19" fill="#FFB84D" fill-opacity=".16" stroke="#FFB84D"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#FFB84D">5/6</text></svg>
+        <div><b>Retrato em foco</b><span>Quase nítido. O ponto cego: você acha que decide pela razão, mas te veem decidindo pelo coração.</span></div>
       </div>
     </section>
 
@@ -389,13 +389,13 @@ dialog::backdrop{background:rgba(3,6,14,.7);backdrop-filter:blur(6px)}
     </section>
 
     <section class="secao" aria-labelledby="t-selos">
-      <span class="rotulo"><svg data-ic="alvo"></svg>O selo</span>
+      <span class="rotulo"><svg data-ic="alvo"></svg>A nitidez</span>
       <h2 id="t-selos">Você é quem <b>acha que é?</b></h2>
-      <p>São 6 traços. Quanto mais deles batem entre como você se vê e como te veem, maior o selo.</p>
+      <p>São 6 traços. Quanto mais deles batem entre como você se vê e como te veem, mais nítido fica o retrato.</p>
       <div class="selos-g">
-        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#FFD166" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#FFD166" fill-opacity=".18" stroke="#FFD166"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#FFD166">6/6</text></svg><b>Ouro</b><small>Exatamente quem acha que é</small></div>
-        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#D7E3F4" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#D7E3F4" fill-opacity=".16" stroke="#D7E3F4"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#D7E3F4">5/6</text></svg><b>Prata</b><small>Quase transparente</small></div>
-        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#E0A06A" stroke-width="2" stroke-dasharray="3 5"/><circle cx="30" cy="30" r="19" fill="#E0A06A" fill-opacity=".18" stroke="#E0A06A"/><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#E0A06A">4/6</text></svg><b>Bronze</b><small>Te conhecem bem</small></div>
+        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#FFB84D" stroke-width="2"/><g><circle cx="30" cy="30" r="19" fill="#FFB84D" fill-opacity=".2" stroke="#FFB84D"/></g><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#FFB84D">6/6</text></svg><b>Nítido</b><small>As pessoas te veem como você se vê</small></div>
+        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><defs><filter id="f5" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.4"/></filter></defs><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#FFB84D" stroke-width="2" stroke-dasharray="2 3" stroke-linecap="round"/><g filter="url(#f5)"><circle cx="30" cy="30" r="19" fill="#FFB84D" fill-opacity=".2" stroke="#FFB84D"/></g><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#FFB84D">5/6</text></svg><b>Em foco</b><small>Quase nítido</small></div>
+        <div class="selo-c"><svg viewBox="0 0 60 60" aria-hidden="true"><defs><filter id="f4" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter></defs><circle class="gira" cx="30" cy="30" r="26" fill="none" stroke="#FFB84D" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/><g filter="url(#f4)"><circle cx="30" cy="30" r="19" fill="#FFB84D" fill-opacity=".2" stroke="#FFB84D"/></g><text x="30" y="35" text-anchor="middle" font-size="13" font-weight="800" fill="#FFB84D">4/6</text></svg><b>Em revelação</b><small>Te conhecem bem, e há o que se revelar</small></div>
       </div>
     </section>
 

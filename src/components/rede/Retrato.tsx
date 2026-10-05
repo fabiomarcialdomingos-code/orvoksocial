@@ -11,27 +11,39 @@ type Perfil = { nome: string; frase: string; descricao: string; marcantes: strin
 type Selo = { batem: number; nivel: "autentico" | "prata" | "bronze" | null; titulo: string | null; frase: string };
 type Dados = { eu: Perfil | null; eles: Perfil | null; selo: Selo | null; respondentes: number; faltam: number; relacoes: { relacao: Relacao; respondentes: number; selo: Selo | null }[]; ocultos: Traco[]; apareceram: Traco[] };
 type Marco = { em: string; respondentes: number; batem: number; nivel: "autentico" | "prata" | "bronze" | null };
-const NIVEL_NOME = { autentico: "Ouro", prata: "Prata", bronze: "Bronze" } as const;
+const NIVEL_NOME = { autentico: "nítido", prata: "em foco", bronze: "em revelação" } as const;
 const VAZIO: Dados = { eu: null, eles: null, selo: null, respondentes: 0, faltam: 3, relacoes: [], ocultos: [], apareceram: [] };
 
-const COR_SELO = { autentico: "#FFD166", prata: "#D7E3F4", bronze: "#E0A06A" } as const;
+/** Uma cor só (o âmbar do orvok): o que muda é o foco, não o metal. */
+const COR_NITIDEZ = "#FFB84D";
+const COR_SEM_NIVEL = "#8E9AB0";
+/** Desfoque do miolo e traço do anel por nível: quanto mais nítido o retrato, mais definido o desenho. */
+const FOCO = {
+  autentico: { desfoque: 0, anel: undefined as string | undefined },
+  prata: { desfoque: 1.4, anel: "2 3" },
+  bronze: { desfoque: 3, anel: "1 5" },
+} as const;
 
-function Medalha({ selo }: { selo: Selo }) {
-  const cor = selo.nivel ? COR_SELO[selo.nivel] : "#8E9AB0";
+function Nitidez({ selo }: { selo: Selo }) {
+  const cor = selo.nivel ? COR_NITIDEZ : COR_SEM_NIVEL;
+  const foco = selo.nivel ? FOCO[selo.nivel] : { desfoque: 4, anel: "1 7" as string | undefined };
   return (
-    <div className={s.medalha} style={{ ["--cor" as string]: cor }}>
+    <div className={s.nitidez} style={{ ["--cor" as string]: cor }}>
       <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle cx="60" cy="60" r="52" fill="none" stroke={cor} strokeWidth="3" strokeDasharray="4 6" className={s.medalhaGira} />
-        <circle cx="60" cy="60" r="40" fill={cor} opacity=".18" />
-        <circle cx="60" cy="60" r="40" fill="none" stroke={cor} strokeWidth="2" />
+        <defs><filter id="foco-nitidez" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation={foco.desfoque} /></filter></defs>
+        <circle cx="60" cy="60" r="52" fill="none" stroke={cor} strokeWidth="3" {...(foco.anel ? { strokeDasharray: foco.anel, strokeLinecap: "round" as const } : {})} className={s.nitidezGira} />
+        <g filter={foco.desfoque ? "url(#foco-nitidez)" : undefined}>
+          <circle cx="60" cy="60" r="40" fill={cor} opacity=".2" />
+          <circle cx="60" cy="60" r="40" fill="none" stroke={cor} strokeWidth="2" />
+        </g>
         <text x="60" y="68" textAnchor="middle" fontSize="26" fontWeight="800" fill={cor}>{selo.batem}/6</text>
       </svg>
-      <div><b>{selo.titulo ?? "Ainda sem selo"}</b><span>{selo.frase}</span></div>
+      <div><b>{selo.titulo ?? "Retrato de contrastes"}</b><span>{selo.frase}</span></div>
     </div>
   );
 }
 
-/** Meu retrato: como você se vê, como te veem e o selo. */
+/** Meu retrato: como você se vê, como te veem e o quanto ele está nítido. */
 export function Retrato() {
   const [d, setD] = useState<Dados | null>(null);
   const [linha, setLinha] = useState<Marco[] | null>(null);
@@ -56,7 +68,7 @@ export function Retrato() {
     <section className={s.hero}>
       <small className={s.marcador}>Seu retrato</small>
       <h2>Descubra como você se vê e como te veem.</h2>
-      <p>Responda 12 perguntas sobre você para ver o seu perfil. Depois, quem você convidar diz como te enxerga. Com 3 respostas, aparece o seu retrato e o seu selo.</p>
+      <p>Responda 12 perguntas sobre você para ver o seu perfil. Depois, quem você convidar diz como te enxerga. Com 3 respostas, aparece o seu retrato e o quanto ele está nítido.</p>
       <div className={s.chips}><Link prefetch={false} className={s.btnP} href="/comecar">Fazer o Retrato</Link></div>
     </section>
   );
@@ -81,7 +93,7 @@ export function Retrato() {
 
       <section className={s.item}>
         <div className={s.itemCab}><b>O que você guarda só para você</b></div>
-        <p className={s.muted} style={{ margin: "0 0 10px" }}>Marque um traço que você sabe de si, mas não costuma mostrar. Isso é só seu — ninguém mais vê, e não entra na comparação nem no selo.</p>
+        <p className={s.muted} style={{ margin: "0 0 10px" }}>Marque um traço que você sabe de si, mas não costuma mostrar. Isso é só seu — ninguém mais vê, e não entra na comparação nem na nitidez.</p>
         <div className={s.chips}>
           {ORDEM_TRACOS.map((t) => {
             const ativo = d.ocultos.includes(t);
@@ -98,16 +110,16 @@ export function Retrato() {
 
       {d.eles && d.selo ? (
         <>
-          <Medalha selo={d.selo} />
+          <Nitidez selo={d.selo} />
           {linha && linha.length >= 2 ? (
             <section className={s.item}>
               <div className={s.itemCab}><b>Sua evolução</b><span className={s.muted}>desde {new Date(linha[0]!.em).toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span></div>
               <div className={s.linhaTempo}>
                 {linha.map((m, k) => (
                   <div key={m.em} className={s.marco}>
-                    <span className={s.marcoPonto} style={{ background: m.nivel ? COR_SELO[m.nivel] : "#8E9AB0" }} />
+                    <span className={s.marcoPonto} style={{ background: m.nivel ? COR_NITIDEZ : COR_SEM_NIVEL }} />
                     <div>
-                      <b>{m.nivel ? `Selo ${NIVEL_NOME[m.nivel]}` : "Ainda sem selo"}</b>
+                      <b>{m.nivel ? `Retrato ${NIVEL_NOME[m.nivel]}` : "Retrato de contrastes"}</b>
                       <span className={s.muted}> · {new Date(m.em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} · {m.respondentes} {m.respondentes === 1 ? "pessoa" : "pessoas"}</span>
                       {k > 0 ? <small className={s.muted} style={{ display: "block" }}>{m.batem > linha[k - 1]!.batem ? "Ficou mais parecido com quem te conhece." : "Ficou mais diferente de quem te conhece."}</small> : null}
                     </div>
@@ -136,7 +148,7 @@ export function Retrato() {
               .map((nota) => <p key={nota} className={s.notaSoka}>{nota}</p>)}
           </section>
           <section className={s.item}>
-            <b>Selo por relação</b>
+            <b>Nitidez por relação</b>
             {d.relacoes.map((r) => (
               <div key={r.relacao} className={s.linha}>
                 <span className={`${s.rel} ${s[`rel_${r.relacao}`]}`}>{ROTULO_RELACAO[r.relacao]}</span>
@@ -150,7 +162,7 @@ export function Retrato() {
         <section className={s.item}>
           <b>Como te veem</b>
           <div className={s.progressoRetrato} aria-label={`${d.respondentes} de 3 pessoas`}>{[0, 1, 2].map((k) => <i key={k} className={k < d.respondentes ? s.ok : ""} />)}</div>
-          <p className={s.muted} style={{ margin: 0 }}>Faltam {d.faltam} {d.faltam === 1 ? "pessoa" : "pessoas"} para aparecer como te enxergam e descobrir o seu selo. Para proteger quem responde, só mostramos com pelo menos 3.</p>
+          <p className={s.muted} style={{ margin: 0 }}>Faltam {d.faltam} {d.faltam === 1 ? "pessoa" : "pessoas"} para aparecer como te enxergam e descobrir o quanto o seu retrato está nítido. Para proteger quem responde, só mostramos com pelo menos 3.</p>
           <div className={s.chips}><Link prefetch={false} className={s.btnP} href="/comecar">Convidar mais gente</Link></div>
         </section>
       )}
