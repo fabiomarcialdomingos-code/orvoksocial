@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { trackMetaCustomEvent, trackMetaEvent } from "@/lib/client/pixel";
 import { Globo } from "./Globo";
-import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, enviarJson, estilos as s, useConta } from "./pecas";
+import { Anel, Icone, LOGIN_GOOGLE, Inicial, Moldura, enviarJson, estilos as s, guardarNomeNoPerfil, useConta } from "./pecas";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type Aviso = { versao: string; hash: string; texto: string };
@@ -44,6 +44,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
   // Quem já tem conta não precisa se apresentar: o nome vem do perfil.
   const conta = useConta();
   const logado = Boolean(conta);
+  const temNomeNoPerfil = Boolean(conta?.nome);
   const nomeEfetivo = conta?.nome ?? nome;
 
   // Abertura: as 12 perguntas da relação (ou, no "convidar de volta", as mesmas do outro convite).
@@ -74,7 +75,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
     }, 380);
   };
   const voltar = tela === "nome" && !conjuntoDe ? () => setTela("relacao")
-    : tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela(logado ? (conjuntoDe ? "pergunta" : "relacao") : "nome"))
+    : tela === "pergunta" ? () => (i > 0 ? setI(i - 1) : setTela(temNomeNoPerfil ? (conjuntoDe ? "pergunta" : "relacao") : "nome"))
     : tela === "pronto" ? () => { setI(perguntas.length - 1); setTela("pergunta"); }
     : tela === "convite" ? () => setTela("pronto") : undefined;
 
@@ -89,6 +90,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
     setOcupado(false);
     if (!r.ok) { setErro(r.status === 429 ? "Muitos convites criados agora. Tente de novo mais tarde." : "Não foi possível criar o convite. Tente de novo."); return null; }
     setCodigo(r.dados.codigo);
+    if (logado && !temNomeNoPerfil) guardarNomeNoPerfil(nomeEfetivo);
     return r.dados.codigo;
   };
   const enviar = async (canal: "whatsapp" | "copiar" | "outros") => {
@@ -110,7 +112,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
         <div className={s.opcoes} role="radiogroup" aria-label="Quem vai compartilhar a visão sobre você">
           {RELACOES.map((rel) => (
             <button key={rel.id} className={`${s.op} ${s.relacao} ${escolheu && relacao === rel.id ? s.opSel : ""}`} type="button" role="radio" aria-checked={escolheu && relacao === rel.id}
-              onClick={() => { trackMetaEvent("Lead", { content_name: "retrato" }); if (rel.id !== relacao) { setPerguntas([]); setRespostas([]); } setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(logado ? "pergunta" : "nome"); }, 250); }}>
+              onClick={() => { trackMetaEvent("Lead", { content_name: "retrato" }); if (rel.id !== relacao) { setPerguntas([]); setRespostas([]); } setRelacao(rel.id); setEscolheu(true); setTom(0); window.setTimeout(() => { setI(0); setTela(temNomeNoPerfil ? "pergunta" : "nome"); }, 250); }}>
               <span className={s.letra}><Icone nome={rel.icone} /></span>
               <span><b>{rel.rotulo}</b><small>{rel.texto}</small></span>
             </button>
@@ -122,8 +124,9 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
   );
 
   if (tela === "nome" && conta === undefined) return <Moldura><main className={s.tela} aria-busy="true" /></Moldura>;
-  if (tela === "nome" && logado) {
-    // Com conta: sem tela de nome. Vai direto às perguntas assim que elas chegarem.
+  if (tela === "nome" && temNomeNoPerfil) {
+    // Com conta e nome no perfil: sem tela de nome. Vai direto às perguntas assim que elas chegarem.
+    // (Logado mas sem nome no perfil: a tela de nome aparece uma vez e o nome é guardado no perfil.)
     if (perguntas.length) queueMicrotask(() => { setI(0); setTela("pergunta"); });
     return <Moldura><main className={s.tela} aria-busy="true" /></Moldura>;
   }

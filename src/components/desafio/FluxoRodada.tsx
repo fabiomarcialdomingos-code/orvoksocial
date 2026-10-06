@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { ROTULO_CATEGORIA, fraseEstado, quandoRevela, type Rodada } from "../../lib/client/mundo";
 import { Conversa } from "./Conversa";
-import { Icone, Inicial, Moldura, enviarJson, estilos as s, useConta } from "./pecas";
+import { Icone, Inicial, Moldura, enviarJson, estilos as s, guardarNomeNoPerfil, useConta } from "./pecas";
 
 const AVISO_IDADE = { aceito: true, versao: "desafio-aceitar-idade-v1" } as const;
 
@@ -32,6 +32,7 @@ export function FluxoRodada({ codigo, hashIdade }: { codigo: string; hashIdade: 
     const x = await enviarJson<{ rodada: Rodada }>(`/api/v1/mundo/r/${encodeURIComponent(codigo)}`, { nome: nomeFinal.trim(), opcao: escolha, consentimentoIdade: { ...AVISO_IDADE, hash: hashIdade } });
     setOcupado(false);
     if (!x.ok) { setFalha(x.dados.code === "OWN_CHALLENGE" ? "Esta conversa é sua. Mande o link para outra pessoa." : x.status === 409 ? "Esta conversa já fechou para respostas." : "Não foi possível registrar agora."); return; }
+    if (conta && !conta.nome) guardarNomeNoPerfil(nomeFinal);
     setR(x.dados.rodada);
   };
 
@@ -74,7 +75,7 @@ export function FluxoRodada({ codigo, hashIdade }: { codigo: string; hashIdade: 
               ))}
               {segunda ? <button type="button" role="radio" aria-checked={escolha === null} className={`${s.op} ${escolha === null ? s.opSel : ""}`} onClick={() => setEscolha(null)}>Prefiro não opinar</button> : null}
             </div>
-            {conta ? null : <div className={s.campo} style={{ marginTop: 14 }}><label htmlFor="nome-rodada">Como {r.criador} te chama?</label><input id="nome-rodada" maxLength={24} placeholder="Seu primeiro nome" value={nome} onChange={(e) => setNome(e.target.value)} /></div>}
+            {conta?.nome ? null : <div className={s.campo} style={{ marginTop: 14 }}><label htmlFor="nome-rodada">Como {r.criador} te chama?</label><input id="nome-rodada" maxLength={24} placeholder="Seu primeiro nome" value={nome} onChange={(e) => setNome(e.target.value)} /></div>}
             <label className={s.consent} style={{ marginTop: 10 }}>
               <input type="checkbox" checked={idade} onChange={(e) => setIdade(e.target.checked)} />
               <span>Confirmo ter pelo menos 16 anos e aceito os <a className="text-link" href="/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a className="text-link" href="/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span>

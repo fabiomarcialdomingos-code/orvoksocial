@@ -92,8 +92,13 @@ export const LOGIN_GOOGLE = `/api/v1/auth/google/start?returnTo=${encodeURICompo
  * Conta de quem está usando o desafio. undefined enquanto carrega, null sem
  * login, ou o primeiro nome do perfil de quem já entrou.
  */
-export function useConta(): { nome: string } | null | undefined {
-  const [conta, setConta] = useState<{ nome: string } | null | undefined>(undefined);
+/**
+ * Quem está logado. `undefined` = ainda carregando; `null` = visitante; objeto = tem conta (logada), com `nome`
+ * do perfil ou `null` se a pessoa ainda não preencheu o nome. Estar logado NÃO depende de ter nome no perfil:
+ * antes, quem se cadastrou por e-mail e ainda não tinha nome era tratado como visitante e via "Crie sua conta".
+ */
+export function useConta(): { nome: string | null } | null | undefined {
+  const [conta, setConta] = useState<{ nome: string | null } | null | undefined>(undefined);
   useEffect(() => {
     let ativo = true;
     void (async () => {
@@ -103,11 +108,18 @@ export function useConta(): { nome: string } | null | undefined {
       const perfil = await fetch("/api/v1/social/profile", { credentials: "same-origin", cache: "no-store" })
         .then((r) => (r.ok ? r.json() : {})).catch(() => ({})) as { profile?: { displayName?: string } | null };
       const nome = (perfil.profile?.displayName ?? "").trim().split(/\s+/)[0] ?? "";
-      if (ativo) setConta(nome.length >= 2 ? { nome } : null);
+      if (ativo) setConta({ nome: nome.length >= 2 ? nome : null });
     })();
     return () => { ativo = false; };
   }, []);
   return conta;
+}
+
+/** Guarda no perfil o nome que a pessoa acabou de digitar, para não perguntar de novo. Nunca atrapalha o fluxo. */
+export function guardarNomeNoPerfil(nome: string): void {
+  const limpo = nome.trim();
+  if (limpo.length < 2) return;
+  void enviarJson("/api/v1/social/profile", { displayName: limpo }).catch(() => undefined);
 }
 
 export { s as estilos };

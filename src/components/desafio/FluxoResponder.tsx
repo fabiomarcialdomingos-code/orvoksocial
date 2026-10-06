@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Globo } from "./Globo";
-import { Anel, Icone, Inicial, Moldura, enviarJson, estilos as s, useConta } from "./pecas";
+import { Anel, Icone, Inicial, Moldura, enviarJson, estilos as s, guardarNomeNoPerfil, useConta } from "./pecas";
 
 type Pergunta = { chave: string; texto: string; opcoes: string[] };
 type AvisoIdade = { versao: string; hash: string; texto: string };
@@ -50,6 +50,7 @@ export function FluxoResponder({ codigo }: { codigo: string }) {
       consentimentoIdade: { aceito: true, versao: v.avisoIdade.versao, hash: v.avisoIdade.hash },
     });
     if (!r.ok) { setFalha(r.dados.code === "OWN_CHALLENGE" ? "Este convite é seu. Envie o link para alguém compartilhar como te vê." : "Não foi possível registrar agora. Tente de novo."); return; }
+    if (conta && !conta.nome) guardarNomeNoPerfil(nomeFinal);
     setMini(r.dados.miniResultado);
     setTela("obrigado");
   };
@@ -99,7 +100,7 @@ export function FluxoResponder({ codigo }: { codigo: string }) {
         <div className={s.centro}><span className={s.chipRelacao}>Convite</span></div>
         <h1 className={`${s.titulo} ${s.centro}`}>Como você <b>vê {v.nome}?</b></h1>
         <p className={`${s.lead} ${s.centro}`}>{v.nome} gostaria de saber. São {v.perguntas.length} perguntas e não há resposta certa: compartilhe como você enxerga essa pessoa. Ninguém saberá o que você respondeu.</p>
-        {conta ? <p className={s.miudo} style={{ marginBottom: 14 }}><Icone nome="ok" />Você vai responder como <b style={{ color: "var(--tinta)", marginLeft: 4 }}>{conta.nome}</b>.</p> : <div className={s.campo}>
+        {conta?.nome ? <p className={s.miudo} style={{ marginBottom: 14 }}><Icone nome="ok" />Você vai responder como <b style={{ color: "var(--tinta)", marginLeft: 4 }}>{conta.nome}</b>.</p> : <div className={s.campo}>
           <label htmlFor="meu-nome">Como {v.nome} te chama?</label>
           <input id="meu-nome" autoComplete="given-name" maxLength={24} placeholder="Seu primeiro nome" value={meuNome} onChange={(e) => setMeuNome(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && meuNome.trim().length >= 2) setTela("responder"); }} />
