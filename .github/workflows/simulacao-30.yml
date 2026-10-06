@@ -1,0 +1,105 @@
+# Simulação de 30 usuários contra o site REAL (Vercel + Neon), seguida de limpeza.
+# Tudo que a simulação cria leva a marca "SIM" (nomes) ou sim30-…@orvok.test (e-mails), e a limpeza roda
+# num passo que executa MESMO se a simulação falhar, provando ao fim que o banco voltou à contagem de antes.
+# O relatório é publicado no branch "sim-relatorios" (pasta relatorios/<execução>).
+name: "Simulação de 30 usuários (teste real)"
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Digite SIMULAR para confirmar que quer rodar no site real'
+        type: string
+        required: true
+      base:
+        description: "Endereço do site"
+        type: string
+        default: "https://orvok.com.br"
+permissions:
+  contents: write
+jobs:
+  simular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      SIM_BASE_URL: ${{ inputs.base }}
+      SIM_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SIM_SAIDA: ${{ github.workspace }}/sim_out
+      SIM_RUN: ${{ github.run_id }}
+      VT: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Conferir a confirmação e os segredos
+        env:
+          CONFIRMAR: ${{ inputs.confirmar }}
+        run: |
+          [ "$CONFIRMAR" = "SIMULAR" ] || { echo "::error::Digite SIMULAR para confirmar."; exit 1; }
+          [ -n "$SIM_DATABASE_URL" ] || { echo "::error::Segredo DATABASE_URL não configurado."; exit 1; }
+          case "$SIM_BASE_URL" in https://orvok.com.br|https://orvoksocial.vercel.app) ;; *) echo "::error::Endereço não permitido."; exit 1;; esac
+          mkdir -p "$SIM_SAIDA"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependências
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Marcar o início (para pegar os logs da Vercel deste período)
+        run: date +%s%3N > "$SIM_SAIDA/inicio_ms.txt"
+      - name: Simular os 30 usuários
+        run: pnpm exec tsx scripts/simulacao/principal.ts
+        env:
+          SIM_MODO: simular
+      - name: Baixar os logs de execução da Vercel (melhor esforço)
+        if: always()
+        run: |
+          set +e
+          cd "$SIM_SAIDA"; inicio=$(cat inicio_ms.txt 2>/dev/null || echo 0); fim=$(date +%s%3N)
+          team=$(curl -s -H "Authorization: Bearer $VT" https://api.vercel.com/v2/teams | jq -r '[.teams[]? | select(.slug=="script-char")][0].id // empty')
+          q=""; [ -n "$team" ] && q="teamId=$team"
+          pid=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial?$q" | jq -r '.id // empty')
+          dep=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v6/deployments?projectId=$pid&target=production&limit=1&$q" | jq -r '.deployments[0].uid // empty')
+          echo "projeto=$pid deploy=$dep" > vercel-info.txt
+          ok=nao
+          for url in "https://api.vercel.com/v1/projects/$pid/deployments/$dep/runtime-logs?$q" "https://api.vercel.com/v3/projects/$pid/deployments/$dep/runtime-logs?$q"; do
+            code=$(curl -s -m 90 -H "Authorization: Bearer $VT" -o vercel-logs.raw -w "%{http_code}" "$url")
+            echo "tentativa $url -> $code ($(wc -c < vercel-logs.raw) bytes)" >> vercel-info.txt
+            if [ "$code" = "200" ] && [ -s vercel-logs.raw ]; then ok=sim; break; fi
+          done
+          if [ "$ok" = "sim" ]; then
+            jq -r --argjson ini "$inicio" --argjson fim "$fim" 'select((.timestampInMs // 0) >= $ini and (.timestampInMs // 0) <= $fim) | .message // empty' vercel-logs.raw > vercel-mensagens.txt 2>/dev/null
+            jq -r --argjson ini "$inicio" --argjson fim "$fim" 'select((.timestampInMs // 0) >= $ini and (.timestampInMs // 0) <= $fim) | [(.requestMethod // "-"), (.requestPath // "-"), (.responseStatusCode // 0)] | @tsv' vercel-logs.raw > vercel-requisicoes.tsv 2>/dev/null
+            echo "logs obtidos: $(wc -l < vercel-mensagens.txt) mensagens, $(wc -l < vercel-requisicoes.tsv) requisições" >> vercel-info.txt
+          else
+            echo "logs de execução da Vercel NÃO obtidos pela API" >> vercel-info.txt
+          fi
+          true
+      - name: Limpar tudo e provar que o banco voltou ao que era
+        if: always()
+        run: pnpm exec tsx scripts/simulacao/principal.ts
+        env:
+          SIM_MODO: limpar
+          SIM_LOG_SERVIDOR: ${{ github.workspace }}/sim_out/vercel-mensagens.txt
+      - name: Publicar o relatório no branch sim-relatorios
+        if: always()
+        run: |
+          set -e
+          git config user.name "orvok-simulacao"; git config user.email "simulacao@orvok.invalid"
+          cp -r "$SIM_SAIDA" "$RUNNER_TEMP/saida"
+          git fetch origin sim-relatorios:sim-relatorios 2>/dev/null && git checkout -q sim-relatorios || { git checkout -q --orphan sim-relatorios; git rm -rqf . ; }
+          d="relatorios/$SIM_RUN"; mkdir -p "$d"
+          cp "$RUNNER_TEMP/saida/relatorio.md" "$RUNNER_TEMP/saida/limpeza.json" "$RUNNER_TEMP/saida/bruto.json" "$RUNNER_TEMP/saida/antes.json" "$d/" 2>/dev/null || true
+          cp "$RUNNER_TEMP/saida/vercel-info.txt" "$RUNNER_TEMP/saida/vercel-requisicoes.tsv" "$RUNNER_TEMP/saida/vercel-mensagens.txt" "$d/" 2>/dev/null || true
+          git add relatorios; git commit -q -m "Relatório da simulação de 30 usuários ($SIM_RUN)" || true
+          git push -q origin sim-relatorios
+      - name: Resumo
+        id: r
+        if: always()
+        run: |
+          f="$SIM_SAIDA/bruto.json"; l="$SIM_SAIDA/limpeza.json"
+          if [ -f "$f" ]; then
+            ok=$(jq '[.resultados[]|select(.ok)]|length' "$f"); ko=$(jq '[.resultados[]|select(.ok|not)]|length' "$f")
+            ach=$(jq '.achados|length' "$f"); req=$(jq '.requisicoes|length' "$f"); e5=$(jq '[.requisicoes[]|select(.s>=500 or .s==0)]|length' "$f")
+          else ok=?; ko=?; ach=?; req=?; e5=?; fi
+          if [ -f "$l" ]; then dif=$(jq '[.diferencas[]|select(.tabela!="AuthRateLimit")]|length' "$l"); pen=$(jq '.pendencias|length' "$l"); else dif=?; pen=?; fi
+          echo "resumo=ok=$ok falhas=$ko achados=$ach requisicoes=$req erros5xx=$e5 limpeza:tabelasDiferentes=$dif pendencias=$pen" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.r.outputs.resumo }}"
+        if: always()
+        run: "true"
