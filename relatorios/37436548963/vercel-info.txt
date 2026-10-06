@@ -1,0 +1,4 @@
+projeto=prj_OFKGxRyUNqCb58OL5ck4Rw9ufft6 deploy=dpl_DDfaX8ernQwEKYFEjLv27xWdK6D5
+tentativa https://api.vercel.com/v1/projects/prj_OFKGxRyUNqCb58OL5ck4Rw9ufft6/deployments/dpl_DDfaX8ernQwEKYFEjLv27xWdK6D5/runtime-logs? -> 000 ( bytes)
+tentativa https://api.vercel.com/v3/projects/prj_OFKGxRyUNqCb58OL5ck4Rw9ufft6/deployments/dpl_DDfaX8ernQwEKYFEjLv27xWdK6D5/runtime-logs? -> 000 ( bytes)
+logs de execução da Vercel NÃO obtidos pela API
