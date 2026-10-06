@@ -61,6 +61,14 @@ export class AuthService {
     );
   }
 
+  /**
+   * A tentativa é reservada ANTES de conferir a senha (limit() é atômico), então uma rajada de tentativas
+   * simultâneas não passa toda de uma vez. Se o login der certo, a reserva é devolvida: só falhas ficam contadas.
+   */
+  private async refund(key: string): Promise<void> {
+    await this.pool.query(`UPDATE "AuthRateLimit" SET attempts=GREATEST(attempts-1,0) WHERE "keyHash"=$1 AND "resetsAt">clock_timestamp()`, [tokenHash(`rate:${key}`)]).catch(() => undefined);
+  }
+
   private async limit(key: string, max: number, seconds: number): Promise<void> {
     const hash = tokenHash(`rate:${key}`);
     const result = await this.pool.query<{ attempts: number }>(
@@ -101,9 +109,15 @@ export class AuthService {
     return token;
   }
 
-  async register(raw: unknown): Promise<void> {
+  /**
+   * Sem AUTH_REQUIRE_EMAIL_VERIFICATION=1 a conta nasce verificada (não há como confirmar o e-mail sem um
+   * provedor de e-mail configurado). Com a variável ligada, a conta só entra depois de clicar no link enviado.
+   */
+  async register(raw: unknown, ctx: { ip?: string | null } = {}): Promise<void> {
     const { email, password } = registrationSchema.parse(raw);
-    await this.limit("register:global", 100, 3600);
+    const exigeConfirmacao = process.env.AUTH_REQUIRE_EMAIL_VERIFICATION === "1";
+    await this.limit("register:global", 1000, 3600);
+    await this.limit(`register:ip:${ctx.ip ?? "sem-ip"}`, 60, 3600);
     await this.limit(`register:${email}`, 5, 3600);
     const passwordHash = await hashPassword(password);
     await this.tx(async (client) => {
@@ -113,6 +127,14 @@ export class AuthService {
       );
       if (existing.rows[0]) {
         if (!existing.rows[0].passwordHash) throw new AuthError("GOOGLE_ACCOUNT_EXISTS", 409);
+        if (exigeConfirmacao && !existing.rows[0].verifiedAt) {
+          // Ainda não confirmado: vale o cadastro mais recente e só o link mais recente (os antigos expiram).
+          await client.query(`UPDATE "AuthIdentity" SET "passwordHash"=$2,"passwordChangedAt"=clock_timestamp() WHERE "userId"=$1`, [existing.rows[0].userId, passwordHash]);
+          await client.query(`UPDATE "AuthToken" SET "expiresAt"=clock_timestamp() WHERE "userId"=$1 AND purpose='VERIFY_EMAIL' AND "consumedAt" IS NULL AND "expiresAt">clock_timestamp()`, [existing.rows[0].userId]);
+          await this.queueMail(client, existing.rows[0].userId, email, "VERIFY_EMAIL", 24 * 60);
+          await this.audit(client, existing.rows[0].userId, "AUTH_REGISTER_RESENT");
+          return;
+        }
         // Keep the public response identical for known and unknown addresses.
         await this.audit(client, existing.rows[0].userId, "AUTH_REGISTER_DUPLICATE");
         return;
@@ -123,9 +145,10 @@ export class AuthService {
         isConfiguredAdminEmail(email) ? "ADMIN" : "USER",
       ]);
       await client.query(
-        `INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt") VALUES ($1,$2,$3,clock_timestamp())`,
+        `INSERT INTO "AuthIdentity" ("userId",email,"passwordHash","verifiedAt") VALUES ($1,$2,$3,${exigeConfirmacao ? "NULL" : "clock_timestamp()"})`,
         [userId, email, passwordHash],
       );
+      if (exigeConfirmacao) await this.queueMail(client, userId, email, "VERIFY_EMAIL", 24 * 60);
       await this.audit(client, userId, "AUTH_REGISTERED");
     });
   }
@@ -147,10 +170,18 @@ export class AuthService {
     });
   }
 
-  async login(raw: unknown): Promise<{ token: string; userId: string }> {
+  /**
+   * Os limites não deixam um desconhecido travar a conta de outra pessoa nem o site inteiro: o bloqueio por
+   * falhas vale para a origem (IP) que errou, e só um chute vindo de muitas origens bloqueia a conta toda.
+   */
+  async login(raw: unknown, ctx: { ip?: string | null } = {}): Promise<{ token: string; userId: string }> {
     const { email, password } = loginSchema.parse(raw);
-    await this.limit("login:global", 1000, 15 * 60);
-    await this.limit(`login:${email}`, 10, 15 * 60);
+    const ip = ctx.ip ?? "sem-ip";
+    await this.limit("login:global", 20000, 15 * 60);
+    await this.limit(`login:ip:${ip}`, 200, 15 * 60);
+    const chaveOrigem = `login:falhas:${email}:${ip}`, chaveConta = `login:falhas-conta:${email}`;
+    await this.limit(chaveOrigem, 10, 15 * 60);
+    await this.limit(chaveConta, 60, 15 * 60);
     const found = await this.pool.query<{
       userId: string; passwordHash: string; verifiedAt: Date | null; status: string;
     }>(
@@ -163,6 +194,8 @@ export class AuthService {
       await this.tx((client) => this.audit(client, identity?.userId ?? null, "AUTH_LOGIN_REJECTED"));
       throw new AuthError("INVALID_CREDENTIALS", 401);
     }
+    await this.refund(chaveOrigem);
+    await this.refund(chaveConta);
     await this.tx(async (client) => {
       await this.audit(client, identity.userId, "AUTH_LOGIN_SUCCESS");
     });
@@ -185,11 +218,19 @@ export class AuthService {
         userId = provider.rows[0].userId;
         await client.query(`UPDATE "AuthProviderIdentity" SET "lastLoginAt"=clock_timestamp() WHERE provider='google' AND subject=$1`, [claims.subject]);
       } else {
-        const existing = await client.query<{ userId: string; status: string; verifiedAt: Date | null }>(`SELECT ai."userId",u.status,ai."verifiedAt" FROM "AuthIdentity" ai JOIN "User" u ON u.id=ai."userId" WHERE ai.email=$1 FOR UPDATE`, [email]);
+        const existing = await client.query<{ userId: string; status: string; verifiedAt: Date | null; passwordHash: string | null; confirmadoPorEmail: boolean }>(`SELECT ai."userId",u.status,ai."verifiedAt",ai."passwordHash",EXISTS (SELECT 1 FROM "AuthToken" t WHERE t."userId"=ai."userId" AND t.purpose='VERIFY_EMAIL' AND t."consumedAt" IS NOT NULL) AS "confirmadoPorEmail" FROM "AuthIdentity" ai JOIN "User" u ON u.id=ai."userId" WHERE ai.email=$1 FOR UPDATE`, [email]);
         if (existing.rows[0]) {
           userId = existing.rows[0].userId;
           if (existing.rows[0].status !== "ACTIVE") throw new AuthError("ACCOUNT_DISABLED", 403);
           if (!existing.rows[0].verifiedAt) await client.query(`UPDATE "AuthIdentity" SET "verifiedAt"=clock_timestamp() WHERE "userId"=$1`, [userId]);
+          // Quem prova ser dono do e-mail (o Google verificou) fica com a conta. Se a senha foi criada sem que o e-mail
+          // fosse confirmado, ela pode ser de quem cadastrou o e-mail de outra pessoa: a senha é apagada e as sessões
+          // abertas são encerradas, para que o cadastro antecipado não vire acesso à conta.
+          if (existing.rows[0].passwordHash && !existing.rows[0].confirmadoPorEmail) {
+            await client.query(`UPDATE "AuthIdentity" SET "passwordHash"=NULL,"passwordChangedAt"=clock_timestamp() WHERE "userId"=$1`, [userId]);
+            await client.query(`UPDATE "AuthSession" SET "revokedAt"=clock_timestamp() WHERE "userId"=$1 AND "revokedAt" IS NULL`, [userId]);
+            await this.audit(client, userId, "AUTH_GOOGLE_LINKED_PASSWORD_CLEARED");
+          }
           linked = true;
         } else {
           userId = randomUUID();
@@ -267,9 +308,10 @@ export class AuthService {
     return replacement;
   }
 
-  async requestReset(raw: unknown): Promise<void> {
+  async requestReset(raw: unknown, ctx: { ip?: string | null } = {}): Promise<void> {
     const { email } = emailRequestSchema.parse(raw);
-    await this.limit("reset:global", 100, 3600);
+    await this.limit("reset:global", 1000, 3600);
+    await this.limit(`reset:ip:${ctx.ip ?? "sem-ip"}`, 20, 3600);
     await this.limit(`reset:${email}`, 5, 3600);
     await this.tx(async (client) => {
       const found = await client.query<{ userId: string }>(

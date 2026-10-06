@@ -41,6 +41,7 @@ export async function limpar(db: Pool, antes: Record<string, number>, inicioMs: 
       ["Retrato: linha do tempo", `DELETE FROM "RetratoSnapshot" WHERE "ownerTokenHash" = ANY($1) OR "claimedByUserId" = ANY($2::uuid[])`, [hashes, usuarios]],
       ["Retrato: convites", `DELETE FROM "GuestChallenge" WHERE "creatorName" LIKE 'SIM %'`, []],
       ["Medição: eventos dos convites, rodadas e lembranças da simulação", `DELETE FROM "ProductEvent" WHERE "actorHash" = ANY($1) OR code = ANY($2) OR (code IS NULL AND name LIKE 'estante\_%' AND "createdAt" >= $3)`, [hashes, codigos, new Date(inicioMs)]],
+      ["Auditoria: tentativas de login recusadas sem autor, feitas durante a simulação", `DELETE FROM "AuditLog" WHERE "actorId" IS NULL AND action='AUTH_LOGIN_REJECTED' AND "createdAt" >= $1`, [new Date(inicioMs)]],
       ["Mundo: opções do evento de teste", `DELETE FROM "WorldOpportunity" WHERE "eventId" IN (SELECT id FROM "WorldEvent" WHERE title LIKE 'SIM %')`, []],
       ["Mundo: evento de teste", `DELETE FROM "WorldEvent" WHERE title LIKE 'SIM %'`, []],
     ];

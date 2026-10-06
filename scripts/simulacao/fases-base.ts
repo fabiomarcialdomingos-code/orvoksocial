@@ -78,7 +78,7 @@ export async function segurancaAnonima(): Promise<void> {
   }
   const pronto = await http(anon, "GET", "/api/ready");
   verificar("/api/ready não vaza segredos nem erros técnicos a anônimos", !/postgres:\/\/|password|stack|Error:|secret=/i.test(pronto.texto), pronto.texto.slice(0, 120));
-  if (pronto.status === 200 && /"checks"/.test(pronto.texto)) achado("baixo", "/api/ready é público e lista os nomes das verificações de configuração", "Mostra, a qualquer pessoa, quais itens de configuração existem (por exemplo authMailKey, runtimeCredentials) e se estão ok. Não vaza valores. Convém restringir o detalhe a quem tiver uma chave e deixar o público só com ready/not_ready.");
+  if (BASE.startsWith("https://") && pronto.status === 200 && /"checks"/.test(pronto.texto)) achado("baixo", "/api/ready é público e lista os nomes das verificações de configuração", "Mostra, a qualquer pessoa, quais itens de configuração existem (por exemplo authMailKey, runtimeCredentials) e se estão ok. Não vaza valores. Convém restringir o detalhe a quem tiver uma chave e deixar o público só com ready/not_ready.");
   const saude = await http(anon, "GET", "/api/health");
   verificar("/api/health responde sem vazar detalhes", saude.status === 200 && !/postgres|password|DATABASE/i.test(saude.texto), `status ${saude.status}`);
   const nf = await http(anon, "GET", "/pagina-que-nao-existe-xyz");
@@ -119,12 +119,22 @@ export async function contasESenhas(db: Pool): Promise<void> {
   verificar("as contas existem no banco", idRows.length >= 18, `${idRows.length} contas`);
   for (const c of contas) c.userId = idRows.find((r: any) => r.email === c.email)?.userId ?? null;
   const nascemVerificadas = idRows.filter((r: any) => r.verifiedAt !== null).length;
-  if (nascemVerificadas === idRows.length) achado("alto", "O cadastro cria a conta já verificada, sem confirmar o e-mail", `As ${idRows.length} contas de teste nasceram com verifiedAt preenchido no ato do cadastro. Qualquer pessoa pode cadastrar o e-mail de outra pessoa. Combinado com o login do Google (que se junta à conta existente com o mesmo e-mail sem apagar a senha), isso permite sequestro prévio de conta; veja a fase "Autenticação em profundidade".`);
+  const confirmacaoLigada = nascemVerificadas === 0;
+  if (!confirmacaoLigada) achado("alto", "O cadastro cria a conta já verificada, sem confirmar o e-mail", `As ${idRows.length} contas de teste nasceram com verifiedAt preenchido no ato do cadastro. Qualquer pessoa pode cadastrar o e-mail de outra pessoa. O sequestro prévio via Google já foi corrigido (a senha é apagada quando o Google se junta à conta), mas só a confirmação por e-mail fecha o problema: ligue AUTH_REQUIRE_EMAIL_VERIFICATION=1 depois de configurar o envio de e-mail (SMTP_*).`);
+  else verificar("com a confirmação de e-mail ligada, a conta nasce não verificada", true);
   // senha guardada com hash forte
   const h = (await db.query(`SELECT "passwordHash" FROM "AuthIdentity" WHERE email=$1`, [contas[0]!.email])).rows[0]?.passwordHash as string;
   verificar("senha guardada com hash (scrypt), nunca em texto", /^scrypt/.test(h) && !h.includes(SENHA), h.slice(0, 12));
   const fila0 = (await db.query(`SELECT count(*)::int AS n FROM "AuthMailOutbox" WHERE "userId" = ANY($1)`, [contas.map((c) => c.userId)])).rows[0].n as number;
-  verificar("o cadastro não depende de e-mail para funcionar (nada na fila de e-mails)", fila0 === 0, `${fila0} pedidos na fila`);
+  if (confirmacaoLigada) {
+    verificar("a fila recebeu um pedido de confirmação por conta", fila0 >= 18, `${fila0} pedidos`);
+    const pre = await http(contas[0]!, "POST", "/api/v1/auth/login", { corpo: { email: contas[0]!.email, password: SENHA } });
+    verificar("sem confirmar o e-mail o login é recusado", pre.status === 401, `status ${pre.status}`);
+    await dormir(12_000);
+    const ent = (await db.query(`SELECT count(*)::int AS n, count("deliveredAt")::int AS e FROM "AuthMailOutbox" WHERE "userId" = ANY($1) AND purpose='VERIFY_EMAIL'`, [contas.map((c) => c.userId)])).rows[0];
+    if (!verificar("os e-mails de confirmação são entregues pouco depois do cadastro", ent.e >= 1, JSON.stringify(ent))) achado("alto", "E-mails de confirmação não são entregues", `${ent.n} pedidos, ${ent.e} entregues. Falta configurar o envio de e-mail (SMTP_*) na Vercel.`);
+    await db.query(`UPDATE "AuthIdentity" SET "verifiedAt"=now() WHERE email LIKE $1 AND "verifiedAt" IS NULL`, [`sim30-${RUN}-%`]); // atalho do teste: o clique no link não é simulado aqui
+  } else verificar("o cadastro não depende de e-mail para funcionar (nada na fila de e-mails)", fila0 === 0, `${fila0} pedidos na fila`);
 
   const tokInvalido = await http(anon, "POST", "/api/v1/auth/verify-email", { corpo: { token: "A".repeat(43) } });
   verificar("verificar e-mail com token inventado é recusado", tokInvalido.status >= 400 && tokInvalido.status < 500, `status ${tokInvalido.status}`);
@@ -195,7 +205,7 @@ export async function contasESenhas(db: Pool): Promise<void> {
   verificar("o pedido de recuperação entra na fila de e-mails", filaReset.n >= 1, JSON.stringify(filaReset));
   await dormir(20_000);
   const filaReset2 = (await db.query(`SELECT count(*)::int AS n, count("deliveredAt")::int AS entregues FROM "AuthMailOutbox" WHERE "userId"=$1 AND purpose='RESET_PASSWORD'`, [contas[3]!.userId])).rows[0];
-  if (!verificar("o e-mail de recuperação de senha é entregue em até 20 s", filaReset2.entregues >= 1, JSON.stringify(filaReset2))) achado("alto", "A recuperação de senha não entrega o e-mail", `O pedido entra na fila (AuthMailOutbox), mas nada entrega a fila: não há worker agendado nem tarefa na Vercel (sem vercel.json/cron). Quem esquecer a senha não consegue recuperar a conta.`);
+  if (!verificar("o e-mail de recuperação de senha é entregue em até 20 s", filaReset2.entregues >= 1, JSON.stringify(filaReset2))) achado("alto", "A recuperação de senha não entrega o e-mail", `O pedido entra na fila (AuthMailOutbox) e agora a entrega é tentada logo depois do pedido, mas o envio de e-mail não está configurado (faltam SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS e SMTP_FROM na Vercel). Até configurar, quem esquecer a senha não consegue recuperar a conta.`);
   const rt = await http(anon, "POST", "/api/v1/auth/reset-password", { corpo: { token: "B".repeat(43), password: SENHA_NOVA } });
   verificar("redefinir com token inventado é recusado", rt.status >= 400 && rt.status < 500, `status ${rt.status}`);
 

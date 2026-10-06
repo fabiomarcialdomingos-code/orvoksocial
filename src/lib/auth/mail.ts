@@ -95,3 +95,14 @@ export async function deliverNextAuthMail(
     client.release();
   }
 }
+
+/**
+ * Entrega a fila de e-mails logo depois de um cadastro ou pedido de recuperação, sem worker separado. Sem e-mail
+ * configurado (SMTP_*), não faz nada e a fila espera. Nunca lança: o pedido da pessoa já foi respondido.
+ */
+export async function entregarFilaDeEmail(pool: Pool, limite = 5): Promise<void> {
+  try {
+    const send = createAuthMailer();
+    for (let i = 0; i < limite; i++) if ((await deliverNextAuthMail(pool, send)) === "idle") break;
+  } catch { /* sem e-mail configurado ou provedor fora do ar: a fila tenta de novo no próximo pedido */ }
+}

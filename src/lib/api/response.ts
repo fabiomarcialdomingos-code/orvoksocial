@@ -62,12 +62,15 @@ export function apiError(error: unknown): Response {
       code = "RULE_VIOLATION";
     }
   }
-  if (status >= 403) {
+  // Só falha do servidor (5xx) é "error". Recusas esperadas (403, 409, 422, 429) são "warn" e sem stack;
+  // 400, 401 e 404 são o uso normal e não entram no log. Assim o que aparece como erro é erro de verdade.
+  if (status >= 500 || status === 403 || status === 409 || status === 422 || status === 429) {
+    const grave = status >= 500;
     const detail = error as { name?: unknown; code?: unknown; table?: unknown; constraint?: unknown; stack?: unknown } | null;
     const pick = (value: unknown) => (typeof value === "string" ? value.slice(0, 300) : undefined);
-    console.error(JSON.stringify({ level: "error", event: "api_failure", requestId, status, code,
+    (grave ? console.error : console.warn)(JSON.stringify({ level: grave ? "error" : "warn", event: "api_failure", requestId, status, code,
       errorName: pick(detail?.name), pgCode: pick(detail?.code), table: pick(detail?.table), constraint: pick(detail?.constraint),
-      stack: pick(detail?.stack) }));
+      ...(grave ? { stack: pick(detail?.stack) } : {}) }));
   }
   // Local diagnostics only: database codes and messages never leave the server
   // and are never logged outside development/test.

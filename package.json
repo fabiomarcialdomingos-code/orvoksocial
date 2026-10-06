@@ -29,7 +29,8 @@
     "test:estante": "tsx scripts/test-estante.ts",
     "test:moderacao": "tsx scripts/test-moderacao.ts",
     "test:svg": "tsx scripts/test-svg.ts",
-    "simulacao": "tsx scripts/simulacao/principal.ts"
+    "simulacao": "tsx scripts/simulacao/principal.ts",
+    "test:auth": "tsx scripts/test-auth.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

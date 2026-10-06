@@ -224,7 +224,7 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
     return apiJson({ profile: result.rows[0] ?? null });
   }
   if (method === "POST" && route === "/social/profile") {
-    const body = z.strictObject({ displayName: z.string().trim().min(1).max(120), avatarUrl: z.string().url().max(1000).optional(), bio: z.string().max(500).optional() }).parse(await readJsonBody(request));
+    const body = z.strictObject({ displayName: z.string().trim().min(1).max(120), avatarUrl: z.string().url().max(1000).refine((u) => /^https:\/\//i.test(u), "avatarUrl precisa começar com https://").optional(), bio: z.string().max(500).optional() }).parse(await readJsonBody(request));
     return apiJson({ profile: await social.profile(actorId, body) });
   }
   if (method === "POST" && route === "/social/groups") {

@@ -92,6 +92,7 @@ export async function retrato(): Promise<void> {
   // convidado que depois cria conta leva o convite junto
   const migra = convidados[0]!; const email = `sim30-${process.env.SIM_RUN ?? "x"}-mig@orvok.test`;
   await http(migra, "POST", "/api/v1/auth/register", { corpo: { email, password: SENHA } });
+  await (await import("./nucleo")).conectarBanco()!.query(`UPDATE "AuthIdentity" SET "verifiedAt"=now() WHERE email=$1 AND "verifiedAt" IS NULL`, [email]); // atalho do teste quando a confirmação por e-mail está ligada
   const lg = await http(migra, "POST", "/api/v1/auth/login", { corpo: { email, password: SENHA } });
   const rv = await http(migra, "POST", "/api/v1/desafio/reivindicar");
   verificar("o convidado que cria conta leva o que fez antes (reivindicar)", lg.status === 200 && rv.status < 300, `login ${lg.status}, reivindicar ${rv.status}`);

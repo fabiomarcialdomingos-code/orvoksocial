@@ -47,10 +47,14 @@ export async function concorrencia(db: Pool): Promise<void> {
   verificar("e sem erro 500", resp.every((r) => r.status < 500), resp.map((r) => r.status).join(","));
 
   // 30 tentativas de login errado em paralelo contra uma conta
-  const ataque = await paralelo(30, () => http(new Ator("ataque", "anon"), "POST", "/api/v1/auth/login", { corpo: { email: contas[16]!.email, password: "Errada#99999a" } }));
+  // Em produção o IP é o da própria plataforma e não dá para forjar; só localmente se simulam duas origens diferentes.
+  const forja = process.env.SIM_IP_FORJAVEL === "1";
+  const ipAtacante = forja ? { "X-Forwarded-For": "203.0.113.50" } : {}, ipDono = forja ? { "X-Forwarded-For": "198.51.100.77" } : {};
+  const ataque = await paralelo(30, () => http(new Ator("ataque", "anon"), "POST", "/api/v1/auth/login", { corpo: { email: contas[16]!.email, password: "Errada#99999a" }, cab: ipAtacante }));
   verificar("30 tentativas de senha simultâneas contra uma conta: o limite aguenta (sem 500, com 429)", ataque.every((r) => r.status < 500) && ataque.some((r) => r.status === 429), ataque.map((r) => r.status).join(","));
-  const certa = await http(new Ator("dono", "anon"), "POST", "/api/v1/auth/login", { corpo: { email: contas[16]!.email, password: SENHA } });
-  if (certa.status === 429) achado("medio", "Qualquer pessoa pode travar o login de outra conta", "Poucas tentativas com senha errada bloqueiam por 15 minutos até a senha certa. Quem sabe o e-mail de alguém consegue impedir que ela entre. O limite por conta é útil contra adivinhação, mas combinado com um limite global (1000 tentativas/15 min para o site todo) também permite bloquear o login do site inteiro com poucas requisições.");
+  const certa = await http(new Ator("dono", "anon"), "POST", "/api/v1/auth/login", { corpo: { email: contas[16]!.email, password: SENHA }, cab: ipDono });
+  if (forja) verificar("o dono, de outra origem, entra mesmo com a conta sob ataque (o atacante não trava o dono)", certa.status === 200, `status ${certa.status}`);
+  else achado("info", "O bloqueio de login por origem não é verificável de um único IP", "Na produção todas as tentativas saem do mesmo IP, então o dono parece bloqueado junto com o atacante. A separação por origem foi verificada no teste automático (test:auth) e na simulação local com duas origens.");
 
   // propostas simultâneas de conversa na mesma rodada
   const p = pares[2]!;
