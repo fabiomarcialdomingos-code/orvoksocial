@@ -23,7 +23,6 @@ jobs:
     env:
       SIM_BASE_URL: ${{ inputs.base }}
       SIM_DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      SIM_SAIDA: ${{ github.workspace }}/sim_out
       SIM_RUN: ${{ github.run_id }}
       VT: ${{ secrets.VERCEL_TOKEN }}
     steps:
@@ -34,7 +33,9 @@ jobs:
           [ "$CONFIRMAR" = "SIMULAR" ] || { echo "::error::Digite SIMULAR para confirmar."; exit 1; }
           [ -n "$SIM_DATABASE_URL" ] || { echo "::error::Segredo DATABASE_URL não configurado."; exit 1; }
           case "$SIM_BASE_URL" in https://orvok.com.br|https://orvoksocial.vercel.app) ;; *) echo "::error::Endereço não permitido."; exit 1;; esac
-          mkdir -p "$SIM_SAIDA"
+          # pasta de saída fora do workspace: o checkout apaga o workspace
+          echo "SIM_SAIDA=$RUNNER_TEMP/sim_out" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/sim_out"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -73,10 +74,11 @@ jobs:
           true
       - name: Limpar tudo e provar que o banco voltou ao que era
         if: always()
-        run: pnpm exec tsx scripts/simulacao/principal.ts
+        run: |
+          export SIM_LOG_SERVIDOR="$SIM_SAIDA/vercel-mensagens.txt"
+          pnpm exec tsx scripts/simulacao/principal.ts
         env:
           SIM_MODO: limpar
-          SIM_LOG_SERVIDOR: ${{ github.workspace }}/sim_out/vercel-mensagens.txt
       - name: Publicar o relatório no branch sim-relatorios
         if: always()
         run: |
@@ -87,7 +89,9 @@ jobs:
           d="relatorios/$SIM_RUN"; mkdir -p "$d"
           cp "$RUNNER_TEMP/saida/relatorio.md" "$RUNNER_TEMP/saida/limpeza.json" "$RUNNER_TEMP/saida/bruto.json" "$RUNNER_TEMP/saida/antes.json" "$d/" 2>/dev/null || true
           cp "$RUNNER_TEMP/saida/vercel-info.txt" "$RUNNER_TEMP/saida/vercel-requisicoes.tsv" "$RUNNER_TEMP/saida/vercel-mensagens.txt" "$d/" 2>/dev/null || true
-          git add relatorios; git commit -q -m "Relatório da simulação de 30 usuários ($SIM_RUN)" || true
+          git add relatorios
+          if git diff --cached --quiet; then echo "nada para publicar"; exit 0; fi
+          git commit -q -m "Relatório da simulação de 30 usuários ($SIM_RUN)"
           git push -q origin sim-relatorios
       - name: Resumo
         id: r
