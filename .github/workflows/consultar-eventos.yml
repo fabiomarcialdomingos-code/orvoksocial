@@ -36,7 +36,9 @@ jobs:
           tres=$(q "SELECT count(*) FROM (SELECT \"challengeId\" FROM \"GuestChallengeAttempt\" GROUP BY 1 HAVING count(*)>=3) x")
           usu=$(q "SELECT count(*) FROM \"User\"")
           ses=$(q "SELECT count(*) FROM \"AuthSession\"")
-          r="eventosMedidos=$pe porPasso=$pen periodo=$pef convitesCriados=$con visoesRecebidas=$att convitesCom3Visoes=$tres usuarios=$usu sessoes=$ses"
+          aud=$(q "SELECT string_agg(action||'@'||to_char(\"createdAt\",'HH24:MI:SS')||(CASE WHEN \"actorId\" IS NULL THEN '(sem ator)' ELSE '' END),' ; ') FROM (SELECT * FROM \"AuditLog\" ORDER BY \"createdAt\" DESC LIMIT 4) x")
+          sim=$(q "SELECT (SELECT count(*) FROM \"AuthIdentity\" WHERE email LIKE 'sim30-%')||'/'||(SELECT count(*) FROM \"GuestChallenge\" WHERE \"creatorName\" LIKE 'SIM %')||'/'||(SELECT count(*) FROM \"WorldEvent\" WHERE title LIKE 'SIM %')||'/'||(SELECT count(*) FROM \"WorldRound\" WHERE \"initiatorName\" LIKE 'SIM %')||'/'||(SELECT count(*) FROM \"ShelfPerson\" WHERE name LIKE 'SIM %')")
+          r="auditoriaRecente=$aud simRestante(contas/convites/eventos/rodadas/pessoas)=$sim eventosMedidos=$pe porPasso=$pen periodo=$pef convitesCriados=$con visoesRecebidas=$att convitesCom3Visoes=$tres usuarios=$usu sessoes=$ses"
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: "Resultado ${{ steps.c.outputs.resumo }}"
         run: "true"
