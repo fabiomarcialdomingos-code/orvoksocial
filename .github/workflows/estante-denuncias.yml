@@ -1,0 +1,21 @@
+# Mostra quantas denúncias da Estante estão abertas e os ids das lembranças denunciadas (só ids e datas,
+# nenhum texto nem foto). O conteúdo só deve ser aberto no banco, por causa da denúncia.
+name: "Estante: ver denúncias"
+on: workflow_dispatch
+jobs:
+  ver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Instalar o psql
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Consultar
+        id: c
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          n=$(psql "$DATABASE_URL" -At -c "SELECT count(*) FROM \"ShelfReport\" WHERE state='OPEN'")
+          ids=$(psql "$DATABASE_URL" -At -c "SELECT string_agg(\"keepsakeId\"::text || ' (' || \"createdAt\"::date || ')', ' ; ' ORDER BY \"createdAt\") FROM \"ShelfReport\" WHERE state='OPEN'")
+          echo "resumo=abertas=$n ${ids:-nenhuma}" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.c.outputs.resumo }}"
+        run: "true"

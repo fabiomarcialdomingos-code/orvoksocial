@@ -73,8 +73,32 @@ export async function exportarConvitesEMundo(pool: Pool, userId: string, token: 
     });
   }
 
+  // A Estante: o que a pessoa deu e o que recebeu. Cada lado vê só o que já vê no app (quem recebe não
+  // vê a previsão de quem deu). As fotos podem ser baixadas na própria Estante.
+  const pe = (await pool.query<{ id: string; name: string; createdAt: Date; avatar: string | null }>(
+    `SELECT id,name,"createdAt","avatarImageId" AS avatar FROM "ShelfPerson" WHERE "userId"=$2::uuid OR "tokenHash"=$1 ORDER BY ("userId" IS NOT NULL) DESC LIMIT 1`, [hash, userId])).rows[0];
+  let estante: unknown = null;
+  if (pe) {
+    const circuloLista = (await pool.query<{ nome: string; status: string }>(
+      `SELECT p.name AS nome,b.status FROM "ShelfBond" b JOIN "ShelfPerson" p ON p.id = CASE WHEN b."personA"=$1 THEN b."personB" ELSE b."personA" END WHERE b."personA"=$1 OR b."personB"=$1 ORDER BY p.name`, [pe.id])).rows;
+    const recebidas = (await pool.query<{ title: string; note: string | null; de: string; reaction: number | null; state: string; temFoto: boolean; createdAt: Date }>(
+      `SELECT k.title,k.note,p.name AS de,k.reaction,k.state,(k."imageId" IS NOT NULL) AS "temFoto",k."createdAt" FROM "Keepsake" k JOIN "ShelfPerson" p ON p.id=k."fromId" WHERE k."toId"=$1 ORDER BY k."createdAt" DESC LIMIT 500`, [pe.id])).rows;
+    const dadas = (await pool.query<{ title: string; note: string | null; para: string | null; predicted: number; reaction: number | null; state: string; temFoto: boolean; createdAt: Date }>(
+      `SELECT k.title,k.note,COALESCE(p.name,k."toName") AS para,k.predicted,k.reaction,k.state,(k."imageId" IS NOT NULL) AS "temFoto",k."createdAt" FROM "Keepsake" k LEFT JOIN "ShelfPerson" p ON p.id=k."toId" WHERE k."fromId"=$1 ORDER BY k."createdAt" DESC LIMIT 500`, [pe.id])).rows;
+    const marcas = Number((await pool.query<{ n: string }>(`SELECT count(*) AS n FROM "ShelfVisit" WHERE "visitorId"=$1 AND mark`, [pe.id])).rows[0]!.n);
+    const denuncias = (await pool.query<{ reason: string; state: string; createdAt: Date }>(`SELECT reason,state,"createdAt" FROM "ShelfReport" WHERE "reporterId"=$1 ORDER BY "createdAt" DESC LIMIT 200`, [pe.id])).rows;
+    estante = {
+      nome: pe.name, criadaEm: pe.createdAt, temFotinha: pe.avatar !== null,
+      circulo: circuloLista.map((c) => ({ nome: c.nome, situacao: c.status === "ACTIVE" ? "ativo" : "bloqueado" })),
+      lembrancasRecebidas: recebidas.map((r) => ({ objeto: r.title, frase: r.note, de: r.de, minhaReacao: r.reaction, situacao: r.state, temFoto: r.temFoto, em: r.createdAt })),
+      lembrancasQueDei: dadas.map((d) => ({ objeto: d.title, frase: d.note, para: d.para, quantoAchei: d.predicted, reacaoDaPessoa: d.reaction, situacao: d.state, temFoto: d.temFoto, em: d.createdAt })),
+      passeiPorAqui: marcas, denunciasQueFiz: denuncias.map((x) => ({ motivo: x.reason, situacao: x.state, em: x.createdAt })),
+      observacao: "As fotos você baixa na própria Estante, em cada lembrança.",
+    };
+  }
+
   return {
-    convites, visoesQueCompartilhei, tracosQueGuardoSoParaMim: ocultos, evolucaoDoSelo, mundo, conversas,
+    estante, convites, visoesQueCompartilhei, tracosQueGuardoSoParaMim: ocultos, evolucaoDoSelo, mundo, conversas,
     confirmacaoDeIdade: idade ? { versao: idade.version, em: idade.createdAt } : null,
     aparelhosComAvisos: aparelhos, denunciasQueFiz: denuncias, bloqueiosQueFiz: bloqueios,
   };

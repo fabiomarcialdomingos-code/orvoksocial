@@ -87,6 +87,7 @@ try {
     await owner.query(`GRANT SELECT,INSERT,UPDATE,DELETE ON "ShelfImage" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT,INSERT ON "ShelfModerationLog" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT,INSERT ON "ShelfIllustration" TO orvok_auth_runtime`);
+    await owner.query(`GRANT SELECT,INSERT ON "ShelfReport" TO orvok_auth_runtime`);
     await owner.query(`GRANT USAGE ON SEQUENCE "ShelfModerationLog_id_seq" TO orvok_auth_runtime`);
     await owner.query(`GRANT USAGE,SELECT ON SEQUENCE "ProductEvent_id_seq" TO orvok_auth_runtime`);
     await owner.query(`GRANT SELECT ON "WorldEvent","WorldOpportunity","WorldResolution","WorldCategory" TO orvok_auth_runtime`);

@@ -805,3 +805,16 @@ model ShelfIllustration {
 
   @@index([createdAt], map: "ShelfIllustration_created")
 }
+
+/// Denúncia de uma lembrança da Estante. Uma por pessoa e lembrança.
+model ShelfReport {
+  id         String   @id @db.Uuid
+  keepsakeId String   @db.Uuid
+  reporterId String   @db.Uuid
+  reason     String   @db.VarChar(500)
+  state      String   @default("OPEN") @db.VarChar(10)
+  createdAt  DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@unique([keepsakeId, reporterId], map: "ShelfReport_unica")
+  @@index([state, createdAt], map: "ShelfReport_state")
+}

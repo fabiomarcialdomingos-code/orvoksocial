@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Como o orvok trata os dados das pessoas que usam o produto.",
 };
 
-const ATUALIZADO_EM = "4 de outubro de 2026";
+const ATUALIZADO_EM = "6 de outubro de 2026";
 
 export default function PoliticaPrivacidadePage() {
   return (
@@ -50,6 +50,15 @@ export default function PoliticaPrivacidadePage() {
             <h2>2. O que o orvok guarda sobre você</h2>
             <p>Só o que é necessário para o orvok funcionar. Em detalhe:</p>
             <ul>
+              <li>
+                <strong>Na Estante:</strong> o nome que você escolhe; as lembranças que você dá e
+                recebe (o nome do objeto, a frase, o quanto você achou que a pessoa gostaria e a
+                reação dela); as <strong>fotos</strong> (a fotinha de perfil e as que você coloca
+                numa lembrança), guardadas já reduzidas e <strong>sem a localização</strong> de onde
+                foram tiradas; quem está no seu círculo; o &ldquo;passei por aqui&rdquo;; as
+                denúncias que você faz; e o registro das decisões da checagem automática (sem a
+                imagem recusada).
+              </li>
               <li>
                 <strong>O nome que você usa no orvok.</strong> Pode ser um apelido; o orvok
                 não pede documento nem nome completo obrigatório.
@@ -124,6 +133,13 @@ export default function PoliticaPrivacidadePage() {
                 de São Paulo (Brasil).
               </li>
               <li>
+                <strong>Anthropic</strong>, empresa de inteligência artificial (o Claude), que
+                recebe <strong>o que você escreve e as fotos que você coloca numa lembrança</strong>{" "}
+                apenas para checar se podem ser publicados, e <strong>o nome do objeto</strong>{" "}
+                para desenhar a ilustração. Se você escrever nomes na frase, eles vão junto. O
+                tratamento nessa empresa segue a política dela, que você pode consultar.
+              </li>
+              <li>
                 <strong>Google</strong>, somente se você escolher entrar com sua conta
                 Google — nesse caso, o Google trata os dados de login conforme a própria
                 política de privacidade dele.
@@ -159,6 +175,16 @@ export default function PoliticaPrivacidadePage() {
                 automaticamente depois de <strong>90 dias</strong>.
               </li>
               <li>
+                As <strong>fotos</strong> da Estante são apagadas de verdade quando você troca a
+                fotinha, recolhe a lembrança ou quando a equipe remove uma lembrança denunciada. O
+                registro das decisões da checagem automática é apagado depois de{" "}
+                <strong>90 dias</strong>.
+              </li>
+              <li>
+                Quem usa a Estante <strong>sem conta</strong> tem os dados apagados depois de{" "}
+                <strong>12 meses sem nenhuma atividade</strong>.
+              </li>
+              <li>
                 Se você cria uma conta, seus dados ficam guardados enquanto a conta existir.
               </li>
               <li>
@@ -190,7 +216,7 @@ export default function PoliticaPrivacidadePage() {
               <li>confirmar se guardamos dados seus, e mostrar quais são;</li>
               <li>corrigir dados incompletos ou desatualizados;</li>
               <li>apagar dados que você não quer mais que existam;</li>
-              <li>receber uma cópia dos seus dados, em formato que você possa reutilizar. A cópia inclui os seus convites, as suas respostas, a visão que você compartilhou sobre outras pessoas, o que você guardou só para você, as suas conversas do Mundo e as suas conversas privadas (as mensagens, enquanto não forem apagadas aos 90 dias). Quem respondeu de forma anônima sobre você aparece só como contagem;</li>
+              <li>receber uma cópia dos seus dados, em formato que você possa reutilizar. A cópia inclui a sua Estante (as lembranças que você deu e recebeu, o círculo e as denúncias que você fez; as fotos você baixa na própria Estante), os seus convites, as suas respostas, a visão que você compartilhou sobre outras pessoas, o que você guardou só para você, as suas conversas do Mundo e as suas conversas privadas (as mensagens, enquanto não forem apagadas aos 90 dias). Quem respondeu de forma anônima sobre você aparece só como contagem;</li>
               <li>revogar um consentimento dado anteriormente;</li>
               <li>saber com quem seus dados são compartilhados.</li>
             </ul>

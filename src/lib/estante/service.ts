@@ -6,6 +6,7 @@ import { AuthError } from "@/lib/auth/session";
 import { AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
 import { avisar } from "@/lib/avisar";
 import { limitar } from "@/lib/limite";
+import { enviarDenunciaDaEstantePorEmail } from "@/lib/desafio/moderacao-mail";
 import { registrarEvento } from "@/lib/medicao";
 import { processarImagem, type Finalidade } from "./imagem";
 import { ilustradorAnthropic, type Ilustrador } from "./ilustrador";
@@ -360,6 +361,23 @@ export class EstanteService {
     if (!eu) throw new AuthError("UNAUTHENTICATED", 401);
     const r = await this.pool.query(`UPDATE "Keepsake" SET state='HIDDEN' WHERE id=$1 AND "toId"=$2 AND state='VISIBLE'`, [keepsakeId, eu.id]);
     if ((r.rowCount ?? 0) === 0) throw new AuthError("NOT_FOUND", 404);
+  }
+
+  /**
+   * Denuncia uma lembrança recebida (texto ou foto). Ela some da estante de quem denunciou na hora, e a equipe
+   * revisa por e-mail. Só quem recebeu denuncia; uma denúncia por pessoa e lembrança.
+   */
+  async denunciar(ator: Ator, keepsakeId: string, motivo: unknown): Promise<void> {
+    z.uuid().parse(keepsakeId);
+    const texto = z.string().trim().min(1).max(500).parse(motivo);
+    const eu = await this.achar(ator);
+    if (!eu) throw new AuthError("UNAUTHENTICATED", 401);
+    await limitar(this.pool, "estante", `denunciar:${eu.id}`, 10, 86400);
+    const k = await this.pool.query(`UPDATE "Keepsake" SET state='HIDDEN' WHERE id=$1 AND "toId"=$2 AND state IN ('VISIBLE','HIDDEN') RETURNING id`, [keepsakeId, eu.id]);
+    if (!k.rows[0]) throw new AuthError("NOT_FOUND", 404);
+    const id = randomUUID();
+    const r = await this.pool.query(`INSERT INTO "ShelfReport"(id,"keepsakeId","reporterId",reason) VALUES ($1,$2,$3,$4) ON CONFLICT ("keepsakeId","reporterId") DO NOTHING`, [id, keepsakeId, eu.id, texto]);
+    if ((r.rowCount ?? 0) > 0) await enviarDenunciaDaEstantePorEmail({ id, lembranca: keepsakeId, motivo: texto });
   }
 
   /** Quem mandou pode recolher a lembrança enquanto a pessoa ainda não reagiu. */

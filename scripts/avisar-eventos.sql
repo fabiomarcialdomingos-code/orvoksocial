@@ -23,3 +23,14 @@ UPDATE "WorldEvent" SET "notifiedAt" = clock_timestamp()
 -- (a Política de privacidade promete isso). Fios sem mensagens ficam só como
 -- registro de que a conversa existiu; as denúncias guardam apenas o motivo.
 DELETE FROM "RoundMessage" WHERE "createdAt" < clock_timestamp() - interval '90 days';
+
+-- Estante: o registro das decisões da checagem automática (sem a imagem) dura 90 dias, e quem usa a
+-- Estante sem conta tem os dados apagados depois de 12 meses sem nenhuma atividade (a Política de
+-- privacidade promete os dois prazos). Apagar a pessoa leva junto, em cascata, lembranças, círculo,
+-- visitas, fotos e denúncias dela.
+DELETE FROM "ShelfModerationLog" WHERE "createdAt" < clock_timestamp() - interval '90 days';
+DELETE FROM "ShelfPerson" p
+ WHERE p."userId" IS NULL
+   AND p."createdAt" < clock_timestamp() - interval '12 months'
+   AND NOT EXISTS (SELECT 1 FROM "Keepsake" k WHERE (k."fromId"=p.id OR k."toId"=p.id) AND k."createdAt" > clock_timestamp() - interval '12 months')
+   AND NOT EXISTS (SELECT 1 FROM "ShelfVisit" v WHERE (v."ownerId"=p.id OR v."visitorId"=p.id) AND v."createdAt" > clock_timestamp() - interval '12 months');

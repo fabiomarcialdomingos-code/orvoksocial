@@ -1,0 +1,36 @@
+# Remove uma lembrança denunciada da Estante (some para todos e a foto é apagada de verdade).
+# Informe o id da lembrança (vem no e-mail da denúncia ou no workflow "Estante: ver denúncias").
+name: "Estante: remover lembrança"
+on:
+  workflow_dispatch:
+    inputs:
+      lembranca:
+        description: "Id (UUID) da lembrança a remover"
+        type: string
+        required: true
+jobs:
+  remover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir o id
+        env:
+          LEMBRANCA: ${{ inputs.lembranca }}
+        run: |
+          if ! echo "$LEMBRANCA" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+            echo "::error::O id precisa ser um UUID."
+            exit 1
+          fi
+      - name: Instalar o psql
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Remover
+        id: r
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LEMBRANCA: ${{ inputs.lembranca }}
+        run: |
+          r=$(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -At -F ' ' -v lembranca="$LEMBRANCA" -f scripts/estante-remover.sql | grep -E '^[0-9]+ [0-9]+ [0-9]+$' | tail -1)
+          echo "resumo=removidas/fotos/denúncias: ${r:-nada encontrado}" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.r.outputs.resumo }}"
+        run: "true"

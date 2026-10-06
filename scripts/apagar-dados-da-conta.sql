@@ -27,4 +27,7 @@ WITH x AS (DELETE FROM "UserAgeConsent" WHERE "userId" = :'usuario'::uuid RETURN
 WITH x AS (DELETE FROM "GuestReport" WHERE "reporterUserId" = :'usuario'::uuid RETURNING 1) SELECT count(*) AS denuncias_que_fez FROM x;
 WITH x AS (DELETE FROM "GuestBlock" WHERE "blockerUserId" = :'usuario'::uuid OR "blockedOwnerUserId" = :'usuario'::uuid RETURNING 1) SELECT count(*) AS bloqueios FROM x;
 
+-- Estante: apagar a pessoa leva junto, em cascata, o que ela deu e recebeu, o círculo, as visitas, as fotos e as denúncias.
+WITH x AS (DELETE FROM "ShelfPerson" WHERE "userId" = :'usuario'::uuid RETURNING 1) SELECT count(*) AS estante_apagada FROM x;
+
 COMMIT;

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AVISO_IDADE_HASH, AVISO_IDADE_VERSAO } from "@/lib/desafio/catalogo";
 import { Moldura } from "../desafio/pecas";
-import { Avatar, Desenho, ErroApi, Escala, chamar, linkWhatsApp, origem, reduzirFoto, urlDaFoto, useMensagem } from "./cliente";
+import { Avatar, Denunciar, Desenho, ErroApi, Escala, chamar, linkWhatsApp, origem, reduzirFoto, urlDaFoto, useMensagem } from "./cliente";
 import e from "./estante.module.css";
 
 type Objeto = { id: string; objeto: string; frase: string | null; ilustracao: string | null; foto: string | null; de: string; reacao: number | null; em: string; podeReagir: boolean };
@@ -261,6 +261,7 @@ function Detalhe({ objeto, aoFechar, aoMudar }: { objeto: Objeto; aoFechar: () =
           <button type="button" className={e.btnTexto} onClick={async () => { try { await chamar(`lembrancas/${objeto.id}/ocultar`, { corpo: {} }); await aoMudar(); } catch (x) { setErro(x instanceof ErroApi ? x.texto : "Não foi possível."); } }}>Esconder da minha estante</button>
           <button type="button" className={e.btn} onClick={async () => { if (agradecido) await aoMudar(); else aoFechar(); }}>Fechar</button>
         </div>
+        <div className={e.linha} style={{ justifyContent: "center" }}><Denunciar id={objeto.id} aoConcluir={() => { void aoMudar(); }} /></div>
       </div>
     </div>
   );

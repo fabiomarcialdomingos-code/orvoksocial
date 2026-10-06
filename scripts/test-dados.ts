@@ -50,6 +50,16 @@ await mundo.agirNaConversa(rodada.codigo, { acao: "aceitar" }, null, ana);
 await mundo.agirNaConversa(rodada.codigo, { acao: "enviar", texto: "Mensagem secreta da Ana para o Caio." }, null, ana);
 await mundo.agirNaConversa(rodada.codigo, { acao: "enviar", texto: "Resposta do Caio para a Ana." }, caioNaRodada.token, caio);
 
+// O banco de teste persiste entre rodadas: limpa o que esta suíte cria na Estante.
+await adm.query(`DELETE FROM "ShelfPerson" WHERE "inviteCode" IN ('TESTE0A1','TESTE0C1','VELHA001','VELHA002','VELHA003','NOVA0001')`);
+// Estante: a Ana e o Caio trocam uma lembrança cada um (inseridas direto, sem passar pela moderação)
+const pEA = randomUUID(), pEC = randomUUID();
+await adm.query(`INSERT INTO "ShelfPerson"(id,"userId",name,"inviteCode","ageConsentVersion") VALUES ($1,$2,'Ana','TESTE0A1','x'),($3,$4,'Caio','TESTE0C1','x')`, [pEA, ana, pEC, caio]);
+const [bA, bB] = pEA < pEC ? [pEA, pEC] : [pEC, pEA];
+await adm.query(`INSERT INTO "ShelfBond"(id,"personA","personB") VALUES ($1,$2,$3)`, [randomUUID(), bA, bB]);
+await adm.query(`INSERT INTO "Keepsake"(id,code,"fromId","toId",title,note,predicted,reaction,"reactedAt") VALUES ($1,'TSTE0001',$2,$3,'Presente do Caio','Frase do Caio',2,5,now())`, [randomUUID(), pEC, pEA]);
+await adm.query(`INSERT INTO "Keepsake"(id,code,"fromId","toId",title,note,predicted) VALUES ($1,'TSTE0002',$2,$3,'Presente da Ana','Frase da Ana',4)`, [randomUUID(), pEA, pEC]);
+
 // ---- Exportação da Ana
 const e = await exportarConvitesEMundo(pool, ana, null);
 const json = JSON.stringify(e);
@@ -62,6 +72,11 @@ ok(e.confirmacaoDeIdade?.versao === AVISO_IDADE_VERSAO, "a confirmação de idad
 ok(e.mundo.length === 1 && e.mundo[0]!.minhaOpiniao === "Sim" && e.mundo[0]!.com === "Caio", "a conversa do Mundo traz a opinião da Ana e com quem foi");
 ok(e.conversas.length === 1 && e.conversas[0]!.mensagens.length === 2 && e.conversas[0]!.mensagens[0]!.minha === true && e.conversas[0]!.mensagens[1]!.minha === false, "a conversa privada traz as duas mensagens, marcando quais são da Ana");
 ok(!json.includes("Hash") && !/[0-9a-f]{64}/.test(json), "a exportação não traz hashes nem identificadores técnicos de aparelho");
+const estAna = (e as unknown as { estante: { lembrancasRecebidas: Record<string, unknown>[]; lembrancasQueDei: Record<string, unknown>[]; circulo: { nome: string }[] } }).estante;
+ok(estAna.lembrancasRecebidas.length === 1 && estAna.lembrancasRecebidas[0]!.objeto === "Presente do Caio" && estAna.lembrancasRecebidas[0]!.minhaReacao === 5, "a exportação traz a Estante: o que a Ana recebeu e a reação dela");
+ok(estAna.lembrancasQueDei.length === 1 && estAna.lembrancasQueDei[0]!.quantoAchei === 4 && estAna.circulo[0]!.nome === "Caio", "e o que ela deu (com o quanto achou) e o círculo");
+ok(!JSON.stringify(estAna.lembrancasRecebidas).includes("quantoAchei") && !JSON.stringify(estAna.lembrancasRecebidas).includes("previsao"), "quem recebeu não ganha na exportação a previsão de quem deu");
+
 // quem tem outra conta não enxerga a conversa
 const eCaio = await exportarConvitesEMundo(pool, caio, caioNaRodada.token);
 ok(eCaio.conversas.length === 1 && eCaio.conversas[0]!.com === "Ana" && eCaio.conversas[0]!.mensagens.length === 2, "o Caio vê a conversa dele, com a Ana, e as mesmas duas mensagens");
@@ -78,6 +93,22 @@ const eDepois = await exportarConvitesEMundo(pool, ana, null);
 ok(eDepois.convites.length === 0 && eDepois.visoesQueCompartilhei.length === 0 && eDepois.tracosQueGuardoSoParaMim.length === 0 && eDepois.confirmacaoDeIdade === null && eDepois.conversas.length === 0 && eDepois.mundo.length === 0, "depois da exclusão, não sobra nada da Ana nas tabelas de convites, retrato, Mundo e conversas");
 const eCaioDepois = await exportarConvitesEMundo(pool, caio, caioNaRodada.token);
 ok(eCaioDepois.convites.length === 1, "a exclusão da Ana não apaga o convite do Caio");
+ok((eDepois as unknown as { estante: unknown }).estante === null, "depois da exclusão, a Estante da Ana também some");
+ok((eCaioDepois as unknown as { estante: { lembrancasRecebidas: unknown[] } | null }).estante !== null, "e a do Caio continua");
+
+// prazos prometidos na Política de privacidade: aplicados pelo job diário
+const velha = randomUUID(), velhaAtiva = randomUUID(), nova = randomUUID();
+await adm.query(`INSERT INTO "ShelfPerson"(id,"tokenHash",name,"inviteCode","createdAt") VALUES ($1,$2,'Velha','VELHA001',now()-interval '13 months')`, [velha, "a".repeat(64)]);
+await adm.query(`INSERT INTO "ShelfPerson"(id,"tokenHash",name,"inviteCode","createdAt") VALUES ($1,$2,'VelhaAtiva','VELHA002',now()-interval '13 months')`, [velhaAtiva, "b".repeat(64)]);
+await adm.query(`INSERT INTO "ShelfPerson"(id,"tokenHash",name,"inviteCode") VALUES ($1,$2,'Nova','NOVA0001')`, [nova, "c".repeat(64)]);
+await adm.query(`INSERT INTO "Keepsake"(id,code,"fromId","toId",title,predicted,"createdAt") VALUES ($1,'TSTE0003',$2,$3,'Recente',3,now())`, [randomUUID(), velhaAtiva, nova]);
+await adm.query(`INSERT INTO "ShelfModerationLog"("personId",kind,ok,reason,"createdAt") VALUES ($1,'texto',false,'assedio',now()-interval '100 days'),($1,'texto',true,'ok',now())`, [nova]);
+execFileSync("psql", [process.env.DATABASE_URL!, "-v", "ON_ERROR_STOP=1", "-q", "-f", "scripts/avisar-eventos.sql"], { encoding: "utf8" });
+const existe = async (id: string) => Number((await adm.query(`SELECT count(*) AS n FROM "ShelfPerson" WHERE id=$1`, [id])).rows[0].n) === 1;
+ok(!(await existe(velha)), "quem usa a Estante sem conta e ficou 12 meses parado é apagado");
+ok((await existe(velhaAtiva)) && (await existe(nova)), "quem teve atividade recente (ou é novo) fica");
+ok(Number((await adm.query(`SELECT count(*) AS n FROM "ShelfModerationLog" WHERE "personId"=$1`, [nova])).rows[0].n) === 1, "o registro da moderação com mais de 90 dias é apagado");
+
 
 await pool.end(); await adm.end();
 console.log("TODOS OS TESTES PASSARAM");

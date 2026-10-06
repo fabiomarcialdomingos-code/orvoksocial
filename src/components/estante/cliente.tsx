@@ -88,3 +88,27 @@ export function Escala({ valor, aoEscolher, desativado }: { valor: number | null
 /** Mensagem pronta para mandar por WhatsApp. */
 export const linkWhatsApp = (texto: string) => `https://wa.me/?text=${encodeURIComponent(texto)}`;
 export const origem = () => (typeof window === "undefined" ? "" : window.location.origin);
+
+/** "Denunciar": o motivo vai para a equipe, e a lembrança sai da estante de quem denunciou na hora. */
+export function Denunciar({ id, aoConcluir }: { id: string; aoConcluir: () => void }) {
+  const [aberto, setAberto] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  if (!aberto) return <button type="button" className={e.btnTexto} onClick={() => setAberto(true)}>Denunciar</button>;
+  return (
+    <div className={e.campo}>
+      <label htmlFor={`den-${id}`}>O que aconteceu? A equipe só abre esta lembrança por causa da denúncia.</label>
+      <textarea id={`den-${id}`} maxLength={500} value={motivo} onChange={(x) => setMotivo(x.target.value)} />
+      {erro ? <p className={e.erro} role="alert">{erro}</p> : null}
+      <div className={e.linha}>
+        <button type="button" className={e.btn} disabled={ocupado || !motivo.trim()} onClick={async () => {
+          setOcupado(true); setErro(null);
+          try { await chamar(`lembrancas/${id}/denunciar`, { corpo: { motivo: motivo.trim() } }); aoConcluir(); }
+          catch (x) { setErro(x instanceof ErroApi ? x.texto : "Não foi possível enviar a denúncia."); setOcupado(false); }
+        }}>Enviar denúncia</button>
+        <button type="button" className={e.btnTexto} onClick={() => setAberto(false)}>Cancelar</button>
+      </div>
+    </div>
+  );
+}

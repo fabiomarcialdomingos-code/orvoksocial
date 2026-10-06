@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "As regras de uso do orvok: idade mínima, comportamento esperado e moderação.",
 };
 
-const ATUALIZADO_EM = "4 de outubro de 2026";
+const ATUALIZADO_EM = "6 de outubro de 2026";
 
 export default function TermosDeUsoPage() {
   return (
@@ -85,6 +85,21 @@ export default function TermosDeUsoPage() {
               <li>As mensagens são privadas. O orvok <strong>não lê as conversas</strong>: elas só são abertas pela nossa equipe se alguém denunciar aquela conversa.</li>
               <li>As mensagens são apagadas automaticamente depois de <strong>90 dias</strong>.</li>
               <li>Vale tudo o que está na seção &ldquo;O que você não pode fazer no orvok&rdquo;: assédio, ameaça e conteúdo sexual ou ilegal podem levar à suspensão da conta.</li>
+            </ul>
+          </section>
+
+          <section className={s.secao}>
+            <h2>A Estante</h2>
+            <p>
+              Na Estante, pessoas do mesmo círculo guardam lembranças umas para as outras: um
+              objeto, uma frase e, se quiserem, uma foto.
+            </p>
+            <ul>
+              <li>A frase e a foto de uma lembrança são <strong>só de quem deu e de quem recebeu</strong>. O resto do círculo vê apenas o desenho do objeto.</li>
+              <li>Você só coloca textos e fotos seus, ou que você tem o direito de compartilhar. <strong>Não é permitido:</strong> nudez ou conteúdo sexual; qualquer imagem de criança nua ou em contexto sexualizado; violência, ameaça, assédio ou ódio; documentos e dados pessoais de outras pessoas.</li>
+              <li>Antes de entrar na estante, textos e fotos passam por uma <strong>checagem automática feita por inteligência artificial</strong>. Ela pode errar. Se não estiver funcionando, nada é publicado.</li>
+              <li>Quem recebe pode esconder, bloquear e <strong>denunciar</strong>. Uma lembrança denunciada sai da estante de quem denunciou na hora e é revisada pela equipe, que pode remover a lembrança (a foto é apagada de verdade) e suspender contas.</li>
+              <li>Quem recolhe uma lembrança antes de ela receber reação apaga também a foto.</li>
             </ul>
           </section>
 

@@ -1,5 +1,6 @@
 // Testa a Estante: pessoas, círculo, lembranças, presentes, reação, comparação, visitas, bloqueio e privacidade.
 // Uso: AUTH_SECRET=... AUTH_DATABASE_URL=(orvok_auth_runtime) DATABASE_URL=(dono) npx tsx scripts/test-estante.ts
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import sharp from "sharp";
@@ -224,6 +225,22 @@ ilustradorLigado = true;
 process.env.ORVOK_ILUSTRACOES_POR_DIA = "0";
 ok((await svc.ilustrar(ana, vio4.id)).motivo === "limite_diario", "o teto de desenhos novos por dia protege a conta");
 delete process.env.ORVOK_ILUSTRACOES_POR_DIA;
+
+// denúncias e remoção pela equipe
+const dFoto = await svc.subirImagem(dani, await foto(700), "keepsake");
+const dLemb = await svc.enviar(dani, { titulo: "Para denunciar", frase: "Texto da lembrança.", previsao: 3, paraPessoaId: pAna.id, imageId: dFoto.id });
+ok((await erro(() => svc.denunciar(dani, dLemb.id, "não gostei"))) === "NOT_FOUND", "quem mandou não denuncia a própria lembrança");
+ok((await erro(() => svc.denunciar(bia, dLemb.id, "não gostei"))) === "NOT_FOUND", "quem não recebeu também não");
+ok((await erro(() => svc.denunciar(ana, dLemb.id, "  "))) === "ZodError", "a denúncia precisa de um motivo");
+await svc.denunciar(ana, dLemb.id, "Isso me incomodou.");
+ok((await svc.minhaEstante(ana))!.objetos.every((o) => o.id !== dLemb.id), "a lembrança denunciada some da estante de quem denunciou na hora");
+ok(await contar(`SELECT count(*) AS n FROM "ShelfReport" WHERE "keepsakeId"=$1 AND state='OPEN'`, [dLemb.id]) === 1, "a denúncia fica registrada para revisão");
+await svc.denunciar(ana, dLemb.id, "De novo.");
+ok(await contar(`SELECT count(*) AS n FROM "ShelfReport" WHERE "keepsakeId"=$1`, [dLemb.id]) === 1, "denunciar de novo não duplica");
+const rem = execFileSync("psql", [process.env.DATABASE_URL!, "-v", "ON_ERROR_STOP=1", "-At", "-F", " ", "-v", `lembranca=${dLemb.id}`, "-f", "scripts/estante-remover.sql"], { encoding: "utf8" });
+ok(/\n?1 1 1\n/.test(rem), "o script da equipe remove a lembrança, apaga a foto e resolve a denúncia");
+ok(await contar(`SELECT count(*) AS n FROM "ShelfImage" WHERE id=$1`, [dFoto.id]) === 0 && (await erro(() => svc.imagem(dani, dFoto.id))) === "NOT_FOUND", "a foto foi apagada de verdade");
+ok(await contar(`SELECT count(*) AS n FROM "Keepsake" WHERE id=$1 AND state='REMOVED'`, [dLemb.id]) === 1 && await contar(`SELECT count(*) AS n FROM "ShelfReport" WHERE "keepsakeId"=$1 AND state='RESOLVED'`, [dLemb.id]) === 1, "e a denúncia ficou resolvida");
 
 // esconder, recolher e bloquear
 const antesDeEsconder = (await svc.minhaEstante(ana))!.objetos.length;

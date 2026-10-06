@@ -52,3 +52,11 @@ export async function enviarDenunciaDeConversaPorEmail(denuncia: { id: string; c
     `Denúncia ${denuncia.id}\nConversa: ${denuncia.threadId}\nRodada: ${denuncia.codigoRodada}\nDenunciou: ${denuncia.lado}\n\nMotivo:\n${denuncia.motivo}\n\nAs mensagens só devem ser lidas por causa desta denúncia.`,
   );
 }
+
+/** Denúncia de uma lembrança da Estante. O e-mail leva só identificadores: o conteúdo (texto e foto) é aberto no banco, por causa da denúncia. */
+export async function enviarDenunciaDaEstantePorEmail(denuncia: { id: string; lembranca: string; motivo: string }): Promise<void> {
+  await enviarParaModeracao(
+    "Denúncia de lembrança da Estante no orvok",
+    `Denúncia ${denuncia.id}\nLembrança: ${denuncia.lembranca}\n\nMotivo:\n${denuncia.motivo}\n\nO conteúdo só deve ser aberto por causa desta denúncia. Para remover: workflow "Estante: remover lembrança" com o id da lembrança.`,
+  );
+}

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Moldura } from "../desafio/pecas";
 import { CONSENTIMENTO_IDADE } from "./Estante";
-import { Avatar, Desenho, ErroApi, Escala, chamar, urlDaFoto } from "./cliente";
+import { Avatar, Denunciar, Desenho, ErroApi, Escala, chamar, urlDaFoto } from "./cliente";
 import e from "./estante.module.css";
 
 function Cadastro({ nome, setNome, idade, setIdade }: { nome: string; setNome: (v: string) => void; idade: boolean; setIdade: (v: boolean) => void }) {
@@ -23,6 +23,7 @@ type Aberta = { id: string; objeto: string; frase: string | null; ilustracao: st
 
 /** O link de um presente: mostra o objeto e quem deu; quem abre primeiro fica com a lembrança. */
 export function Presente({ codigo }: { codigo: string }) {
+  const roteador = useRouter();
   const [previa, setPrevia] = useState<Previa | null | "sumiu">(null);
   const [temPessoa, setTemPessoa] = useState<boolean | null>(null);
   const [aberta, setAberta] = useState<Aberta | null>(null);
@@ -80,6 +81,7 @@ export function Presente({ codigo }: { codigo: string }) {
           <Link className={`${e.btn} ${e.btnPrincipal}`} href={`/estante/mandar?para=${aberta.deId}`} prefetch={false}>Lembrar de {aberta.de} também</Link>
           <Link className={e.btn} href="/estante" prefetch={false}>Ver a minha estante</Link>
         </div>
+        <div className={e.linha} style={{ justifyContent: "center" }}><Denunciar id={aberta.id} aoConcluir={() => roteador.push("/estante")} /></div>
       </div>
     </Moldura>
   );

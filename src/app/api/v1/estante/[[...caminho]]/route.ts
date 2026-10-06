@@ -92,6 +92,7 @@ export async function POST(request: Request, { params }: Contexto) {
       if (c === "ilustrar") return json(await svc.ilustrar(ator, b));
       if (c === "ocultar") { await svc.ocultar(ator, b); return json({ ok: true }); }
       if (c === "recolher") { await svc.recolher(ator, b); return json({ ok: true }); }
+      if (c === "denunciar") { await svc.denunciar(ator, b, dados.motivo); return json({ ok: true }); }
     }
     if (a === "presente" && b) return json({ presente: await svc.abrirPresente(b, ator, dados) }, novoToken);
     if (a === "convite" && b) return json(await svc.entrarPeloConvite(b, ator, dados), novoToken);

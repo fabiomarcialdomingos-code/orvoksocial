@@ -174,6 +174,11 @@ async function handler(request: Request, method: "GET" | "POST", path: string[])
       ["views", `SELECT count(*)::int AS count FROM "GuestChallengeAttempt"`],
       ["worldRounds", `SELECT count(*)::int AS count FROM "WorldRound" WHERE "revokedAt" IS NULL`],
       ["privateThreads", `SELECT count(*)::int AS count FROM "RoundThread" WHERE status='ACCEPTED'`],
+      ["shelfPeople", `SELECT count(*)::int AS count FROM "ShelfPerson"`],
+      ["keepsakes", `SELECT count(*)::int AS count FROM "Keepsake" WHERE state<>'REMOVED'`],
+      ["keepsakeReactions", `SELECT count(*)::int AS count FROM "Keepsake" WHERE reaction IS NOT NULL AND state<>'REMOVED'`],
+      ["shelfBonds", `SELECT count(*)::int AS count FROM "ShelfBond" WHERE status='ACTIVE'`],
+      ["shelfReportsOpen", `SELECT count(*)::int AS count FROM "ShelfReport" WHERE state='OPEN'`],
     ] as const;
     const valoresProduto = await Promise.all(produto.map(async ([key, sql]) => {
       try { const result = await authPool().query<{ count: number }>(sql); return [key, Number(result.rows[0]?.count ?? 0)] as const; }
