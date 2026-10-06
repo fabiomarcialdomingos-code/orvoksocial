@@ -26,7 +26,8 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Roda em tudo, exceto assets estáticos (sem necessidade de CSP/nonce ali).
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    // Roda em tudo, exceto assets estáticos (sem necessidade de CSP/nonce ali) e as fotos da Estante, que
+    // têm o próprio CSP rígido (default-src 'none'; sandbox) e não podem receber o das páginas por cima.
+    "/((?!_next/static|_next/image|favicon.ico|api/v1/estante/imagens).*)",
   ],
 };

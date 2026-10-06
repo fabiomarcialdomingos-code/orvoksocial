@@ -255,6 +255,8 @@ await svc.recolher(dani, l6.id);
 ok((await erro(() => svc.imagem(dani, comFoto2.id))) === "NOT_FOUND" && await contar(`SELECT count(*) AS n FROM "ShelfImage" WHERE id=$1`, [comFoto2.id]) === 0, "recolher uma lembrança apaga a foto de verdade");
 void comFoto;
 ok((await erro(() => svc.reagir(ana, l5.id, 3))) === "CONFLICT", "lembrança recolhida não aceita reação");
+ok((await erro(() => svc.bloquear(ana, pAna.id))) === "CONFLICT", "ninguém bloqueia a si mesmo (antes dava erro 500 no banco)");
+ok((await erro(() => svc.bloquear(ana, randomUUID()))) === "NOT_FOUND", "bloquear um id que não existe responde 404 (antes dava erro 500 no banco)");
 await svc.bloquear(ana, pBia.id);
 ok((await svc.minhaEstante(ana))!.objetos.every((o) => o.de !== "Bia"), "bloquear tira da estante o que a pessoa bloqueada deu");
 ok((await erro(() => svc.enviar(bia, { ...base, titulo: "Novo", paraPessoaId: pAna.id }))) === "FORBIDDEN", "quem foi bloqueado não manda mais");

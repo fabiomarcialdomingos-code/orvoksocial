@@ -192,6 +192,8 @@ export class EstanteService {
     const eu = await this.achar(ator);
     if (!eu) throw new AuthError("UNAUTHENTICATED", 401);
     z.uuid().parse(pessoaId);
+    if (pessoaId === eu.id) throw new AuthError("CONFLICT", 409);
+    if (!((await this.pool.query(`SELECT 1 FROM "ShelfPerson" WHERE id=$1`, [pessoaId])).rowCount)) throw new AuthError("NOT_FOUND", 404);
     const [a, b] = eu.id < pessoaId ? [eu.id, pessoaId] : [pessoaId, eu.id];
     const c = await this.pool.connect();
     try {
