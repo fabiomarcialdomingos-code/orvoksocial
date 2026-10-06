@@ -16,11 +16,14 @@ export function Inicio() {
   const { profile } = useShell();
   const { dados } = useDesafios();
   const [eventos, setEventos] = useState<WorldEvent[]>([]);
+  const [estanteAtiva, setEstanteAtiva] = useState(false);
 
   useEffect(() => {
     let ativo = true;
     void apiGet<{ items: WorldEvent[] }>("/world/events").catch(() => ({ items: [] as WorldEvent[] }))
       .then((w) => { if (ativo) setEventos(w.items.slice(0, 3)); });
+    void fetch("/api/v1/estante/estado", { credentials: "same-origin", cache: "no-store" }).then((r) => (r.ok ? r.json() : { ativa: false })).catch(() => ({ ativa: false }))
+      .then((x: { ativa?: boolean }) => { if (ativo) setEstanteAtiva(x.ativa === true); });
     return () => { ativo = false; };
   }, []);
 
@@ -47,6 +50,14 @@ export function Inicio() {
         <Link prefetch={false} className={s.story} href="/comecar"><span className={`${s.anel} ${s.anelVoce}`}><Avatar nome={nome} tamanho={58} voce /><span className={s.mais}>+</span></span><b>Você</b></Link>
         {conhecidos.map((n) => <Link key={n} className={s.story} href="/desafios"><span className={s.anel}><Avatar nome={n} tamanho={58} /></span><b>{n}</b></Link>)}
       </div>
+
+      {estanteAtiva ? (
+        <Link prefetch={false} href="/estante" className={s.hero} style={{ display: "block", textDecoration: "none", color: "inherit", marginBottom: 12 }}>
+          <small className={s.marcador}>A sua estante</small>
+          <h2 style={{ margin: "6px 0" }}>Alguém lembrou de você?</h2>
+          <p style={{ margin: 0 }}>Veja o que as pessoas guardaram para você, ou guarde algo na estante de quem importa.</p>
+        </Link>
+      ) : null}
 
       <section className={s.hero} aria-labelledby="t-hero">
         <small className={s.marcador}>{enviados ? "Seus convites" : "Comece por aqui"}</small>

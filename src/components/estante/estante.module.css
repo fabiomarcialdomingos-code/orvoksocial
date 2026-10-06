@@ -1,0 +1,66 @@
+/* A Estante. Usa as variáveis da moldura de convidado (.raiz): escuro, âmbar do orvok. */
+.pagina { padding: 4px 18px 40px; display: grid; gap: 16px; align-content: start; }
+.titulo { margin: 0; font-size: 26px; letter-spacing: -0.03em; line-height: 1.15; }
+.lead { margin: 0; color: var(--suave); line-height: 1.55; }
+.miudo { margin: 0; color: var(--suave); font-size: 13px; line-height: 1.5; }
+.erro { margin: 0; color: #FF8FB1; font-size: 14px; }
+.ok { margin: 0; color: var(--verde); font-size: 14px; }
+.cartao { border: 1px solid var(--fio-2); background: var(--sup); border-radius: 20px; padding: 16px; display: grid; gap: 12px; }
+.cabeca { display: flex; align-items: center; gap: 14px; }
+.cabeca b { display: block; font-size: 20px; letter-spacing: -0.02em; }
+.cabeca span { color: var(--suave); font-size: 13px; }
+.avatar { border-radius: 50%; object-fit: cover; border: 1px solid var(--fio-2); flex: none; }
+.avatarIni { border-radius: 50%; display: inline-grid; place-items: center; background: var(--ambar-sub); color: var(--ambar); font-weight: 800; flex: none; border: 1px solid var(--fio-2); }
+.btn { border: 1px solid var(--fio-2); background: transparent; color: var(--tinta); border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btnPrincipal { background: var(--ambar); border-color: transparent; color: #1a1205; }
+.btnLargo { width: 100%; padding: 14px 18px; font-size: 16px; }
+.btnTexto { background: none; border: 0; padding: 0; color: var(--suave); text-decoration: underline; font-size: 13px; cursor: pointer; }
+.linha { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.abas { display: flex; gap: 6px; border-bottom: 1px solid var(--fio); overflow-x: auto; }
+.aba { background: none; border: 0; padding: 10px 12px; color: var(--suave); font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.abaAtiva { color: var(--tinta); border-bottom-color: var(--ambar); }
+.estante { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.objeto { border: 1px solid var(--fio-2); background: var(--sup-2); border-radius: 16px; padding: 10px 6px 8px; display: grid; justify-items: center; gap: 4px; cursor: pointer; color: var(--tinta); position: relative; text-align: center; font: inherit; }
+.objeto:hover { border-color: var(--ambar); }
+.objeto b { font-size: 12.5px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.objeto small { color: var(--suave); font-size: 11px; }
+.novo::after { content: ""; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 10px var(--ambar); }
+.desenho { width: 72px; height: 72px; display: block; }
+.desenhoGrande { width: 160px; height: 160px; display: block; margin: 0 auto; }
+.vazio { border: 1px dashed var(--fio-2); border-radius: 18px; padding: 22px 16px; text-align: center; color: var(--suave); display: grid; gap: 8px; }
+.fundo { position: fixed; inset: 0; background: rgb(2 6 14 / .72); display: grid; align-items: end; z-index: 30; }
+.folha { width: min(480px, 100%); margin: 0 auto; max-height: 92dvh; overflow-y: auto; background: var(--sup); border: 1px solid var(--fio-2); border-radius: 24px 24px 0 0; padding: 20px 18px 28px; display: grid; gap: 14px; }
+.folha h2 { margin: 0; font-size: 20px; text-align: center; }
+.frase { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--sup-2); border: 1px solid var(--fio); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.foto { width: 100%; border-radius: 16px; display: block; border: 1px solid var(--fio-2); }
+.escala { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.nota { border: 1px solid var(--fio-2); background: var(--sup-2); color: var(--tinta); border-radius: 14px; padding: 10px 2px; cursor: pointer; display: grid; gap: 2px; justify-items: center; text-align: center; font: inherit; }
+.nota b { font-size: 18px; }
+.nota small { font-size: 10.5px; color: var(--suave); }
+.notaSel { border-color: var(--ambar); background: var(--ambar-sub); }
+.campo { display: grid; gap: 6px; }
+.campo label, .rotulo { font-size: 13px; font-weight: 600; }
+.campo input[type=text], .campo textarea { border: 1px solid var(--fio-2); background: var(--sup-2); color: var(--tinta); border-radius: 14px; padding: 12px 14px; font: inherit; font-size: 15px; width: 100%; box-sizing: border-box; }
+.campo textarea { min-height: 84px; resize: vertical; }
+.campo > small { color: var(--suave); font-size: 12px; justify-self: end; }
+.escolhas { display: grid; gap: 8px; }
+.escolha { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--fio-2); border-radius: 16px; background: var(--sup-2); cursor: pointer; color: var(--tinta); font: inherit; text-align: left; width: 100%; }
+.escolhaSel { border-color: var(--ambar); background: var(--ambar-sub); }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--suave); line-height: 1.5; }
+.consent input { margin-top: 3px; }
+.consent a { color: var(--azul-luz); }
+.lista { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.item { border: 1px solid var(--fio-2); background: var(--sup); border-radius: 18px; padding: 12px; display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.item .desenho { width: 56px; height: 56px; }
+.item b { display: block; font-size: 15px; }
+.item span, .item p { margin: 0; color: var(--suave); font-size: 13px; line-height: 1.5; }
+.comparacao { color: var(--ambar) !important; }
+.pessoa { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; border: 1px solid var(--fio-2); background: var(--sup); border-radius: 18px; padding: 12px; }
+.pessoa .linha { grid-column: 1 / -1; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--fio-2); background: var(--sup-2); color: var(--tinta); border-radius: 999px; padding: 8px 14px; font-size: 13px; cursor: pointer; font: inherit; }
+.chipSel { border-color: var(--ambar); background: var(--ambar-sub); }
+.faixa { border: 1px solid var(--fio-2); background: var(--ambar-sub); border-radius: 16px; padding: 12px 14px; font-size: 14px; color: var(--tinta); }
+.fotoPrevia { width: 96px; height: 96px; border-radius: 14px; object-fit: cover; border: 1px solid var(--fio-2); }
+.luz { position: absolute; inset: 0; z-index: -1; pointer-events: none; }

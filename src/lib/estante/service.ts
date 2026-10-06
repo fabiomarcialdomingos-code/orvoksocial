@@ -171,6 +171,13 @@ export class EstanteService {
     return { pessoa: { id: dono.id, nome: dono.name } };
   }
 
+  /** O que se vê no link de convite, antes de aceitar: só o nome de quem convida. */
+  async previaConvite(codigoConvite: string): Promise<{ nome: string }> {
+    const r = await this.pool.query<{ name: string }>(`SELECT name FROM "ShelfPerson" WHERE "inviteCode"=$1`, [codigoConvite.toUpperCase()]);
+    if (!r.rows[0]) throw new AuthError("NOT_FOUND", 404);
+    return { nome: r.rows[0].name };
+  }
+
   async circulo(ator: Ator) {
     const eu = await this.achar(ator);
     if (!eu) return { convite: null, avatar: null as string | null, pessoas: [] as { id: string; nome: string; avatar: string | null }[] };
@@ -261,7 +268,7 @@ export class EstanteService {
       if (quem.userId) await avisar(this.pool, quem.userId, "ESTANTE_PRESENTE_ABERTO", k.id, { titulo: "Seu presente foi aberto", corpo: `${eu.nome} guardou a sua lembrança.`, url: "/estante" });
     }
     const de = await this.carregar(k.fromId);
-    return { id: k.id, objeto: k.title, frase: k.note, ilustracao: k.svg, foto: k.imageId, de: de.nome, deAvatar: de.avatar };
+    return { id: k.id, objeto: k.title, frase: k.note, ilustracao: k.svg, foto: k.imageId, de: de.nome, deId: de.id, deAvatar: de.avatar, reacao: (await this.pool.query<{ reaction: number | null }>(`SELECT reaction FROM "Keepsake" WHERE id=$1`, [k.id])).rows[0]?.reaction ?? null };
   }
 
   /** Quem recebeu reage (1 a 5). Quem mandou descobre a diferença entre o que previu e o que aconteceu. */
@@ -305,11 +312,11 @@ export class EstanteService {
   async enviadas(ator: Ator) {
     const eu = await this.achar(ator);
     if (!eu) return [];
-    const r = await this.pool.query<{ id: string; code: string; title: string; imageId: string | null; predicted: number; reaction: number | null; para: string | null; toId: string | null; createdAt: Date }>(
-      `SELECT k.id,k.code,k.title,k."imageId",k.predicted,k.reaction,COALESCE(p.name,k."toName") AS para,k."toId",k."createdAt"
+    const r = await this.pool.query<{ id: string; code: string; title: string; svg: string | null; imageId: string | null; predicted: number; reaction: number | null; para: string | null; toId: string | null; createdAt: Date }>(
+      `SELECT k.id,k.code,k.title,k."illustrationSvg" AS svg,k."imageId",k.predicted,k.reaction,COALESCE(p.name,k."toName") AS para,k."toId",k."createdAt"
          FROM "Keepsake" k LEFT JOIN "ShelfPerson" p ON p.id=k."toId" WHERE k."fromId"=$1 AND k.state IN ('VISIBLE','PENDING','HIDDEN') ORDER BY k."createdAt" DESC LIMIT 100`, [eu.id]);
     return r.rows.map((x) => ({
-      id: x.id, codigo: x.code, objeto: x.title, foto: x.imageId, para: x.para, aberta: x.toId !== null, previsto: x.predicted, reacao: x.reaction, em: x.createdAt,
+      id: x.id, codigo: x.code, objeto: x.title, ilustracao: x.svg, foto: x.imageId, para: x.para, aberta: x.toId !== null, previsto: x.predicted, reacao: x.reaction, em: x.createdAt,
       ...(x.reaction !== null ? comparar(x.predicted, x.reaction) : {}),
     }));
   }

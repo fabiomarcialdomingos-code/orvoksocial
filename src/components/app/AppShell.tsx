@@ -76,10 +76,18 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
   const [toastState, setToastState] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
   const [unread, setUnread] = useState(0);
   const [novas, setNovas] = useState(0);
+  const [estanteAtiva, setEstanteAtiva] = useState(false);
   const toast = useCallback((text: string, kind: "ok" | "error" = "ok") => {
     setToastState({ text, kind });
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => setToastState(null), 4200);
+  }, []);
+  useEffect(() => {
+    let ativo = true;
+    fetch("/api/v1/estante/estado", { credentials: "same-origin", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { ativa: false })).then((x: { ativa?: boolean }) => { if (ativo) setEstanteAtiva(x.ativa === true); })
+      .catch(() => undefined);
+    return () => { ativo = false; };
   }, []);
   const refreshUnread = useCallback(() => {
     apiGet<{ items: { state: string }[] }>("/notifications")
@@ -140,7 +148,7 @@ export function AppShell({ title, children, largo, lateral }: { title: string; c
         <aside className={s.lateral} aria-label="Navegação principal">
           <Link className={s.marca} href="/painel"><BrandMark size={32} /><span>orvok</span></Link>
           <nav className={s.menu}>
-            {MENU.map((item) => (
+            {(estanteAtiva ? [...MENU.slice(0, 3), { href: "/estante", rotulo: "Minha estante", icone: "elo" as NomeIcone }, ...MENU.slice(3)] : MENU).map((item) => (
               <Link key={item.href} href={item.href} aria-current={ativo(item) ? "page" : undefined}>
                 <IconeRede nome={item.icone} /><span>{item.rotulo}</span>
                 {item.href === "/notificacoes" && unread > 0 ? <b className={s.bolha}>{unread}</b> : null}

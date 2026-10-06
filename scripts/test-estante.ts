@@ -32,6 +32,9 @@ const idade = { aceito: true as const, versao: AVISO_IDADE_VERSAO, hash: AVISO_I
 const novoUsuario = async () => { const id = randomUUID(); await adm.query(`INSERT INTO "User"(id,"updatedAt") VALUES ($1,now())`, [id]); return id; };
 const tok = () => randomUUID() + randomUUID();
 
+// O banco de teste guarda o cache de desenhos entre execuções; cada rodada começa sem ele.
+await adm.query(`DELETE FROM "ShelfIllustration"`);
+
 // interruptor
 ok((await svc.ativa()) === false, "a Estante nasce desligada");
 await svc.ligar(true); ok((await svc.ativa()) === true, "dá para ligar");

@@ -61,6 +61,17 @@ export function clearSessionCookie(response: Response): void {
 export function assertMutationRequest(request: Request): void {
   const contentType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
   if (contentType !== "application/json") throw new AuthError("JSON_REQUIRED", 415);
+  assertSameOrigin(request);
+}
+
+/** Envio de imagem: a mesma checagem de origem, mas o corpo é uma imagem em vez de JSON. */
+export function assertUploadRequest(request: Request): void {
+  const contentType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+  if (!contentType?.startsWith("image/")) throw new AuthError("IMAGE_REQUIRED", 415);
+  assertSameOrigin(request);
+}
+
+function assertSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
   if (process.env.APP_ENV === "production" && !process.env.APP_ORIGIN)
     throw new AuthError("ORIGIN_NOT_CONFIGURED", 500);

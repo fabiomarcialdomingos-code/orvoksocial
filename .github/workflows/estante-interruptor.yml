@@ -1,0 +1,38 @@
+# Liga ou desliga a Estante no banco de produção. Desligada, as páginas e as rotas respondem "não existe".
+# Mesmo ligada, ela só funciona se a moderação estiver configurada (ANTHROPIC_API_KEY na Vercel):
+# sem a chave o diagnóstico mostra estanteAtiva=false e nada é publicado.
+# Rode pela aba Actions > "Estante: ligar ou desligar" > Run workflow.
+name: "Estante: ligar ou desligar"
+on:
+  workflow_dispatch:
+    inputs:
+      ligada:
+        description: "Ligar a Estante? (marque para ligar; desmarcado, desliga)"
+        type: boolean
+        default: false
+jobs:
+  interruptor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Conferir o segredo
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Segredo DATABASE_URL não configurado em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+      - name: Instalar o psql
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Aplicar
+        id: a
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LIGADA: ${{ inputs.ligada }}
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO \"AppFlag\"(name,enabled) VALUES ('estante', $LIGADA) ON CONFLICT (name) DO UPDATE SET enabled=$LIGADA, \"updatedAt\"=clock_timestamp()"
+          r=$(psql "$DATABASE_URL" -At -c "SELECT 'estante=' || CASE WHEN enabled THEN 'LIGADA' ELSE 'desligada' END FROM \"AppFlag\" WHERE name='estante'")
+          echo "resumo=$r" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.a.outputs.resumo }}"
+        run: "true"
