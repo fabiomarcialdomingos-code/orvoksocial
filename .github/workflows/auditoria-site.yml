@@ -1,0 +1,109 @@
+# Auditoria objetiva do site real: Lighthouse (celular com rede móvel simulada) em 3 rodadas por página, mais a imagem de prévia
+# dos convites. Só lê o site: não grava nada nele. O resultado vai para o branch sim-relatorios, pasta auditorias/<execução>.
+name: "Auditoria do site (Lighthouse)"
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Endereço do site"
+        type: string
+        default: "https://orvok.com.br"
+permissions:
+  contents: write
+jobs:
+  auditar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: ${{ inputs.base }}
+      SAIDA: ${{ github.workspace }}/../auditoria_saida
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Medir a imagem de prévia e as etiquetas de compartilhamento
+        run: |
+          mkdir -p "$SAIDA"
+          {
+            echo "== imagem de prévia do convite (código de teste) =="
+            curl -s -o "$SAIDA/og.png" -w "status=%{http_code} tipo=%{content_type} bytes=%{size_download} tempo=%{time_total}s\n" "$BASE/d/AAAAAAAA/opengraph-image"
+            echo "== etiquetas na home =="
+            curl -s "$BASE/" -o "$SAIDA/home.html"
+            for t in '<h1' 'rel="canonical"' 'property="og:title"' 'property="og:image"' 'name="twitter:card"' 'name="description"'; do printf '%-26s %s\n' "$t" "$(grep -c -- "$t" "$SAIDA/home.html")"; done
+            echo "== arquivos públicos =="
+            for p in /robots.txt /sitemap.xml /favicon.ico /manifest.webmanifest; do printf '%-22s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' "$BASE$p")"; done
+            echo "== tempo até o primeiro byte (5 medições) =="
+            for u in / /comecar; do for i in 1 2 3 4 5; do curl -s -o /dev/null -w "$u %{time_starttransfer}\n" "$BASE$u"; done; done
+          } | tee "$SAIDA/medidas.txt"
+      - name: Lighthouse no celular (3 rodadas por página)
+        run: |
+          export CHROME_PATH="$(which google-chrome || which chromium || true)"
+          echo "chrome: $CHROME_PATH"
+          for pagina in "/" "/comecar"; do
+            nome=$(echo "$pagina" | tr -c 'a-z' '_'); [ "$pagina" = "/" ] && nome=home
+            for i in 1 2 3; do
+              npx --yes lighthouse@12 "$BASE$pagina" --quiet --output=json --output-path="$SAIDA/lh_${nome}_$i.json" \
+                --only-categories=performance,accessibility,best-practices,seo \
+                --chrome-flags="--headless=new --no-sandbox --disable-gpu" || echo "rodada $i de $pagina falhou"
+            done
+          done
+          ls "$SAIDA"
+      - name: Resumir
+        id: r
+        run: |
+          python3 - <<'PY'
+          import json,glob,os,statistics as st,re
+          saida=os.environ["SAIDA"]; out=[]
+          out.append("# Auditoria do site real (Lighthouse, celular, rede móvel simulada)\n")
+          out.append("```\n"+open(f"{saida}/medidas.txt").read()+"```\n")
+          resumo=[]
+          for nome in ("home","_comecar"):
+              arqs=sorted(glob.glob(f"{saida}/lh_{nome}_*.json"))
+              if not arqs: continue
+              dados=[json.load(open(a)) for a in arqs]
+              med=lambda f: st.median([f(d) for d in dados])
+              cats={c:round(med(lambda d,c=c:(d["categories"][c]["score"] or 0)*100)) for c in ("performance","accessibility","best-practices","seo")}
+              mets={k:med(lambda d,k=k:d["audits"][k]["numericValue"]) for k in ("first-contentful-paint","largest-contentful-paint","total-blocking-time","cumulative-layout-shift","speed-index","interactive")}
+              titulo="/" if nome=="home" else "/comecar"
+              out.append(f"\n## {titulo}  ({len(dados)} rodadas, mediana)\n")
+              out.append("| Categoria | Nota |\n|---|---|\n"+"\n".join(f"| {k} | {v} |" for k,v in cats.items()))
+              out.append("\n| Métrica | Valor |\n|---|---|")
+              out.append(f"| Primeira pintura (FCP) | {mets['first-contentful-paint']/1000:.2f} s |")
+              out.append(f"| Maior conteúdo (LCP) | {mets['largest-contentful-paint']/1000:.2f} s |")
+              out.append(f"| Bloqueio de interação (TBT) | {mets['total-blocking-time']:.0f} ms |")
+              out.append(f"| Deslocamento de layout (CLS) | {mets['cumulative-layout-shift']:.3f} |")
+              out.append(f"| Speed Index | {mets['speed-index']/1000:.2f} s |")
+              out.append(f"| Interativo (TTI) | {mets['interactive']/1000:.2f} s |")
+              d=dados[len(dados)//2]
+              falhas=[]
+              for cat in ("accessibility","seo","best-practices"):
+                  for ref in d["categories"][cat]["auditRefs"]:
+                      a=d["audits"][ref["id"]]
+                      if a["scoreDisplayMode"] in ("binary","numeric") and a["score"] is not None and a["score"]<1:
+                          falhas.append((cat,a["id"],a["title"],a.get("displayValue","")))
+              out.append("\n**Itens que falharam (não-desempenho):**\n")
+              out += [f"- [{c}] `{i}` {t} {v}".rstrip() for c,i,t,v in falhas] or ["- nenhum"]
+              ops=[(a["id"],a["title"],a.get("displayValue","")) for a in d["audits"].values() if a.get("details",{}).get("type")=="opportunity" and (a.get("score") or 1)<0.9]
+              out.append("\n**Oportunidades de desempenho:**\n")
+              out += [f"- `{i}` {t} {v}".rstrip() for i,t,v in ops] or ["- nenhuma relevante"]
+              resumo.append(f"{titulo}: perf {cats['performance']} a11y {cats['accessibility']} bp {cats['best-practices']} seo {cats['seo']} LCP {mets['largest-contentful-paint']/1000:.1f}s")
+          open(f"{saida}/auditoria.md","w").write("\n".join(out))
+          open(os.environ["GITHUB_OUTPUT"],"a").write("resumo="+" | ".join(resumo)+"\n")
+          PY
+      - name: Publicar no branch sim-relatorios
+        if: always()
+        run: |
+          set -e
+          git config user.name "orvok-auditoria"; git config user.email "auditoria@orvok.invalid"
+          cp -r "$SAIDA" "$RUNNER_TEMP/saida"
+          git fetch origin sim-relatorios:sim-relatorios 2>/dev/null && git checkout -q sim-relatorios || { git checkout -q --orphan sim-relatorios; git rm -rqf . ; }
+          d="auditorias/${{ github.run_id }}"; mkdir -p "$d"
+          cp "$RUNNER_TEMP/saida/auditoria.md" "$RUNNER_TEMP/saida/medidas.txt" "$d/" 2>/dev/null || true
+          git add auditorias
+          if git diff --cached --quiet; then echo "nada para publicar"; exit 0; fi
+          git commit -q -m "Auditoria do site (${{ github.run_id }})"
+          git push -q origin sim-relatorios
+      - name: "Resultado ${{ steps.r.outputs.resumo }}"
+        if: always()
+        run: "true"
