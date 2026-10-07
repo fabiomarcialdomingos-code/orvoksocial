@@ -28,8 +28,10 @@
 .iconeBtn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--fio-2); background: var(--sup); display: grid; place-items: center; cursor: pointer; color: var(--suave); }
 .iconeBtn:hover { color: var(--tinta); border-color: var(--azul); }
 .iconeBtn svg { width: 18px; height: 18px; }
-.tela { flex: 1; display: flex; flex-direction: column; padding: 4px 20px calc(24px + env(safe-area-inset-bottom, 0px)); animation: entra 0.5s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.tela { flex: 1; display: flex; flex-direction: column; padding: 4px 20px calc(24px + env(safe-area-inset-bottom, 0px)); animation: entraTela 0.5s cubic-bezier(0.2, 0.9, 0.3, 1); }
 @keyframes entra { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+/* A entrada da tela só desliza: começar transparente escondia o texto até o navegador terminar de preparar a página, e o "maior conteúdo" só aparecia depois. */
+@keyframes entraTela { from { transform: translateX(18px); } to { transform: none; } }
 .titulo { font-size: clamp(30px, 8vw, 38px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.08; margin: 0 0 12px; text-wrap: balance; }
 .titulo b { font-weight: 600; }
 .centro { text-align: center; }

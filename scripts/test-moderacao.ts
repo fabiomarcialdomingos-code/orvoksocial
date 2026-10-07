@@ -42,4 +42,13 @@ const enviado = (JSON.parse(corpo) as { messages: { content: { text: string }[] 
 ok(enviado.startsWith("<texto>") && enviado.endsWith("</texto>") && enviado.split("</texto>").length === 2, "o texto do usuário não consegue fechar a marca e virar instrução");
 ok((JSON.parse(corpo) as { temperature: number }).temperature === 0, "a moderação roda sem aleatoriedade");
 
+// quando a Anthropic recusa (por exemplo, sem saldo), a moderação fecha a porta E o motivo vai para o log, sem o texto da pessoa
+const avisos: string[] = []; const aviso = console.warn; console.warn = (m: string) => { avisos.push(String(m)); };
+const semSaldo = moderadorAnthropic(env, (async () => new Response(JSON.stringify({ error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." } }), { status: 400 })) as unknown as typeof fetch);
+const rSemSaldo = await semSaldo.texto("texto privado da pessoa");
+console.warn = aviso;
+ok(rSemSaldo.ok === false && rSemSaldo.motivo === "indisponivel", "sem saldo na Anthropic a moderação continua fechando a porta");
+ok(avisos.some((a) => a.includes("anthropic_recusou") && a.includes("credit balance") && a.includes('"status":400')), "e o motivo da recusa aparece no log");
+ok(!avisos.join("").includes("texto privado da pessoa"), "o log nunca leva o texto da pessoa");
+
 console.log("TODOS OS TESTES PASSARAM");
