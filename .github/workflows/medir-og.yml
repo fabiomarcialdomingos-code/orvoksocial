@@ -1,0 +1,17 @@
+# Mede o tempo e o cache da imagem de prévia dos convites (o que o WhatsApp busca ao mostrar o link). Somente leitura.
+name: "Medir imagem de prévia"
+on: workflow_dispatch
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Medir
+        id: m
+        run: |
+          u="https://orvok.com.br/d/AAAAAAAA/opengraph-image"
+          t=""; for i in 1 2 3 4 5 6; do t="$t $(curl -s -o /dev/null -w '%{time_total}' -m 30 "$u")"; sleep 1; done
+          h=$(curl -s -D - -o /dev/null -m 30 "$u" | tr -d '\r' | grep -iE '^(cache-control|age|x-vercel-cache|content-length|content-type):' | tr '\n' ';' | tr ' ' '_')
+          echo "resumo=tempos(s):$t | $h" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.m.outputs.resumo }}"
+        run: "true"
