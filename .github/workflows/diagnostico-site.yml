@@ -33,7 +33,9 @@ jobs:
             g_cli=$(python3 -c "import sys,urllib.parse as u;q=u.parse_qs(u.urlparse(sys.argv[1]).query);print((q.get('client_id',['-'])[0])[:14])" "$g_loc" 2>/dev/null || echo "-")
             g_ok="-"; if [ "$base" = "https://orvok.com.br" ] && [ -n "$g_loc" ]; then
               curl -s -m 20 -o /tmp/g_body.html "$g_loc" || true
-              if grep -qi "redirect_uri_mismatch" /tmp/g_body.html; then g_ok=NAO_CADASTRADO; elif [ -s /tmp/g_body.html ]; then g_ok=ACEITO; else g_ok=SEM_RESPOSTA; fi
+              g_tit=$(grep -o "<title>[^<]*</title>" /tmp/g_body.html | head -1 | sed 's/<[^>]*>//g' | tr ' ' '_' | cut -c1-60)
+              g_err=$(grep -oiE "Error [0-9]{3}: [a-z_]+|access_denied|invalid_client|org_internal|app_not_verified" /tmp/g_body.html | head -2 | tr '\n' ',' | tr ' ' '_')
+              if grep -qi "redirect_uri_mismatch" /tmp/g_body.html; then g_ok=NAO_CADASTRADO; elif [ -n "$g_err" ]; then g_ok="OUTRO_ERRO:${g_err}"; elif [ -s /tmp/g_body.html ]; then g_ok="ACEITO(titulo=${g_tit:-sem})"; else g_ok=SEM_RESPOSTA; fi
             fi
             estante=$(curl -s -m 15 "$base/api/v1/estante/estado" | grep -o '"ativa":[a-z]*' | cut -d: -f2 || echo ERR)
             estante_pagina=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/estante" || echo ERR)
