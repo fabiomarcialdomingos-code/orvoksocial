@@ -818,3 +818,11 @@ model ShelfReport {
   @@unique([keepsakeId, reporterId], map: "ShelfReport_unica")
   @@index([state, createdAt], map: "ShelfReport_state")
 }
+
+/// Card do convite (imagem de prévia), desenhado uma vez e guardado pronto. Some junto com o convite.
+model GuestChallengeCard {
+  challengeId String   @id @db.Uuid
+  version     String   @db.VarChar(80)
+  png         Bytes
+  createdAt   DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+}

@@ -119,6 +119,15 @@ export class DesafioService {
   }
 
   /** O que quem recebeu o convite pode ver: nome e perguntas. Nunca as respostas. */
+  /**
+   * O que qualquer pessoa (ou robô de prévia) pode ver do convite: só o nome e a relação. Não registra "convite aberto":
+   * antes, cada leitura do título e cada desenho da imagem contavam como um convite aberto de verdade.
+   */
+  async resumoPublico(codigo: string): Promise<{ id: string; nome: string; relacao: Contexto }> {
+    const d = await this.ativo(codigo);
+    return { id: d.id, nome: d.creatorName, relacao: d.relation };
+  }
+
   async vitrine(codigo: string, token: string | null, userId: string | null = null) {
     const d = await this.ativo(codigo);
     if (await this.bloqueadoPor(token, userId, d)) throw new AuthError("BLOCKED", 403);

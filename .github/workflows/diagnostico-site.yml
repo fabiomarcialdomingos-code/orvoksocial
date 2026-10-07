@@ -25,7 +25,7 @@ jobs:
             mundo=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/eventos" || echo ERR)
             push=$(curl -s -m 15 "$base/api/v1/push/public-key" | python3 -c "import json,sys;d=json.load(sys.stdin);print('disponivel' if d.get('disponivel') else 'sem-chaves')" 2>/dev/null || echo ERR)
             conversa=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/rodadas/AAAAAAAA/conversa" || echo ERR)
-            og_convite=$(curl -s -o /dev/null -w "%{http_code}" -m 25 "$base/d/AAAAAAAA/opengraph-image" || echo ERR)
+            og_convite=$(curl -s -o /dev/null -w "%{http_code}" -m 25 "$base/d/AAAAAAAA/cartao" || echo ERR)
             g_hdr=$(curl -s -D - -o /dev/null -m 15 "$base/api/v1/auth/google/start?returnTo=%2Fpainel" || true)
             g_cod=$(echo "$g_hdr" | head -1 | awk '{print $2}')
             g_loc=$(echo "$g_hdr" | tr -d '\r' | grep -i '^location:' | head -1 | cut -d' ' -f2-)
