@@ -26,6 +26,11 @@ jobs:
             push=$(curl -s -m 15 "$base/api/v1/push/public-key" | python3 -c "import json,sys;d=json.load(sys.stdin);print('disponivel' if d.get('disponivel') else 'sem-chaves')" 2>/dev/null || echo ERR)
             conversa=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/api/v1/mundo/rodadas/AAAAAAAA/conversa" || echo ERR)
             og_convite=$(curl -s -o /dev/null -w "%{http_code}" -m 25 "$base/d/AAAAAAAA/opengraph-image" || echo ERR)
+            g_hdr=$(curl -s -D - -o /dev/null -m 15 "$base/api/v1/auth/google/start?returnTo=%2Fpainel" || true)
+            g_cod=$(echo "$g_hdr" | head -1 | awk '{print $2}')
+            g_loc=$(echo "$g_hdr" | tr -d '\r' | grep -i '^location:' | head -1 | cut -d' ' -f2-)
+            g_redir=$(python3 -c "import sys,urllib.parse as u;q=u.parse_qs(u.urlparse(sys.argv[1]).query);print(q.get('redirect_uri',['-'])[0])" "$g_loc" 2>/dev/null || echo "-")
+            g_cli=$(python3 -c "import sys,urllib.parse as u;q=u.parse_qs(u.urlparse(sys.argv[1]).query);print((q.get('client_id',['-'])[0])[:14])" "$g_loc" 2>/dev/null || echo "-")
             estante=$(curl -s -m 15 "$base/api/v1/estante/estado" | grep -o '"ativa":[a-z]*' | cut -d: -f2 || echo ERR)
             estante_pagina=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$base/estante" || echo ERR)
             pronto=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "$base/api/ready" || echo ERR)
@@ -35,7 +40,7 @@ jobs:
             ins_entrar=$(curl -s -m 15 "$base/entrar" | grep -o '<script[^>]*>' | grep -v 'src=' | grep -vc 'nonce=' || true)
             ins_comecar=$(curl -s -m 15 "$base/comecar" | grep -o '<script[^>]*>' | grep -v 'src=' | grep -vc 'nonce=' || true)
             cat_perguntas=$(curl -s -m 15 "$base/api/v1/desafio/catalogo" | python3 -c "import json,sys;print(len(json.load(sys.stdin)['perguntas']))" 2>/dev/null || echo ERR)
-            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede umaPorta=$home_porta linguagemDeJogoNaHome=$home_jogo nitidezNaHome=$home_nitidez selosAntigosNaHome=$home_selos_velhos perguntas=$cat_perguntas scriptsInlineSemNonce_entrar=$ins_entrar scriptsInlineSemNonce_comecar=$ins_comecar mundoSemLogin=$mundo rodadaInexistente=$rodada conexoesSemLogin=$conexoes estanteAtiva=${estante:-ERR} paginaEstante=$estante_pagina prontoStatus=$pronto loginComOrigemDoProprioSite=$origem imagemDoConvite=$og_convite conversaInexistente=$conversa push=$push"
+            r="$r | ${base#https://}: home=$h cat=$c prov=$p login=$l privacidade=$pv termos=$tm redeAoVivoNaHome=$home_tem_rede umaPorta=$home_porta linguagemDeJogoNaHome=$home_jogo nitidezNaHome=$home_nitidez selosAntigosNaHome=$home_selos_velhos perguntas=$cat_perguntas scriptsInlineSemNonce_entrar=$ins_entrar scriptsInlineSemNonce_comecar=$ins_comecar mundoSemLogin=$mundo rodadaInexistente=$rodada conexoesSemLogin=$conexoes googleStart=${g_cod:-ERR} googleRedirectUri=${g_redir:--} googleClient=${g_cli:--} estanteAtiva=${estante:-ERR} paginaEstante=$estante_pagina prontoStatus=$pronto loginComOrigemDoProprioSite=$origem imagemDoConvite=$og_convite conversaInexistente=$conversa push=$push"
           done
           echo "resumo=$r" >> "$GITHUB_OUTPUT"
       - name: Google
