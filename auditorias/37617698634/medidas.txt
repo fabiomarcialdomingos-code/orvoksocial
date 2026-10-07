@@ -1,0 +1,25 @@
+== imagem de prévia do convite (código de teste) ==
+status=200 tipo=image/png bytes=108243 tempo=4.909509s
+== etiquetas na home ==
+<h1                        0
+rel="canonical"            0
+property="og:title"        0
+property="og:image"        0
+name="twitter:card"        0
+name="description"         1
+== arquivos públicos ==
+/robots.txt            404
+/sitemap.xml           404
+/favicon.ico           404
+/manifest.webmanifest  200
+== tempo até o primeiro byte (5 medições) ==
+/ 0.376026
+/ 0.381662
+/ 0.048375
+/ 0.052940
+/ 0.058258
+/comecar 0.486609
+/comecar 0.620241
+/comecar 0.141440
+/comecar 0.318887
+/comecar 0.211531
