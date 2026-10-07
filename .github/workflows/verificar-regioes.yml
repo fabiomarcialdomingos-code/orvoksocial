@@ -1,0 +1,27 @@
+# Mostra em que região estão o banco (Neon) e as funções do site (Vercel). Só lê; não imprime segredos.
+name: "Verificar regiões (banco e site)"
+on: workflow_dispatch
+jobs:
+  regioes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      VT: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Verificar
+        id: v
+        run: |
+          set +e
+          neon=$(echo "$DATABASE_URL" | sed -nE 's#.*@[^/?:]*\.([a-z]+-[a-z]+-[0-9]+)\.(aws|azure)\.neon\.tech.*#\1/\2#p')
+          pooler=$(echo "$DATABASE_URL" | grep -q -- '-pooler' && echo sim || echo nao)
+          vid=$(curl -s -D - -o /dev/null -m 20 https://orvok.com.br/d/D32P3C8K | tr -d '\r' | grep -i '^x-vercel-id:' | cut -d' ' -f2)
+          team=$(curl -s -H "Authorization: Bearer $VT" https://api.vercel.com/v2/teams | jq -r '[.teams[]? | select(.slug=="script-char")][0].id // empty')
+          q=""; [ -n "$team" ] && q="?teamId=$team"
+          proj=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial$q")
+          regiao=$(echo "$proj" | jq -r '.serverlessFunctionRegion // "padrão(não definida)"')
+          plano=$(echo "$proj" | jq -r '.resourceConfig.functionDefaultRegions // empty | tostring')
+          nodever=$(echo "$proj" | jq -r '.nodeVersion // "?"')
+          echo "resumo=Neon[regiao=${neon:-nao-identificada} pooler=$pooler] | Vercel[x-vercel-id=$vid funcaoRegiaoProjeto=$regiao regioesPadrao=${plano:--} node=$nodever]" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.v.outputs.resumo }}"
+        run: "true"
