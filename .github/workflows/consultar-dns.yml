@@ -1,0 +1,20 @@
+# Consulta somente leitura do DNS público de orvok.com.br: onde o DNS está hospedado e quais registros de e-mail já existem.
+name: "Consultar DNS do domínio"
+on: workflow_dispatch
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Instalar o dig
+        run: sudo apt-get update -y >/dev/null && sudo apt-get install -y --no-install-recommends dnsutils >/dev/null
+      - name: Consultar
+        id: c
+        run: |
+          d=orvok.com.br
+          q() { dig +short +time=5 +tries=2 "$@" 2>/dev/null | tr '\n' ' ' | sed 's/  */ /g;s/ $//'; }
+          ns=$(q NS $d); a=$(q A $d); www=$(q CNAME www.$d); mx=$(q MX $d); txt=$(q TXT $d); dmarc=$(q TXT _dmarc.$d); ds=$(q DS $d)
+          dk1=$(q CNAME brevo1._domainkey.$d); dk2=$(q CNAME brevo2._domainkey.$d); dkm=$(q TXT mail._domainkey.$d); brevo=$(q TXT $d | grep -o 'brevo-code[^" ]*' | head -1)
+          echo "resumo=NS=[$ns] A=[$a] www=[$www] MX=[$mx] TXT=[$txt] DMARC=[$dmarc] DS=[${ds:+sim}] DKIM_brevo1=[$dk1] DKIM_brevo2=[$dk2] brevoCodigo=[${brevo:-nao}]" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.c.outputs.resumo }}"
+        run: "true"
