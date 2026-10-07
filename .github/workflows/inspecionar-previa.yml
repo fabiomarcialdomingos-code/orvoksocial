@@ -1,0 +1,36 @@
+# Mostra o que o WhatsApp e o Facebook recebem ao abrir o link de um convite: as etiquetas da página e se a imagem de prévia
+# responde dentro do tempo e do tamanho aceitos. Somente leitura; o código do convite vem da entrada.
+name: "Inspecionar prévia de um convite"
+on:
+  workflow_dispatch:
+    inputs:
+      codigo:
+        description: "Código do convite (8 caracteres)"
+        type: string
+        required: true
+      base:
+        type: string
+        default: "https://orvok.com.br"
+jobs:
+  inspecionar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspecionar
+        id: i
+        env:
+          COD: ${{ inputs.codigo }}
+          BASE: ${{ inputs.base }}
+        run: |
+          echo "$COD" | grep -Eq '^[A-Z0-9]{8}$' || { echo "::error::código inválido"; exit 1; }
+          UA="WhatsApp/2.24.5.78 A"
+          u="$BASE/d/$COD"
+          code=$(curl -s -A "$UA" -o /tmp/p.html -w "%{http_code} tempo=%{time_total}s bytes=%{size_download}" -m 30 "$u")
+          tags=$(grep -o '<meta[^>]*\(property="og:[a-z:_]*"\|name="twitter:[a-z:_]*"\)[^>]*>' /tmp/p.html | sed 's/<meta //; s/ *\/\?>$//' | cut -c1-170 | tr '\n' ';')
+          img=$(grep -o 'property="og:image" content="[^"]*"' /tmp/p.html | head -1 | sed 's/.*content="//; s/"$//')
+          imgres="sem-og:image"
+          if [ -n "$img" ]; then imgres=$(curl -s -A "$UA" -o /tmp/img.bin -w "%{http_code} tipo=%{content_type} bytes=%{size_download} tempo=%{time_total}s" -m 30 "$img"); fi
+          robots=$(curl -s -A "$UA" -o /dev/null -w "%{http_code}" "$BASE/robots.txt")
+          echo "resumo=pagina[$code] | etiquetas[$tags] | imagem[$img => $imgres] | robots.txt=$robots" >> "$GITHUB_OUTPUT"
+      - name: "Resultado ${{ steps.i.outputs.resumo }}"
+        run: "true"
