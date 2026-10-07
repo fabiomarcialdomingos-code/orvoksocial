@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return { beforeFiles: [{ source: "/", destination: "/inicio.html" }], afterFiles: [], fallback: [] };
   },
+  // O endereço antigo da Vercel passa a levar ao domínio próprio, preservando caminho e parâmetros: os links de
+  // convite já compartilhados com o endereço antigo continuam funcionando.
+  async redirects() {
+    return [{ source: "/:path*", has: [{ type: "host" as const, value: "orvoksocial.vercel.app" }], destination: "https://orvok.com.br/:path*", permanent: true }];
+  },
   async headers() {
     const common = [
       { key: "X-Content-Type-Options", value: "nosniff" },
