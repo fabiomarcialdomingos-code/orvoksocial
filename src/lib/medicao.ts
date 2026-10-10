@@ -4,6 +4,7 @@ import type { Pool } from "pg";
 export const PASSOS = [
   "desafio_criado", "convite_aberto", "tentativa_concluida", "cartao_compartilhado", "convite_enviado",
   "mundo_rodada_criada", "mundo_convite_aberto", "mundo_convidado_participou", "mundo_opiniao", "mundo_revelacao_vista",
+  "compartilhar_whatsapp", "compartilhar_menu", "compartilhar_facebook", "compartilhar_stories", "compartilhar_copiar",
   "estante_lembranca_enviada", "estante_presente_aberto", "estante_reacao", "estante_estante_vista", "estante_pegada", "estante_vinculo",
 ] as const;
 export type Passo = (typeof PASSOS)[number];

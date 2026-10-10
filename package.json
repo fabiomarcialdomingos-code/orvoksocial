@@ -31,7 +31,8 @@
     "test:svg": "tsx scripts/test-svg.ts",
     "simulacao": "tsx scripts/simulacao/principal.ts",
     "test:auth": "tsx scripts/test-auth.ts",
-    "test:cartao": "tsx scripts/test-cartao.ts"
+    "test:cartao": "tsx scripts/test-cartao.ts",
+    "test:mensagens": "tsx scripts/test-mensagens.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

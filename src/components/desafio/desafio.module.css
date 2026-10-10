@@ -141,3 +141,8 @@
 .acoesModeracao button:hover { color: var(--tinta); }
 .acoesModeracao svg { width: 15px; height: 15px; }
 .painelModeracao { margin-top: 14px; padding: 16px; border-radius: 18px; border: 1px dashed var(--fio-2); background: var(--sup); }
+
+/* Painel de compartilhar: os 3 passos dos Stories do Instagram. */
+.passosStories { display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--fio-2); background: rgb(255 255 255 / 0.03); }
+.passosStories ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--suave); font-size: 14px; line-height: 1.4; }
+.oferta + .oferta { margin-top: 14px; }

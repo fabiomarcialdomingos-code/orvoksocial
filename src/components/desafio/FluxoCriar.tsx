@@ -1,4 +1,6 @@
 "use client";
+import { ROTULOS_TOM, mensagemConvite, urlCompartilhar } from "@/lib/desafio/mensagens";
+import { PainelCompartilhar, medirCompartilhamento } from "./PainelCompartilhar";
 import { useEffect, useMemo, useState } from "react";
 import { trackMetaCustomEvent, trackMetaEvent } from "@/lib/client/pixel";
 import { Globo } from "./Globo";
@@ -15,11 +17,6 @@ const RELACOES: { id: Relacao; rotulo: string; texto: string; campo: string; exe
   { id: "familia", rotulo: "Família", texto: "Mãe, pai, irmãos, avós… quem cresceu com você", campo: "Quem da família vai receber? (opcional)", exemplo: "Ex.: Mãe", icone: "casa" },
   { id: "amigos", rotulo: "Amigos", texto: "Quem está por perto e conhece o seu dia a dia", campo: "Nome do amigo (opcional)", exemplo: "Ex.: Marina", icone: "pessoas" },
   { id: "crush", rotulo: "Alguém especial", texto: "Quem faz o coração acelerar", campo: "Nome da pessoa (opcional)", exemplo: "Ex.: Rafa", icone: "coracao" },
-];
-const TONS: [string, (nome: string) => string][] = [
-  ["Curioso", (a) => `${a ? `${a}, gostaria` : "Gostaria"} de saber como você me vê de verdade. São 12 perguntas no orvok, anônimas:`],
-  ["Carinhoso", (a) => `${a ? `${a}, sua` : "Sua"} visão importa para mim. Poderia me contar como você me enxerga? É anônimo:`],
-  ["Direto", () => "Poderia compartilhar como você me vê? São 12 perguntas no orvok, leva cerca de 3 minutos e é anônimo:"],
 ];
 
 /** Percurso de quem chega pelo anúncio: responde sobre si e convida alguém para compartilhar a sua visão, sem cadastro. */
@@ -63,7 +60,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
   const link = codigo ? `${typeof window === "undefined" ? "" : window.location.origin}/d/${codigo}` : "";
   const mensagem = useMemo(() => (convidarDeVolta
     ? `${convidarDeVolta}, respondi sobre você no orvok. Agora gostaria de saber como você me vê:`
-    : TONS[tom]![1](amigo.trim())), [convidarDeVolta, tom, amigo]);
+    : mensagemConvite(relacao, tom, amigo.trim())), [convidarDeVolta, relacao, tom, amigo]);
 
   const escolher = (k: number) => {
     const novas = [...respostas]; novas[i] = k; setRespostas(novas);
@@ -97,7 +94,8 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
     const c = await garantirConvite();
     if (!c) return;
     const url = `${window.location.origin}/d/${c}`, texto = `${mensagem} ${url}`;
-    if (canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
+    medirCompartilhamento(canal === "outros" ? "menu" : canal, c);
+    if (canal === "whatsapp") window.open(urlCompartilhar("whatsapp", url, mensagem), "_blank", "noopener");
     if (canal === "copiar") await navigator.clipboard?.writeText(texto).catch(() => undefined);
     if (canal === "outros" && navigator.share) await navigator.share({ text: mensagem, url }).catch(() => undefined);
     trackMetaCustomEvent("Convite", { content_name: "retrato" }); // "compartilhamento ou convite" (briefing, seção 6)
@@ -222,7 +220,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
         </div>
         {convidarDeVolta ? null : (
           <div className={s.tons} role="group" aria-label="Tom da mensagem">
-            {TONS.map(([rotulo], k) => <button key={rotulo} className={s.tom} type="button" aria-pressed={tom === k} onClick={() => setTom(k)}>{rotulo}</button>)}
+            {ROTULOS_TOM.map((rotulo, k) => <button key={rotulo} className={s.tom} type="button" aria-pressed={tom === k} onClick={() => setTom(k)}>{rotulo}</button>)}
           </div>
         )}
         <div className={s.balao}>{mensagem} <span className={s.link}>{link || "orvok.com.br/d/…"}</span></div>
@@ -254,6 +252,7 @@ export function FluxoCriar({ convidarDeVolta, conjuntoDe, relacaoInicial = null 
           <li className={s.agora}><span className={s.p} />{quem ?? "A pessoa"} compartilha como te vê</li>
           <li><span className={s.p} />Com 3 respostas, aparece o seu retrato</li>
         </ol>
+        {codigo ? <PainelCompartilhar codigo={codigo} link={link} mensagem={mensagem} /> : null}
         {logado ? (
           <section className={s.oferta}>
             <h2>Pronto! Acompanhe em Meu retrato.</h2>
