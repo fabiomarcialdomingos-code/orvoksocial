@@ -12,6 +12,7 @@ export async function chamarClaude(o: {
 }): Promise<string | null> {
   const chave = o.env.ANTHROPIC_API_KEY;
   if (!chave) return null;
+  let semTemperatura = false; // modelos novos recusam `temperature`; ao ver essa recusa, repete sem ela
   for (let tentativa = 0; tentativa < o.tentativas; tentativa++) {
     if (tentativa > 0) await new Promise((r) => setTimeout(r, 300));
     const limite = new AbortController();
@@ -20,13 +21,14 @@ export async function chamarClaude(o: {
       const r = await o.buscar("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({ model: o.modelo, max_tokens: o.maxTokens, temperature: o.temperatura, system: o.sistema, messages: o.mensagens }),
+        body: JSON.stringify({ model: o.modelo, max_tokens: o.maxTokens, ...(semTemperatura ? {} : { temperature: o.temperatura }), system: o.sistema, messages: o.mensagens }),
         signal: limite.signal,
       });
       if (!r.ok) {
         // O motivo da recusa (saldo, chave, limite de uso) vai para o log, sem nenhum conteúdo da pessoa. Antes sumia em silêncio.
         const corpoErro = (await r.json().catch(() => null)) as { error?: { type?: string; message?: string } } | null;
         console.warn(JSON.stringify({ level: "warn", event: "anthropic_recusou", status: r.status, tipo: corpoErro?.error?.type ?? null, mensagem: (corpoErro?.error?.message ?? "").slice(0, 140) }));
+        if (r.status === 400 && !semTemperatura && /temperature/i.test(corpoErro?.error?.message ?? "")) { semTemperatura = true; tentativa--; }
         continue;
       }
       const corpo = (await r.json()) as { content?: { type: string; text?: string }[] };
