@@ -1,0 +1,32 @@
+# Troca a chave da Anthropic no ambiente de produção da Vercel e republica. A chave vem como entrada e é mascarada nos logs.
+name: Trocar chave da IA na Vercel
+on:
+  workflow_dispatch:
+    inputs:
+      chave:
+        description: "Chave da Anthropic (sk-ant-...)"
+        required: true
+jobs:
+  trocar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VT: ${{ secrets.VERCEL_TOKEN }}
+      CHAVE: ${{ inputs.chave }}
+    steps:
+      - name: Trocar e republicar
+        run: |
+          set -e
+          echo "::add-mask::$CHAVE"
+          team=$(curl -s -H "Authorization: Bearer $VT" https://api.vercel.com/v2/teams | jq -r '[.teams[]? | select(.slug=="script-char")][0].id // empty'); q=""; [ -n "$team" ] && q="?teamId=$team"
+          pid=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial$q" | jq -r '.id')
+          ids=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env$q" | jq -r '.envs[] | select(.key=="ANTHROPIC_API_KEY") | .id')
+          for id in $ids; do curl -s -X DELETE -H "Authorization: Bearer $VT" "https://api.vercel.com/v9/projects/orvoksocial/env/$id$q" -o /dev/null; done
+          corpo=$(jq -n --arg v "$CHAVE" '{key:"ANTHROPIC_API_KEY",value:$v,type:"sensitive",target:["production"]}')
+          curl -s -X POST -H "Authorization: Bearer $VT" -H "Content-Type: application/json" "https://api.vercel.com/v10/projects/orvoksocial/env$q" -d "$corpo" | jq -r '.created.key // .error.message' > /tmp/r
+          last=$(curl -s -H "Authorization: Bearer $VT" "https://api.vercel.com/v6/deployments?projectId=$pid&target=production&limit=1${team:+&teamId=$team}" | jq -r '.deployments[0].uid')
+          dep=$(curl -s -X POST -H "Authorization: Bearer $VT" -H "Content-Type: application/json" "https://api.vercel.com/v13/deployments$q" -d "{\"name\":\"orvoksocial\",\"deploymentId\":\"$last\",\"target\":\"production\"}" | jq -r '.id // .error.message')
+          echo "res=chave:$(cat /tmp/r) republicado:$dep" >> "$GITHUB_OUTPUT"
+        id: t
+      - name: "Resultado ${{ steps.t.outputs.res }}"
+        run: "true"
